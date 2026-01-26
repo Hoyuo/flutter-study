@@ -135,17 +135,17 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 | `firebase_analytics` | Analytics |
 | `hive` | Local Storage |
 
-## Document Index by Learning Path
+## Document Index (권장 참조 순서)
 
-### 입문자용 (권장 학습 순서)
+### 기초 (Foundation)
 
-1. `core/Architecture.md` - 전체 구조 이해
-2. `infrastructure/DI.md` - 의존성 주입 기초
-3. `core/Bloc.md` - 상태 관리 기초
+1. `core/Architecture.md` - 전체 구조
+2. `infrastructure/DI.md` - 의존성 주입
+3. `core/Bloc.md` - 상태 관리
 4. `core/Freezed.md` - 불변 데이터 모델
 5. `networking/Networking_Dio.md` → `networking/Networking_Retrofit.md` - API 통신
 
-### 중급자용
+### 심화 (Advanced)
 
 6. `core/Fpdart.md` - 함수형 프로그래밍
 7. `system/ErrorHandling.md` - 에러 처리 패턴
@@ -153,7 +153,7 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 9. `features/Navigation.md` - 라우팅
 10. `patterns/FormValidation.md` - 폼 처리
 
-### 고급 기능
+### 기능별 가이드 (Features)
 
 11. `features/Localization.md` - 다국어
 12. `features/Permission.md` - 권한 관리
@@ -161,7 +161,7 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 14. `patterns/Analytics.md` - 분석/추적
 15. `system/Theming.md` - 테마 시스템
 
-### 시스템 레벨
+### 시스템 및 인프라 (System)
 
 16. `infrastructure/Environment.md` - 환경 설정
 17. `infrastructure/LocalStorage.md` - 로컬 저장소
