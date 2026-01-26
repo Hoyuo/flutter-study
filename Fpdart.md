@@ -1,0 +1,830 @@
+# Flutter Functional Programming with fpdart
+
+> 이 문서는 fpdart 라이브러리를 사용한 함수형 프로그래밍 패턴을 설명합니다.
+
+## 1. 개요
+
+### 1.1 fpdart란?
+
+fpdart는 Dart/Flutter에서 함수형 프로그래밍을 지원하는 라이브러리입니다.
+
+| 타입 | 용도 | 비유 |
+|------|------|------|
+| `Either<L, R>` | 성공/실패 표현 | Result 타입 |
+| `Option<T>` | 값 있음/없음 표현 | nullable 대체 |
+| `TaskEither<L, R>` | 비동기 Either | Future + Either |
+| `Unit` | 반환값 없음 표현 | void 대체 |
+
+### 1.2 왜 fpdart를 사용할까?
+
+```dart
+// ❌ 예외 기반 (전통적 방식)
+Future<User> getUser(String id) async {
+  try {
+    final response = await api.getUser(id);
+    return User.fromJson(response);
+  } catch (e) {
+    throw UserException(e.toString());  // 어디서 처리?
+  }
+}
+
+// ✅ Either 기반 (함수형)
+Future<Either<UserFailure, User>> getUser(String id) async {
+  try {
+    final response = await api.getUser(id);
+    return Right(User.fromJson(response));  // 성공
+  } catch (e) {
+    return Left(UserFailure.fromException(e));  // 실패
+  }
+}
+```
+
+### 1.3 장점
+
+```
+Either 기반 에러 처리
+├── 명시적 에러 타입 (컴파일 타임 체크)
+├── 에러 전파 없음 (호출자가 명시적 처리)
+├── 체이닝 가능 (flatMap, map)
+└── 테스트 용이 (예외 없이 값으로 처리)
+```
+
+## 2. 프로젝트 설정
+
+### 2.1 의존성 추가
+
+```yaml
+# pubspec.yaml
+dependencies:
+  fpdart: ^1.1.0
+```
+
+## 3. Either
+
+### 3.1 기본 개념
+
+```dart
+import 'package:fpdart/fpdart.dart';
+
+// Either<L, R>
+// L = Left = 실패 타입
+// R = Right = 성공 타입
+
+Either<String, int> divide(int a, int b) {
+  if (b == 0) {
+    return const Left('Cannot divide by zero');  // 실패
+  }
+  return Right(a ~/ b);  // 성공
+}
+
+// 사용
+final result = divide(10, 2);
+result.fold(
+  (error) => print('Error: $error'),
+  (value) => print('Result: $value'),
+);
+```
+
+### 3.2 Repository에서 사용
+
+```dart
+// features/user/lib/domain/repositories/user_repository.dart
+import 'package:fpdart/fpdart.dart';
+
+abstract class UserRepository {
+  Future<Either<UserFailure, User>> getUser(String id);
+  Future<Either<UserFailure, List<User>>> getUsers();
+  Future<Either<UserFailure, Unit>> updateUser(User user);
+  Future<Either<UserFailure, Unit>> deleteUser(String id);
+}
+```
+
+```dart
+// features/user/lib/data/repositories/user_repository_impl.dart
+import 'package:fpdart/fpdart.dart';
+import 'package:injectable/injectable.dart';
+
+@LazySingleton(as: UserRepository)
+class UserRepositoryImpl implements UserRepository {
+  final UserRemoteDataSource _dataSource;
+  final UserMapper _mapper;
+
+  UserRepositoryImpl(this._dataSource, this._mapper);
+
+  @override
+  Future<Either<UserFailure, User>> getUser(String id) async {
+    try {
+      final dto = await _dataSource.getUser(id);
+      return Right(_mapper.toEntity(dto));
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
+    } catch (e) {
+      return const Left(UserFailure.unknown());
+    }
+  }
+
+  @override
+  Future<Either<UserFailure, Unit>> updateUser(User user) async {
+    try {
+      await _dataSource.updateUser(_mapper.toDto(user));
+      return const Right(unit);  // 성공, 반환값 없음
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
+    } catch (e) {
+      return const Left(UserFailure.unknown());
+    }
+  }
+
+  UserFailure _mapDioError(DioException e) {
+    // 에러 매핑 로직
+    return const UserFailure.network();
+  }
+}
+```
+
+### 3.3 UseCase에서 사용
+
+```dart
+// features/user/lib/domain/usecases/get_user_usecase.dart
+import 'package:fpdart/fpdart.dart';
+import 'package:injectable/injectable.dart';
+
+@injectable
+class GetUserUseCase {
+  final UserRepository _repository;
+
+  GetUserUseCase(this._repository);
+
+  Future<Either<UserFailure, User>> call(String id) {
+    return _repository.getUser(id);
+  }
+}
+```
+
+### 3.4 Bloc에서 Either 처리
+
+```dart
+// features/user/lib/presentation/bloc/user_bloc.dart
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+class UserBloc extends Bloc<UserEvent, UserState> {
+  final GetUserUseCase _getUserUseCase;
+
+  UserBloc(this._getUserUseCase) : super(const UserState.initial()) {
+    on<UserEvent>(_onEvent);
+  }
+
+  Future<void> _onEvent(UserEvent event, Emitter<UserState> emit) async {
+    await event.when(
+      started: (userId) => _onStarted(userId, emit),
+    );
+  }
+
+  Future<void> _onStarted(String userId, Emitter<UserState> emit) async {
+    emit(const UserState.loading());
+
+    final result = await _getUserUseCase(userId);
+
+    // fold로 성공/실패 처리
+    result.fold(
+      (failure) => emit(UserState.error(_mapFailureMessage(failure))),
+      (user) => emit(UserState.loaded(user)),
+    );
+  }
+
+  String _mapFailureMessage(UserFailure failure) {
+    return failure.when(
+      network: () => '네트워크 오류가 발생했습니다.',
+      notFound: () => '사용자를 찾을 수 없습니다.',
+      unauthorized: () => '권한이 없습니다.',
+      unknown: () => '알 수 없는 오류가 발생했습니다.',
+    );
+  }
+}
+```
+
+## 4. Either 체이닝
+
+### 4.1 map - 성공 값 변환
+
+```dart
+// 성공 값만 변환 (실패는 그대로 통과)
+final result = await getUserUseCase(id);
+
+final userName = result.map((user) => user.name);
+// Either<UserFailure, String>
+```
+
+### 4.2 flatMap - Either 연결
+
+```dart
+// 여러 Either 연산을 연결
+Future<Either<UserFailure, Profile>> getUserProfile(String userId) async {
+  final userResult = await _userRepository.getUser(userId);
+
+  return userResult.flatMap((user) async {
+    final profileResult = await _profileRepository.getProfile(user.profileId);
+    return profileResult;
+  });
+}
+```
+
+### 4.3 체이닝 예시
+
+```dart
+// features/order/lib/domain/usecases/create_order_usecase.dart
+@injectable
+class CreateOrderUseCase {
+  final CartRepository _cartRepository;
+  final OrderRepository _orderRepository;
+  final PaymentRepository _paymentRepository;
+
+  CreateOrderUseCase(
+    this._cartRepository,
+    this._orderRepository,
+    this._paymentRepository,
+  );
+
+  Future<Either<OrderFailure, Order>> call(CreateOrderParams params) async {
+    // 1. 장바구니 검증
+    final cartResult = await _cartRepository.getCart(params.cartId);
+
+    return cartResult.fold(
+      (failure) => Left(OrderFailure.cartError(failure.message)),
+      (cart) async {
+        // 2. 재고 확인
+        final stockResult = await _orderRepository.checkStock(cart.items);
+
+        return stockResult.fold(
+          (failure) => Left(failure),
+          (stockValid) async {
+            if (!stockValid) {
+              return const Left(OrderFailure.outOfStock());
+            }
+
+            // 3. 결제 처리
+            final paymentResult = await _paymentRepository.process(
+              amount: cart.totalAmount,
+              method: params.paymentMethod,
+            );
+
+            return paymentResult.fold(
+              (failure) => Left(OrderFailure.paymentError(failure.message)),
+              (payment) async {
+                // 4. 주문 생성
+                final orderResult = await _orderRepository.createOrder(
+                  cart: cart,
+                  paymentId: payment.id,
+                );
+
+                return orderResult;
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+}
+```
+
+### 4.4 더 깔끔한 체이닝 (flatMap 사용)
+
+```dart
+Future<Either<OrderFailure, Order>> call(CreateOrderParams params) async {
+  return _cartRepository
+      .getCart(params.cartId)
+      .mapLeft((f) => OrderFailure.cartError(f.message))
+      .flatMap((cart) => _validateStock(cart))
+      .flatMap((cart) => _processPayment(cart, params.paymentMethod))
+      .flatMap((payment) => _createOrder(payment));
+}
+
+Future<Either<OrderFailure, Cart>> _validateStock(Cart cart) async {
+  final result = await _orderRepository.checkStock(cart.items);
+  return result.flatMap((valid) {
+    if (!valid) return const Left(OrderFailure.outOfStock());
+    return Right(cart);
+  });
+}
+```
+
+## 5. Option
+
+### 5.1 기본 개념
+
+```dart
+import 'package:fpdart/fpdart.dart';
+
+// Option<T> = Some(value) | None
+// nullable 대신 사용
+
+Option<User> findUserByEmail(String email, List<User> users) {
+  final user = users.where((u) => u.email == email).firstOrNull;
+  return Option.fromNullable(user);
+}
+
+// 사용
+final userOption = findUserByEmail('test@test.com', users);
+
+userOption.fold(
+  () => print('User not found'),
+  (user) => print('Found: ${user.name}'),
+);
+
+// 또는 match 사용
+userOption.match(
+  () => print('User not found'),
+  (user) => print('Found: ${user.name}'),
+);
+```
+
+### 5.2 Option 메서드
+
+```dart
+final option = Option.of(5);
+
+// map - 값 변환
+final doubled = option.map((n) => n * 2);  // Some(10)
+
+// flatMap - Option 연결
+final result = option.flatMap((n) => n > 0 ? Some(n) : const None());
+
+// getOrElse - 기본값
+final value = option.getOrElse(() => 0);  // 5
+
+// toNullable - nullable로 변환
+final nullable = option.toNullable();  // int?
+
+// toEither - Either로 변환
+final either = option.toEither(() => 'No value');  // Either<String, int>
+```
+
+### 5.3 Option 사용 예시
+
+```dart
+// features/user/lib/data/datasources/user_local_datasource.dart
+abstract class UserLocalDataSource {
+  Option<CachedUser> getCachedUser(String id);
+  Future<void> cacheUser(CachedUser user);
+}
+
+@LazySingleton(as: UserLocalDataSource)
+class UserLocalDataSourceImpl implements UserLocalDataSource {
+  final IsarDatabase _database;
+
+  UserLocalDataSourceImpl(this._database);
+
+  @override
+  Option<CachedUser> getCachedUser(String id) {
+    final user = _database.instance.cachedUsers
+        .where()
+        .odIdEqualTo(id)
+        .findFirstSync();
+
+    return Option.fromNullable(user);
+  }
+}
+```
+
+```dart
+// Repository에서 캐시 활용
+@override
+Future<Either<UserFailure, User>> getUser(String id) async {
+  // 1. 캐시 확인
+  final cachedUser = _localDataSource.getCachedUser(id);
+
+  return cachedUser.fold(
+    // 캐시 없음 → API 호출
+    () async {
+      try {
+        final dto = await _remoteDataSource.getUser(id);
+        await _localDataSource.cacheUser(_mapper.toCached(dto));
+        return Right(_mapper.toEntity(dto));
+      } on DioException catch (e) {
+        return Left(_mapDioError(e));
+      }
+    },
+    // 캐시 있음 → 캐시 반환
+    (cached) async {
+      // 캐시가 오래되었으면 백그라운드에서 갱신
+      if (_isCacheExpired(cached)) {
+        _refreshCacheInBackground(id);
+      }
+      return Right(_mapper.cachedToEntity(cached));
+    },
+  );
+}
+```
+
+## 6. TaskEither
+
+### 6.1 기본 개념
+
+```dart
+import 'package:fpdart/fpdart.dart';
+
+// TaskEither<L, R> = () => Future<Either<L, R>>
+// 비동기 연산을 지연 실행하고 체이닝 가능
+
+TaskEither<UserFailure, User> getUser(String id) {
+  return TaskEither(() async {
+    try {
+      final response = await api.getUser(id);
+      return Right(User.fromJson(response));
+    } catch (e) {
+      return const Left(UserFailure.network());
+    }
+  });
+}
+
+// 실행
+final result = await getUser('123').run();
+```
+
+### 6.2 TaskEither 체이닝
+
+```dart
+// 여러 비동기 작업을 순차적으로 체이닝
+TaskEither<OrderFailure, Order> createOrder(CreateOrderParams params) {
+  return getCart(params.cartId)
+      .flatMap((cart) => validateStock(cart))
+      .flatMap((cart) => processPayment(cart, params.paymentMethod))
+      .flatMap((payment) => saveOrder(payment));
+}
+
+TaskEither<OrderFailure, Cart> getCart(String cartId) {
+  return TaskEither.tryCatch(
+    () => _cartRepository.getCart(cartId),
+    (error, stackTrace) => OrderFailure.cartError(error.toString()),
+  );
+}
+
+TaskEither<OrderFailure, Cart> validateStock(Cart cart) {
+  return TaskEither.tryCatch(
+    () => _orderRepository.checkStock(cart.items),
+    (error, stackTrace) => const OrderFailure.outOfStock(),
+  ).flatMap((valid) {
+    if (!valid) return TaskEither.left(const OrderFailure.outOfStock());
+    return TaskEither.right(cart);
+  });
+}
+```
+
+### 6.3 TaskEither vs Future<Either>
+
+```dart
+// Future<Either> - 즉시 실행
+Future<Either<Failure, Data>> getData() async {
+  // 이 함수가 호출되면 바로 실행됨
+  return Right(await api.fetch());
+}
+
+// TaskEither - 지연 실행
+TaskEither<Failure, Data> getData() {
+  return TaskEither(() async {
+    // .run()이 호출될 때까지 실행되지 않음
+    return Right(await api.fetch());
+  });
+}
+
+// TaskEither의 장점: 체이닝과 합성이 더 자연스러움
+final pipeline = getData()
+    .flatMap(processData)
+    .flatMap(saveData)
+    .map(formatResult);
+
+// 실행
+final result = await pipeline.run();
+```
+
+## 7. Unit 타입
+
+### 7.1 기본 개념
+
+```dart
+import 'package:fpdart/fpdart.dart';
+
+// Unit = void의 함수형 대체
+// Either<Failure, void>가 아닌 Either<Failure, Unit> 사용
+
+Future<Either<UserFailure, Unit>> deleteUser(String id) async {
+  try {
+    await _dataSource.deleteUser(id);
+    return const Right(unit);  // unit 상수 사용
+  } catch (e) {
+    return const Left(UserFailure.unknown());
+  }
+}
+```
+
+### 7.2 Unit 사용 이유
+
+```dart
+// ❌ void 사용 시 문제
+Future<Either<Failure, void>> delete() async {
+  // void는 값이 아니라 타입 체크 어려움
+  return Right(null);  // 애매함
+}
+
+// ✅ Unit 사용
+Future<Either<Failure, Unit>> delete() async {
+  return const Right(unit);  // 명확한 "성공, 반환값 없음" 표현
+}
+```
+
+## 8. 실전 패턴
+
+### 8.1 여러 Either 조합
+
+```dart
+// 여러 Either 결과를 조합
+Future<Either<Failure, ProfileData>> getProfileData(String userId) async {
+  final userResult = await _userRepository.getUser(userId);
+  final settingsResult = await _settingsRepository.getSettings(userId);
+  final statsResult = await _statsRepository.getStats(userId);
+
+  // 모든 결과가 성공인 경우에만 조합
+  return userResult.fold(
+    (failure) => Left(failure),
+    (user) => settingsResult.fold(
+      (failure) => Left(failure),
+      (settings) => statsResult.fold(
+        (failure) => Left(failure),
+        (stats) => Right(ProfileData(
+          user: user,
+          settings: settings,
+          stats: stats,
+        )),
+      ),
+    ),
+  );
+}
+```
+
+### 8.2 Either.Do 문법 (권장)
+
+```dart
+// Either.Do를 사용한 깔끔한 조합
+Future<Either<Failure, ProfileData>> getProfileData(String userId) async {
+  return Either.Do(($) async {
+    // $는 Either에서 Right 값을 추출
+    // Left면 즉시 반환됨
+    final user = await $(await _userRepository.getUser(userId));
+    final settings = await $(await _settingsRepository.getSettings(userId));
+    final stats = await $(await _statsRepository.getStats(userId));
+
+    return ProfileData(
+      user: user,
+      settings: settings,
+      stats: stats,
+    );
+  });
+}
+```
+
+### 8.3 병렬 실행
+
+```dart
+// 여러 요청을 병렬로 실행
+Future<Either<Failure, DashboardData>> getDashboardData() async {
+  // 병렬 실행
+  final results = await Future.wait([
+    _userRepository.getCurrentUser(),
+    _notificationRepository.getUnreadCount(),
+    _orderRepository.getRecentOrders(),
+  ]);
+
+  final userResult = results[0] as Either<Failure, User>;
+  final notificationResult = results[1] as Either<Failure, int>;
+  final ordersResult = results[2] as Either<Failure, List<Order>>;
+
+  // 결과 조합
+  return Either.Do(($) {
+    final user = $(userResult);
+    final unreadCount = $(notificationResult);
+    final orders = $(ordersResult);
+
+    return DashboardData(
+      user: user,
+      unreadNotifications: unreadCount,
+      recentOrders: orders,
+    );
+  });
+}
+```
+
+### 8.4 에러 변환
+
+```dart
+// 하위 레이어의 에러를 상위 레이어 에러로 변환
+Future<Either<OrderFailure, Order>> createOrder(OrderParams params) async {
+  // CartFailure를 OrderFailure로 변환
+  final cartResult = await _cartRepository.getCart(params.cartId);
+
+  return cartResult
+      .mapLeft((cartFailure) => OrderFailure.fromCartFailure(cartFailure))
+      .flatMap((cart) async {
+        // PaymentFailure를 OrderFailure로 변환
+        final paymentResult = await _paymentRepository.process(cart.total);
+
+        return paymentResult
+            .mapLeft((paymentFailure) => OrderFailure.fromPaymentFailure(paymentFailure))
+            .flatMap((payment) => _orderRepository.create(cart, payment));
+      });
+}
+```
+
+## 9. 테스트
+
+### 9.1 Either 테스트
+
+```dart
+// test/domain/usecases/get_user_usecase_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:mocktail/mocktail.dart';
+
+void main() {
+  late GetUserUseCase useCase;
+  late MockUserRepository mockRepository;
+
+  setUp(() {
+    mockRepository = MockUserRepository();
+    useCase = GetUserUseCase(mockRepository);
+  });
+
+  group('GetUserUseCase', () {
+    test('성공 시 Right(User) 반환', () async {
+      // Arrange
+      final user = User(id: '1', name: 'Test');
+      when(() => mockRepository.getUser(any()))
+          .thenAnswer((_) async => Right(user));
+
+      // Act
+      final result = await useCase('1');
+
+      // Assert
+      expect(result.isRight(), true);
+      expect(result.getOrElse(() => throw Exception()), user);
+
+      // 또는
+      result.fold(
+        (failure) => fail('Expected Right, got Left'),
+        (value) => expect(value, user),
+      );
+    });
+
+    test('실패 시 Left(UserFailure) 반환', () async {
+      // Arrange
+      when(() => mockRepository.getUser(any()))
+          .thenAnswer((_) async => const Left(UserFailure.notFound()));
+
+      // Act
+      final result = await useCase('999');
+
+      // Assert
+      expect(result.isLeft(), true);
+      result.fold(
+        (failure) => expect(failure, const UserFailure.notFound()),
+        (value) => fail('Expected Left, got Right'),
+      );
+    });
+  });
+}
+```
+
+### 9.2 Option 테스트
+
+```dart
+test('캐시에 사용자가 있으면 Some 반환', () {
+  // Arrange
+  final cachedUser = CachedUser()..odId = '1'..name = 'Test';
+  when(() => mockDatabase.getCachedUser('1'))
+      .thenReturn(Some(cachedUser));
+
+  // Act
+  final result = dataSource.getCachedUser('1');
+
+  // Assert
+  expect(result.isSome(), true);
+  result.fold(
+    () => fail('Expected Some'),
+    (user) => expect(user.name, 'Test'),
+  );
+});
+
+test('캐시에 사용자가 없으면 None 반환', () {
+  // Arrange
+  when(() => mockDatabase.getCachedUser('999'))
+      .thenReturn(const None());
+
+  // Act
+  final result = dataSource.getCachedUser('999');
+
+  // Assert
+  expect(result.isNone(), true);
+});
+```
+
+## 10. Best Practices
+
+### 10.1 언제 Either를 사용할까?
+
+| 상황 | Either 사용 | Exception 사용 |
+|------|------------|---------------|
+| Repository 반환값 | ✅ | ❌ |
+| UseCase 반환값 | ✅ | ❌ |
+| DataSource 내부 | ❌ (try-catch) | ✅ |
+| 비즈니스 로직 에러 | ✅ | ❌ |
+| 시스템 에러 | 상황에 따라 | ✅ |
+
+### 10.2 DO (이렇게 하세요)
+
+```dart
+// ✅ Repository 반환값에 Either 사용
+Future<Either<UserFailure, User>> getUser(String id);
+
+// ✅ Unit으로 반환값 없음 표현
+Future<Either<UserFailure, Unit>> deleteUser(String id);
+
+// ✅ fold로 명시적 처리
+result.fold(
+  (failure) => emit(UserState.error(failure.message)),
+  (user) => emit(UserState.loaded(user)),
+);
+
+// ✅ 에러 타입을 도메인에 맞게 정의
+sealed class UserFailure {
+  const factory UserFailure.network() = _Network;
+  const factory UserFailure.notFound() = _NotFound;
+}
+```
+
+### 10.3 DON'T (하지 마세요)
+
+```dart
+// ❌ Either를 무시하고 getOrElse만 사용
+final user = (await getUser(id)).getOrElse(() => User.empty());
+// 에러 처리가 누락됨!
+
+// ❌ 모든 곳에 Either 사용 (오버엔지니어링)
+Either<Failure, int> add(int a, int b) {
+  return Right(a + b);  // 실패할 수 없는 연산에 불필요
+}
+
+// ❌ Exception과 Either 혼용
+Future<Either<Failure, User>> getUser() async {
+  final user = await api.getUser();  // Exception 발생 가능!
+  return Right(user);  // try-catch 필요
+}
+```
+
+### 10.4 Either 패턴 요약
+
+```dart
+// 1. DataSource: Exception 발생 가능
+class UserRemoteDataSource {
+  Future<UserDto> getUser(String id) async {
+    final response = await dio.get('/users/$id');  // Exception 가능
+    return UserDto.fromJson(response.data);
+  }
+}
+
+// 2. Repository: Exception을 Either로 변환
+class UserRepositoryImpl implements UserRepository {
+  @override
+  Future<Either<UserFailure, User>> getUser(String id) async {
+    try {
+      final dto = await _dataSource.getUser(id);
+      return Right(_mapper.toEntity(dto));
+    } catch (e) {
+      return Left(_mapError(e));  // Either로 변환
+    }
+  }
+}
+
+// 3. UseCase: Either 전달
+class GetUserUseCase {
+  Future<Either<UserFailure, User>> call(String id) {
+    return _repository.getUser(id);  // Either 그대로 전달
+  }
+}
+
+// 4. Bloc: Either 처리
+class UserBloc {
+  Future<void> _onLoad(Emitter emit) async {
+    final result = await _useCase(id);
+    result.fold(
+      (failure) => emit(Error(failure)),  // Left 처리
+      (user) => emit(Loaded(user)),       // Right 처리
+    );
+  }
+}
+```
+
+## 11. 참고
+
+- [fpdart 공식 문서](https://pub.dev/packages/fpdart)
+- [fpdart GitHub](https://github.com/SandroMaglione/fpdart)
+- [Functional Programming in Dart](https://www.sandromaglione.com/articles/functional-programming-in-dart-and-flutter)
