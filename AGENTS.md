@@ -21,9 +21,9 @@ Flutter 개발팀을 위한 포괄적인 개발 가이드 문서 저장소입니
 | `networking/` | 네트워킹 - Dio, Retrofit | 2개 (see `networking/AGENTS.md`) |
 | `features/` | 기능별 - Navigation, Localization, Permission, PushNotification | 4개 (see `features/AGENTS.md`) |
 | `patterns/` | 필수 패턴 - Analytics, ImageHandling, Pagination, FormValidation | 4개 (see `patterns/AGENTS.md`) |
-| `system/` | 시스템 - ErrorHandling, Theming, AppLifecycle, Testing | 4개 (see `system/AGENTS.md`) |
+| `system/` | 시스템 - ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging | 8개 (see `system/AGENTS.md`) |
 
-**총 22개 문서**
+**총 26개 문서**
 
 ## Directory Structure
 
@@ -63,7 +63,11 @@ flutter-study/
     ├── ErrorHandling.md
     ├── Theming.md
     ├── AppLifecycle.md
-    └── Testing.md
+    ├── Testing.md
+    ├── Performance.md
+    ├── Security.md
+    ├── Accessibility.md
+    └── Logging.md
 ```
 
 ## For AI Agents
@@ -165,5 +169,9 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 19. `patterns/Pagination.md` - 페이지네이션
 20. `system/AppLifecycle.md` - 생명주기
 21. `system/Testing.md` - 테스트 전략
+22. `system/Performance.md` - 성능 최적화
+23. `system/Security.md` - 보안
+24. `system/Accessibility.md` - 접근성
+25. `system/Logging.md` - 로깅
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->
