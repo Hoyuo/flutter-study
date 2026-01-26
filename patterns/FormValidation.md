@@ -4,6 +4,14 @@
 
 Flutter의 Form/TextFormField를 사용한 폼 검증 패턴과 Bloc을 활용한 상태 관리 방식을 다룹니다. 실시간 검증, 에러 표시, 제출 처리 등을 구현합니다.
 
+## 의존성 추가
+
+```yaml
+# pubspec.yaml
+dependencies:
+  rxdart: ^0.28.0  # 디바운싱에 필요 (2026년 1월 기준)
+```
+
 ## 기본 폼 검증
 
 ### Flutter 기본 Form 사용
@@ -72,7 +80,8 @@ class _BasicFormExampleState extends State<BasicFormExample> {
   }
 
   void _submit() {
-    if (_formKey.currentState!.validate()) {
+    if (_formKey.currentState?.validate() ?? false) {
+      _formKey.currentState!.save();
       // 폼 유효함 - 제출 로직
       print('Email: ${_emailController.text}');
       print('Password: ${_passwordController.text}');
@@ -99,15 +108,21 @@ class Validators {
   }
 
   /// 이메일 형식
+  /// 기본 형식만 체크 (실제 검증은 서버에서)
+  /// user+tag@gmail.com, 국제화 도메인 등 허용
   static String? email(String? value) {
     if (value == null || value.isEmpty) return null;
 
-    final emailRegex = RegExp(
-      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-    );
-    if (!emailRegex.hasMatch(value)) {
+    // 기본 형식만 체크: @ 포함, @ 앞뒤로 문자 존재
+    if (!value.contains('@') ||
+        value.split('@').length != 2 ||
+        value.split('@')[0].isEmpty ||
+        value.split('@')[1].isEmpty) {
       return '올바른 이메일 형식이 아닙니다';
     }
+
+    // 더 정확한 검증은 서버에서 수행
+    // 이메일 발송 및 인증 과정으로 실제 존재 여부 확인 권장
     return null;
   }
 
@@ -441,6 +456,7 @@ class LoginFormBloc extends Bloc<LoginFormEvent, LoginFormState> {
 // lib/features/auth/presentation/pages/login_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart'; // GoRouter 사용 시 필요
 
 import '../bloc/login_form_bloc.dart';
 import '../bloc/login_form_event.dart';
@@ -600,6 +616,36 @@ extension RegisterFormStateX on RegisterFormState {
 }
 ```
 
+### 디바운스 패턴 설명
+
+**올바른 디바운스 사용법:**
+```dart
+// ✅ 올바른 방법: 특정 이벤트에만 디바운스 적용
+on<EmailChanged>(
+  _onEmailChanged,
+  transformer: debounce(Duration(milliseconds: 500)),
+);
+on<SubmitEvent>(_onSubmit); // 디바운스 없음
+
+// ❌ 잘못된 방법: 모든 이벤트에 디바운스 적용
+on<MyEvent>(_onEvent, transformer: debounce(...)); // Submit도 지연됨!
+```
+
+**디바운스가 필요한 경우:**
+- 텍스트 입력 중 API 호출 (이메일 중복 확인, 검색 자동완성)
+- 실시간 검증으로 인한 빈번한 상태 업데이트
+- 사용자가 타이핑을 멈출 때까지 대기가 필요한 경우
+
+**디바운스가 불필요한 경우:**
+- 버튼 클릭 (제출, 저장)
+- 체크박스/라디오 버튼 토글
+- 드롭다운 선택
+- 일회성 액션
+
+**RxDart의 자동 리소스 정리:**
+- `debounceTime()`은 내부적으로 타이머를 생성하지만, Bloc의 `close()` 호출 시 자동으로 구독이 취소됩니다.
+- 수동으로 타이머나 구독을 dispose할 필요가 없습니다.
+
 ### 회원가입 Bloc
 
 ```dart
@@ -623,30 +669,53 @@ class RegisterFormBloc extends Bloc<RegisterFormEvent, RegisterFormState> {
   })  : _registerUseCase = registerUseCase,
         _checkEmailUseCase = checkEmailUseCase,
         super(const RegisterFormState()) {
-    // 이메일 변경에 디바운스 적용 (중복 확인용)
+    // 이메일 변경 - 디바운스 적용 (중복 확인 API 호출 최소화)
     on<_EmailChanged>(
-      _onEmailChanged,
-      transformer: debounce(const Duration(milliseconds: 500)),
+      (event, emit) async => _onEmailChanged(event.email, emit),
+      transformer: _debounce(const Duration(milliseconds: 500)),
     );
 
-    on<_PasswordChanged>(_onPasswordChanged);
-    on<_ConfirmPasswordChanged>(_onConfirmPasswordChanged);
-    on<_NameChanged>(_onNameChanged);
-    on<_PhoneChanged>(_onPhoneChanged);
-    on<_AgreeToTermsChanged>(_onAgreeToTermsChanged);
-    on<_AgreeToMarketingChanged>(_onAgreeToMarketingChanged);
-    on<_Submitted>(_onSubmitted);
+    // 일반 필드 변경 - 디바운스 적용 (실시간 검증 성능 최적화)
+    on<_PasswordChanged>(
+      (event, emit) => _onPasswordChanged(event.password, emit),
+      transformer: _debounce(const Duration(milliseconds: 300)),
+    );
+    on<_ConfirmPasswordChanged>(
+      (event, emit) => _onConfirmPasswordChanged(event.confirmPassword, emit),
+      transformer: _debounce(const Duration(milliseconds: 300)),
+    );
+    on<_NameChanged>(
+      (event, emit) => _onNameChanged(event.name, emit),
+      transformer: _debounce(const Duration(milliseconds: 300)),
+    );
+    on<_PhoneChanged>(
+      (event, emit) => _onPhoneChanged(event.phone, emit),
+      transformer: _debounce(const Duration(milliseconds: 300)),
+    );
+
+    // 즉시 처리 - 디바운스 불필요
+    on<_AgreeToTermsChanged>(
+      (event, emit) => _onAgreeToTermsChanged(event.value, emit),
+    );
+    on<_AgreeToMarketingChanged>(
+      (event, emit) => _onAgreeToMarketingChanged(event.value, emit),
+    );
+    on<_Submitted>(
+      (event, emit) async => _onSubmitted(emit),
+    );
   }
 
-  EventTransformer<E> debounce<E>(Duration duration) {
+  /// 디바운스 트랜스포머
+  /// - 연속된 이벤트를 지연시켜 마지막 이벤트만 처리
+  /// - 타이머 자동 취소 및 스트림 구독 정리는 rxdart가 처리
+  EventTransformer<E> _debounce<E>(Duration duration) {
     return (events, mapper) => events.debounceTime(duration).flatMap(mapper);
   }
 
   Future<void> _onEmailChanged(
-    _EmailChanged event,
+    String email,
     Emitter<RegisterFormState> emit,
   ) async {
-    final email = event.email;
     final error = _validateEmail(email);
 
     emit(state.copyWith(
@@ -677,10 +746,9 @@ class RegisterFormBloc extends Bloc<RegisterFormEvent, RegisterFormState> {
   }
 
   void _onPasswordChanged(
-    _PasswordChanged event,
+    String password,
     Emitter<RegisterFormState> emit,
   ) {
-    final password = event.password;
     final error = _validatePassword(password);
 
     // 비밀번호 확인도 재검증
@@ -698,10 +766,9 @@ class RegisterFormBloc extends Bloc<RegisterFormEvent, RegisterFormState> {
   }
 
   void _onConfirmPasswordChanged(
-    _ConfirmPasswordChanged event,
+    String confirmPassword,
     Emitter<RegisterFormState> emit,
   ) {
-    final confirmPassword = event.confirmPassword;
     final error = _validateConfirmPassword(confirmPassword, state.password);
 
     emit(state.copyWith(
@@ -712,10 +779,9 @@ class RegisterFormBloc extends Bloc<RegisterFormEvent, RegisterFormState> {
   }
 
   void _onNameChanged(
-    _NameChanged event,
+    String name,
     Emitter<RegisterFormState> emit,
   ) {
-    final name = event.name;
     final error = _validateName(name);
 
     emit(state.copyWith(
@@ -726,10 +792,9 @@ class RegisterFormBloc extends Bloc<RegisterFormEvent, RegisterFormState> {
   }
 
   void _onPhoneChanged(
-    _PhoneChanged event,
+    String phone,
     Emitter<RegisterFormState> emit,
   ) {
-    final phone = event.phone;
     final error = Validators.phone(phone);
 
     emit(state.copyWith(
@@ -740,21 +805,20 @@ class RegisterFormBloc extends Bloc<RegisterFormEvent, RegisterFormState> {
   }
 
   void _onAgreeToTermsChanged(
-    _AgreeToTermsChanged event,
+    bool value,
     Emitter<RegisterFormState> emit,
   ) {
-    emit(state.copyWith(agreeToTerms: event.value));
+    emit(state.copyWith(agreeToTerms: value));
   }
 
   void _onAgreeToMarketingChanged(
-    _AgreeToMarketingChanged event,
+    bool value,
     Emitter<RegisterFormState> emit,
   ) {
-    emit(state.copyWith(agreeToMarketing: event.value));
+    emit(state.copyWith(agreeToMarketing: value));
   }
 
   Future<void> _onSubmitted(
-    _Submitted event,
     Emitter<RegisterFormState> emit,
   ) async {
     // 모든 필드 검증
@@ -822,6 +886,196 @@ class RegisterFormBloc extends Bloc<RegisterFormEvent, RegisterFormState> {
     return null;
   }
 }
+```
+
+## FocusNode 관리 패턴
+
+### 필드 간 포커스 이동
+
+```dart
+// lib/features/auth/presentation/pages/sign_up_page.dart
+class SignUpForm extends StatefulWidget {
+  const SignUpForm({super.key});
+
+  @override
+  State<SignUpForm> createState() => _SignUpFormState();
+}
+
+class _SignUpFormState extends State<SignUpForm> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  // FocusNode 관리
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+  final _confirmPasswordFocus = FocusNode();
+
+  @override
+  void dispose() {
+    // FocusNode는 반드시 dispose 필요
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
+    _confirmPasswordFocus.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _submitForm() {
+    if (_formKey.currentState?.validate() ?? false) {
+      // 제출 로직
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          // 이메일 필드
+          TextFormField(
+            controller: _emailController,
+            focusNode: _emailFocus,
+            decoration: const InputDecoration(labelText: '이메일'),
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) {
+              // Enter 누르면 다음 필드로 이동
+              FocusScope.of(context).requestFocus(_passwordFocus);
+            },
+            validator: (value) => Validators.email(value),
+          ),
+          const SizedBox(height: 16),
+
+          // 비밀번호 필드
+          TextFormField(
+            controller: _passwordController,
+            focusNode: _passwordFocus,
+            decoration: const InputDecoration(labelText: '비밀번호'),
+            obscureText: true,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) {
+              FocusScope.of(context).requestFocus(_confirmPasswordFocus);
+            },
+            validator: (value) => Validators.password(value),
+          ),
+          const SizedBox(height: 16),
+
+          // 비밀번호 확인 필드
+          TextFormField(
+            controller: _confirmPasswordController,
+            focusNode: _confirmPasswordFocus,
+            decoration: const InputDecoration(labelText: '비밀번호 확인'),
+            obscureText: true,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => _submitForm(), // 마지막 필드에서 제출
+            validator: (value) =>
+                Validators.confirmPassword(value, _passwordController.text),
+          ),
+          const SizedBox(height: 24),
+
+          // 제출 버튼
+          ElevatedButton(
+            onPressed: _submitForm,
+            child: const Text('가입하기'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+### FocusNode로 동적 포커스 제어
+
+```dart
+class DynamicFocusExample extends StatefulWidget {
+  const DynamicFocusExample({super.key});
+
+  @override
+  State<DynamicFocusExample> createState() => _DynamicFocusExampleState();
+}
+
+class _DynamicFocusExampleState extends State<DynamicFocusExample> {
+  final _emailFocus = FocusNode();
+  bool _isEmailValid = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // FocusNode 리스너 - 포커스 상태 변화 감지
+    _emailFocus.addListener(() {
+      if (_emailFocus.hasFocus) {
+        print('이메일 필드에 포커스됨');
+      } else {
+        print('이메일 필드 포커스 해제');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _emailFocus.dispose();
+    super.dispose();
+  }
+
+  void _validateAndMoveFocus() {
+    if (_isEmailValid) {
+      // 프로그래밍 방식으로 다음 필드에 포커스
+      FocusScope.of(context).nextFocus();
+    } else {
+      // 에러가 있으면 현재 필드에 포커스 유지
+      _emailFocus.requestFocus();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TextFormField(
+          focusNode: _emailFocus,
+          decoration: InputDecoration(
+            labelText: '이메일',
+            // 포커스 여부에 따라 스타일 변경
+            border: _emailFocus.hasFocus
+                ? const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue, width: 2))
+                : const OutlineInputBorder(),
+          ),
+          onChanged: (value) {
+            setState(() {
+              _isEmailValid = Validators.email(value) == null;
+            });
+          },
+        ),
+      ],
+    );
+  }
+}
+```
+
+### 키보드 닫기
+
+```dart
+// 현재 포커스 해제 (키보드 닫기)
+FocusScope.of(context).unfocus();
+
+// 또는
+FocusManager.instance.primaryFocus?.unfocus();
+
+// GestureDetector로 배경 탭 시 키보드 닫기
+GestureDetector(
+  onTap: () => FocusScope.of(context).unfocus(),
+  child: Scaffold(
+    body: Form(...),
+  ),
+)
 ```
 
 ## 재사용 가능한 폼 필드 위젯
@@ -1071,6 +1325,294 @@ class PasswordStrengthIndicator extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+```
+
+## Form Autofill 지원
+
+### 기본 Autofill 사용
+
+```dart
+// lib/features/auth/presentation/pages/login_with_autofill.dart
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+class LoginWithAutofillPage extends StatefulWidget {
+  const LoginWithAutofillPage({super.key});
+
+  @override
+  State<LoginWithAutofillPage> createState() => _LoginWithAutofillPageState();
+}
+
+class _LoginWithAutofillPageState extends State<LoginWithAutofillPage> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    // 제출 시 autofill 저장 트리거
+    TextInput.finishAutofillContext();
+
+    // 로그인 로직
+    print('Login: ${_emailController.text}');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('로그인')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: AutofillGroup(
+          child: Column(
+            children: [
+              // 이메일 필드 - autofill 지원
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(
+                  labelText: '이메일',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+              ),
+              const SizedBox(height: 16),
+
+              // 비밀번호 필드 - autofill 지원
+              TextFormField(
+                controller: _passwordController,
+                decoration: const InputDecoration(
+                  labelText: '비밀번호',
+                  border: OutlineInputBorder(),
+                ),
+                obscureText: true,
+                autofillHints: const [AutofillHints.password],
+              ),
+              const SizedBox(height: 24),
+
+              ElevatedButton(
+                onPressed: _submit,
+                child: const Text('로그인'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+### 회원가입 Autofill
+
+```dart
+class SignUpWithAutofillPage extends StatelessWidget {
+  const SignUpWithAutofillPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('회원가입')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: AutofillGroup(
+          child: Column(
+            children: [
+              // 이름
+              TextFormField(
+                decoration: const InputDecoration(labelText: '이름'),
+                autofillHints: const [AutofillHints.name],
+              ),
+              const SizedBox(height: 16),
+
+              // 이메일
+              TextFormField(
+                decoration: const InputDecoration(labelText: '이메일'),
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+              ),
+              const SizedBox(height: 16),
+
+              // 전화번호
+              TextFormField(
+                decoration: const InputDecoration(labelText: '전화번호'),
+                keyboardType: TextInputType.phone,
+                autofillHints: const [AutofillHints.telephoneNumber],
+              ),
+              const SizedBox(height: 16),
+
+              // 새 비밀번호
+              TextFormField(
+                decoration: const InputDecoration(labelText: '비밀번호'),
+                obscureText: true,
+                autofillHints: const [AutofillHints.newPassword],
+              ),
+              const SizedBox(height: 16),
+
+              // 주소
+              TextFormField(
+                decoration: const InputDecoration(labelText: '주소'),
+                autofillHints: const [
+                  AutofillHints.streetAddressLine1,
+                  AutofillHints.fullStreetAddress,
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              ElevatedButton(
+                onPressed: () {
+                  // 제출 시 autofill 저장
+                  TextInput.finishAutofillContext();
+                },
+                child: const Text('가입하기'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+### 주요 AutofillHints 타입
+
+```dart
+/// 자주 사용하는 autofillHints
+class CommonAutofillHints {
+  // 인증 관련
+  static const email = AutofillHints.email;
+  static const username = AutofillHints.username;
+  static const password = AutofillHints.password;
+  static const newPassword = AutofillHints.newPassword;
+
+  // 개인 정보
+  static const name = AutofillHints.name;
+  static const namePrefix = AutofillHints.namePrefix; // Mr., Ms.
+  static const givenName = AutofillHints.givenName; // 이름
+  static const familyName = AutofillHints.familyName; // 성
+  static const middleName = AutofillHints.middleName;
+
+  // 연락처
+  static const telephoneNumber = AutofillHints.telephoneNumber;
+  static const telephoneNumberCountryCode = AutofillHints.telephoneNumberCountryCode;
+
+  // 주소
+  static const fullStreetAddress = AutofillHints.fullStreetAddress;
+  static const streetAddressLine1 = AutofillHints.streetAddressLine1;
+  static const streetAddressLine2 = AutofillHints.streetAddressLine2;
+  static const postalCode = AutofillHints.postalCode;
+  static const addressCity = AutofillHints.addressCity;
+  static const addressState = AutofillHints.addressState;
+  static const countryName = AutofillHints.countryName;
+
+  // 결제 정보
+  static const creditCardNumber = AutofillHints.creditCardNumber;
+  static const creditCardExpirationDate = AutofillHints.creditCardExpirationDate;
+  static const creditCardSecurityCode = AutofillHints.creditCardSecurityCode;
+  static const creditCardName = AutofillHints.creditCardName;
+
+  // 생년월일
+  static const birthday = AutofillHints.birthday;
+  static const birthdayDay = AutofillHints.birthdayDay;
+  static const birthdayMonth = AutofillHints.birthdayMonth;
+  static const birthdayYear = AutofillHints.birthdayYear;
+
+  // URL
+  static const url = AutofillHints.url;
+}
+
+// 사용 예시
+TextFormField(
+  autofillHints: const [AutofillHints.email],
+  // 또는 커스텀
+  autofillHints: const ['custom-hint'], // 특수한 경우
+)
+```
+
+### Autofill 저장 타이밍
+
+```dart
+// 1. 제출 버튼 클릭 시 (권장)
+ElevatedButton(
+  onPressed: () {
+    TextInput.finishAutofillContext(); // autofill 저장
+    _submitForm();
+  },
+  child: const Text('제출'),
+)
+
+// 2. 폼이 완료되었을 때 자동으로
+class AutoSaveAutofillForm extends StatefulWidget {
+  @override
+  State<AutoSaveAutofillForm> createState() => _AutoSaveAutofillFormState();
+}
+
+class _AutoSaveAutofillFormState extends State<AutoSaveAutofillForm> {
+  @override
+  void dispose() {
+    // dispose 시점에 autofill 저장
+    TextInput.finishAutofillContext(shouldSave: true);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AutofillGroup(
+      child: Form(...),
+    );
+  }
+}
+```
+
+### Bloc과 Autofill 통합
+
+```dart
+class LoginPageWithAutofill extends StatelessWidget {
+  const LoginPageWithAutofill({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<LoginFormBloc, LoginFormState>(
+      listenWhen: (prev, curr) => prev.isSuccess != curr.isSuccess,
+      listener: (context, state) {
+        if (state.isSuccess) {
+          // 로그인 성공 시 autofill 저장
+          TextInput.finishAutofillContext();
+          context.go('/home');
+        }
+      },
+      child: AutofillGroup(
+        child: Column(
+          children: [
+            TextField(
+              autofillHints: const [AutofillHints.email],
+              onChanged: (value) {
+                context.read<LoginFormBloc>().add(
+                      LoginFormEvent.emailChanged(value),
+                    );
+              },
+            ),
+            TextField(
+              autofillHints: const [AutofillHints.password],
+              obscureText: true,
+              onChanged: (value) {
+                context.read<LoginFormBloc>().add(
+                      LoginFormEvent.passwordChanged(value),
+                    );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

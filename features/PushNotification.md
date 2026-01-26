@@ -13,8 +13,26 @@ Firebase Cloud Messaging(FCM)과 flutter_local_notifications를 조합하여 푸
 dependencies:
   firebase_core: ^3.0.0
   firebase_messaging: ^15.0.0
-  flutter_local_notifications: ^18.0.0
+  flutter_local_notifications: ^19.0.0
 ```
+
+### Migration Notes (v18 → v19)
+
+**Breaking Changes:**
+- **Notification Channels (Android)**: Channel importance levels now strictly follow Android guidelines. Some importance levels may behave differently.
+- **iOS Notification Attachments**: Attachment handling improved but requires explicit file path validation. URLs must be local file paths, not remote URLs.
+- **Permission Handling**: `requestPermission()` on iOS now returns more detailed authorization status including provisional and ephemeral states.
+
+**API Changes:**
+- `AndroidInitializationSettings` now requires explicit icon resource validation at initialization.
+- `DarwinNotificationDetails.subtitle` parameter renamed for consistency with iOS terminology.
+- Background notification handling callback signature updated to include `NotificationResponse` instead of raw payload strings.
+
+**New Features:**
+- Android 14 notification permission support with better UX
+- Improved notification grouping and summary management
+- Enhanced badge count handling for iOS
+- Better support for notification actions and interactive notifications
 
 ### Firebase 프로젝트 설정
 
@@ -114,7 +132,10 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  print('Background message: ${message.messageId}');
+  // print 대신 적절한 로깅
+  debugPrint('[FCM] Background message: ${message.messageId}');
+  // 또는 Crashlytics 로깅
+  // FirebaseCrashlytics.instance.log('Background message: ${message.messageId}');
   // 백그라운드에서 알림 표시가 필요하면 여기서 처리
 }
 
@@ -211,7 +232,7 @@ class NotificationService {
     final notification = message.notification;
     final android = message.notification?.android;
 
-    // Foreground에서 알림 표시 (FCM은 자동으로 표시하지 않음)
+    // Notification 메시지 처리
     if (notification != null) {
       await _showLocalNotification(
         id: message.hashCode,
@@ -219,6 +240,23 @@ class NotificationService {
         body: notification.body ?? '',
         payload: message.data.toString(),
       );
+      return;
+    }
+
+    // Data-only 메시지 처리 (추가!)
+    // 서버에서 notification 없이 data만 보내는 경우
+    if (message.data.isNotEmpty) {
+      final title = message.data['title'] as String?;
+      final body = message.data['body'] as String?;
+
+      if (title != null || body != null) {
+        await _showLocalNotification(
+          id: message.hashCode,
+          title: title ?? '',
+          body: body ?? '',
+          payload: message.data.toString(),
+        );
+      }
     }
   }
 
@@ -309,6 +347,13 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // iOS foreground 알림 표시 설정 (추가 필수!)
+  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    alert: true,  // 알림 배너 표시
+    badge: true,  // 앱 아이콘 배지
+    sound: true,  // 알림음
+  );
+
   // 알림 초기화
   await NotificationService().initialize();
 
@@ -397,6 +442,7 @@ class PushNotification with _$PushNotification {
     String? imageUrl,
     Map<String, dynamic>? data,
     DateTime? receivedAt,
+    @Default(false) bool isRead,
   }) = _PushNotification;
 
   factory PushNotification.fromJson(Map<String, dynamic> json) =>
@@ -474,9 +520,19 @@ class NotificationHandler {
 ### 이미지 포함 알림
 
 ```dart
+// 필요한 패키지: pubspec.yaml에 추가
+// dependencies:
+//   http: ^1.1.0
+//   path_provider: ^2.1.0  // iOS 이미지 로컬 저장용
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+
 Future<void> _showImageNotification(RemoteMessage message) async {
   final notification = message.notification;
-  final imageUrl = notification?.android?.imageUrl ??
+  final imageUrl = message.data['image_url'] as String? ??
+      notification?.android?.imageUrl ??
       notification?.apple?.imageUrl;
 
   if (imageUrl == null) {
@@ -488,39 +544,87 @@ Future<void> _showImageNotification(RemoteMessage message) async {
     return;
   }
 
-  // 이미지 다운로드
-  final response = await http.get(Uri.parse(imageUrl));
-  final bigPicture = ByteArrayAndroidBitmap(response.bodyBytes);
+  try {
+    // 이미지 다운로드
+    final response = await http.get(Uri.parse(imageUrl));
+    if (response.statusCode != 200) {
+      // 이미지 로드 실패 시 일반 알림으로 fallback
+      await _showBasicNotification(message);
+      return;
+    }
 
-  final androidDetails = AndroidNotificationDetails(
-    'high_importance_channel',
-    'High Importance Notifications',
-    importance: Importance.high,
-    priority: Priority.high,
-    styleInformation: BigPictureStyleInformation(
-      bigPicture,
-      contentTitle: notification?.title,
-      summaryText: notification?.body,
-    ),
-  );
+    // Android: base64 문자열로 변환 (필수!)
+    final base64Image = base64Encode(response.bodyBytes);
+    final bigPicture = ByteArrayAndroidBitmap.fromBase64String(base64Image);
 
-  final iosDetails = DarwinNotificationDetails(
-    presentAlert: true,
-    presentBadge: true,
-    presentSound: true,
-    attachments: [
-      DarwinNotificationAttachment(
-        imageUrl,
-        identifier: 'image',
+    final androidDetails = AndroidNotificationDetails(
+      'high_importance_channel',
+      'High Importance Notifications',
+      importance: Importance.high,
+      priority: Priority.high,
+      styleInformation: BigPictureStyleInformation(
+        bigPicture,
+        contentTitle: notification?.title,
+        summaryText: notification?.body,
+        hideExpandedLargeIcon: true,
       ),
-    ],
-  );
+    );
 
-  await _localNotifications.show(
-    message.hashCode,
-    notification?.title ?? '',
-    notification?.body ?? '',
-    NotificationDetails(android: androidDetails, iOS: iosDetails),
+    // iOS: 로컬 파일로 저장 후 첨부 (URL 직접 전달 불가!)
+    final localImagePath = await _downloadAndSaveImage(imageUrl, response.bodyBytes);
+
+    final iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      attachments: localImagePath != null
+          ? [
+              DarwinNotificationAttachment(
+                localImagePath,  // 로컬 파일 경로 사용
+                identifier: 'image',
+              ),
+            ]
+          : null,
+    );
+
+    await _localNotifications.show(
+      message.hashCode,
+      notification?.title ?? '',
+      notification?.body ?? '',
+      NotificationDetails(android: androidDetails, iOS: iosDetails),
+    );
+  } catch (e) {
+    // 이미지 로드 실패 시 일반 알림으로 fallback
+    await _showBasicNotification(message);
+  }
+}
+
+/// iOS용: 이미지를 로컬 파일로 저장
+Future<String?> _downloadAndSaveImage(String imageUrl, List<int> imageBytes) async {
+  if (!Platform.isIOS) return null;
+
+  try {
+    // 임시 디렉토리에 저장
+    final tempDir = await getTemporaryDirectory();
+    final fileName = 'notification_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final file = File('${tempDir.path}/$fileName');
+    await file.writeAsBytes(imageBytes);
+
+    return file.path;
+  } catch (e) {
+    debugPrint('[FCM] Failed to save image: $e');
+    return null;
+  }
+}
+
+/// 기본 알림 표시 (이미지 없음)
+Future<void> _showBasicNotification(RemoteMessage message) async {
+  final notification = message.notification;
+  await _showLocalNotification(
+    id: message.hashCode,
+    title: notification?.title ?? '',
+    body: notification?.body ?? '',
+    payload: jsonEncode(message.data),
   );
 }
 ```
@@ -573,6 +677,19 @@ Future<void> _showGroupedNotification({
 ### 예약 알림 (Local)
 
 ```dart
+// timezone 패키지 필요: pubspec.yaml에 추가
+// dependencies:
+//   timezone: ^0.9.0
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
+// main()에서 초기화 필요:
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   tz.initializeTimeZones();
+//   runApp(const MyApp());
+// }
+
 Future<void> scheduleNotification({
   required int id,
   required String title,

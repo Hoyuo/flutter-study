@@ -33,13 +33,18 @@ class HomeBloc {
 ```yaml
 # pubspec.yaml
 dependencies:
-  get_it: ^7.6.0
-  injectable: ^2.3.0
+  get_it: ^9.2.0          # 2026년 1월 기준 최신
+  injectable: ^2.7.1      # get_it 9.x 호환
 
 dev_dependencies:
-  injectable_generator: ^2.4.0
-  build_runner: ^2.4.0
+  injectable_generator: ^2.6.1
+  build_runner: ^2.4.7
 ```
+
+> **get_it v9.0.0 주요 변경사항:**
+> - `registerLazySingleton` 비동기 초기화 개선
+> - `pushNewScope` / `popScope` API 변경
+> - `onDispose` 콜백 시그니처 업데이트
 
 ### 2.2 Feature 모듈 구조
 

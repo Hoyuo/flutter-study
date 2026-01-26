@@ -6,11 +6,13 @@
 
 ### 1.1 저장소 종류 비교
 
-| 저장소 | 용도 | 데이터 유형 | 보안 |
-|--------|------|------------|------|
-| **SharedPreferences** | 간단한 설정값 | Key-Value (primitive) | 낮음 |
-| **Isar** | 복잡한 구조화 데이터 | 객체/컬렉션 | 중간 |
-| **SecureStorage** | 민감한 정보 | Key-Value | 높음 (암호화) |
+| 저장소 | 용도 | 데이터 유형 | 보안 | 상태 |
+|--------|------|------------|------|------|
+| **SharedPreferences** | 간단한 설정값 | Key-Value (primitive) | 낮음 | ✅ 활발 (새 async API) |
+| **Isar** | 복잡한 구조화 데이터 | 객체/컬렉션 | 중간 | ⚠️ 개발 중단 |
+| **SecureStorage** | 민감한 정보 | Key-Value | 높음 (암호화) | ✅ 활발 (v10+) |
+| **Drift** | SQL 데이터베이스 | 관계형 테이블 | 중간 | ✅ 활발 (Isar 대체) |
+| **ObjectBox** | NoSQL 데이터베이스 | 객체/컬렉션 | 중간 | ✅ 활발 (Isar 대체) |
 
 ### 1.2 사용 시나리오
 
@@ -60,22 +62,244 @@ core/
 ```yaml
 # core/core_storage/pubspec.yaml
 dependencies:
-  shared_preferences: ^2.2.0
+  # SharedPreferences - 최신 async API 지원
+  shared_preferences: ^2.3.3
+
+  # SecureStorage - v10+ 새로운 초기화 API
+  flutter_secure_storage: ^10.0.0
+
+  # Isar - ⚠️ 개발 중단, 기존 프로젝트만 사용
   isar: ^3.1.0
   isar_flutter_libs: ^3.1.0
-  flutter_secure_storage: ^9.0.0
-  injectable: ^2.3.0
-  path_provider: ^2.1.0
+
+  # 추천 대안: Drift (SQL) 또는 ObjectBox (NoSQL)
+  # drift: ^2.14.0  # SQL 래퍼, 타입 안전
+  # objectbox: ^2.4.0  # NoSQL, 고성능
+
+  injectable: ^2.4.1
+  path_provider: ^2.1.2
 
 dev_dependencies:
   isar_generator: ^3.1.0
-  build_runner: ^2.4.0
-  injectable_generator: ^2.4.0
+  build_runner: ^2.4.7
+  injectable_generator: ^2.6.1
+  # drift_dev: ^2.14.0  # Drift 사용 시
 ```
 
 ## 3. SharedPreferences
 
-### 3.1 Preference Keys 정의
+> **⚠️ 중요 (2025년 업데이트)**: 기존 동기(synchronous) API(`SharedPreferences.getInstance()`)는 deprecated 되었습니다.
+> 새 프로젝트는 **SharedPreferencesAsync** 또는 **SharedPreferencesWithCache**를 사용하세요.
+
+### 3.0 새로운 Async API (권장)
+
+#### 3.0.1 SharedPreferencesAsync - 완전 비동기 API
+
+모든 읽기/쓰기가 비동기로 동작하며, 초기화 불필요.
+
+```dart
+// core/core_storage/lib/src/preferences/app_preferences_async.dart
+import 'package:injectable/injectable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+abstract class AppPreferencesAsync {
+  Future<void> setThemeMode(String mode);
+  Future<String?> getThemeMode();
+  Future<void> setLanguageCode(String code);
+  Future<String?> getLanguageCode();
+  Future<void> clear();
+}
+
+@LazySingleton(as: AppPreferencesAsync)
+class AppPreferencesAsyncImpl implements AppPreferencesAsync {
+  // 초기화 불필요! 인스턴스 직접 사용
+  final SharedPreferencesAsync _prefs = SharedPreferencesAsync();
+
+  @override
+  Future<void> setThemeMode(String mode) async {
+    await _prefs.setString(PreferenceKeys.themeMode, mode);
+  }
+
+  @override
+  Future<String?> getThemeMode() async {
+    return await _prefs.getString(PreferenceKeys.themeMode);
+  }
+
+  @override
+  Future<void> setLanguageCode(String code) async {
+    await _prefs.setString(PreferenceKeys.languageCode, code);
+  }
+
+  @override
+  Future<String?> getLanguageCode() async {
+    return await _prefs.getString(PreferenceKeys.languageCode);
+  }
+
+  @override
+  Future<void> clear() async {
+    await _prefs.clear();
+  }
+}
+```
+
+**장점:**
+- ✅ 초기화 단계 불필요
+- ✅ 진짜 비동기, 메인 스레드 블로킹 없음
+- ✅ 동시성 안전 (concurrent-safe)
+
+**단점:**
+- ❌ 모든 읽기가 비동기 (UI 렌더링 시 약간의 지연)
+
+#### 3.0.2 SharedPreferencesWithCache - 하이브리드 API
+
+초기화 후 동기 읽기 + 비동기 쓰기. 성능과 편의성의 균형.
+
+```dart
+// core/core_storage/lib/src/preferences/app_preferences_cached.dart
+import 'package:injectable/injectable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+abstract class AppPreferencesCached {
+  // 읽기: 동기 (캐시에서)
+  String? getThemeMode();
+  bool isOnboardingCompleted();
+
+  // 쓰기: 비동기 (디스크에)
+  Future<void> setThemeMode(String mode);
+  Future<void> setOnboardingCompleted(bool completed);
+  Future<void> clear();
+}
+
+@LazySingleton(as: AppPreferencesCached)
+class AppPreferencesCachedImpl implements AppPreferencesCached {
+  final SharedPreferencesWithCache _prefs;
+
+  AppPreferencesCachedImpl(this._prefs);
+
+  // 읽기 - 동기 (빠름)
+  @override
+  String? getThemeMode() {
+    return _prefs.getString(PreferenceKeys.themeMode);
+  }
+
+  @override
+  bool isOnboardingCompleted() {
+    return _prefs.getBool(PreferenceKeys.onboardingCompleted) ?? false;
+  }
+
+  // 쓰기 - 비동기
+  @override
+  Future<void> setThemeMode(String mode) async {
+    await _prefs.setString(PreferenceKeys.themeMode, mode);
+  }
+
+  @override
+  Future<void> setOnboardingCompleted(bool completed) async {
+    await _prefs.setBool(PreferenceKeys.onboardingCompleted, completed);
+  }
+
+  @override
+  Future<void> clear() async {
+    await _prefs.clear();
+  }
+}
+```
+
+**DI 설정:**
+
+```dart
+// core/core_storage/lib/src/modules/preferences_module.dart
+import 'package:injectable/injectable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+@module
+abstract class PreferencesModule {
+  // WithCache 사용 시 초기화 필요
+  @preResolve
+  Future<SharedPreferencesWithCache> get prefsWithCache async {
+    return await SharedPreferencesWithCache.create(
+      cacheOptions: const SharedPreferencesWithCacheOptions(
+        // 캐시할 키 명시 (선택사항)
+        allowList: <String>{
+          PreferenceKeys.themeMode,
+          PreferenceKeys.languageCode,
+          PreferenceKeys.onboardingCompleted,
+        },
+      ),
+    );
+  }
+}
+```
+
+**장점:**
+- ✅ 읽기는 동기 (UI 렌더링 시 빠름)
+- ✅ 쓰기는 비동기 (메인 스레드 안전)
+- ✅ 선택적 캐싱 (allowList로 메모리 절약)
+
+**단점:**
+- ❌ 초기화 필요 (앱 시작 시)
+
+#### 3.0.3 API 선택 가이드
+
+| 시나리오 | 권장 API |
+|---------|---------|
+| 새 프로젝트, 단순한 설정 | **SharedPreferencesAsync** |
+| 앱 시작 시 많은 설정 읽기 (테마, 언어 등) | **SharedPreferencesWithCache** |
+| 기존 프로젝트 (마이그레이션 전) | Legacy API (아래 3.1-3.3) |
+
+#### 3.0.4 마이그레이션 가이드
+
+**Legacy → SharedPreferencesAsync**
+
+```dart
+// ❌ Before (Legacy)
+class AppPreferencesImpl {
+  final SharedPreferences _prefs;
+  AppPreferencesImpl(this._prefs);
+
+  String? getThemeMode() => _prefs.getString('theme_mode');
+  Future<void> setThemeMode(String mode) => _prefs.setString('theme_mode', mode);
+}
+
+// ✅ After (Async)
+class AppPreferencesAsyncImpl {
+  final SharedPreferencesAsync _prefs = SharedPreferencesAsync();
+
+  Future<String?> getThemeMode() => _prefs.getString('theme_mode');
+  Future<void> setThemeMode(String mode) => _prefs.setString('theme_mode', mode);
+}
+```
+
+**Legacy → SharedPreferencesWithCache**
+
+```dart
+// ❌ Before (Legacy)
+@module
+abstract class PreferencesModule {
+  @preResolve
+  Future<SharedPreferences> get prefs => SharedPreferences.getInstance();
+}
+
+// ✅ After (WithCache)
+@module
+abstract class PreferencesModule {
+  @preResolve
+  Future<SharedPreferencesWithCache> get prefs async {
+    return await SharedPreferencesWithCache.create(
+      cacheOptions: const SharedPreferencesWithCacheOptions(),
+    );
+  }
+}
+```
+
+**주요 변경사항:**
+1. `getInstance()` → `SharedPreferencesAsync()` 또는 `SharedPreferencesWithCache.create()`
+2. 읽기 메서드가 `Future<T?>` 반환 (Async API만)
+3. DI에서 타입 변경 필요
+
+---
+
+### 3.1 Preference Keys 정의 (모든 API 공통)
 
 ```dart
 // core/core_storage/lib/src/preferences/preference_keys.dart
@@ -97,10 +321,16 @@ abstract class PreferenceKeys {
   // Feature Flags
   static const String pushNotificationEnabled = 'push_notification_enabled';
   static const String analyticsEnabled = 'analytics_enabled';
+
+  // Migration
+  static const String storageVersion = 'storage_version';
 }
 ```
 
-### 3.2 AppPreferences 클래스
+### 3.2 Legacy AppPreferences 클래스 (기존 프로젝트용)
+
+> **⚠️ 주의**: 아래는 deprecated된 synchronous API 예제입니다.
+> 새 프로젝트는 위의 3.0 섹션의 새 API를 사용하세요.
 
 ```dart
 // core/core_storage/lib/src/preferences/app_preferences.dart
@@ -133,6 +363,10 @@ abstract class AppPreferences {
   // Notifications
   Future<void> setPushNotificationEnabled(bool enabled);
   bool isPushNotificationEnabled();
+
+  // Storage Version (for migrations)
+  Future<void> setStorageVersion(int version);
+  int? getStorageVersion();
 
   // Clear
   Future<void> clear();
@@ -228,6 +462,17 @@ class AppPreferencesImpl implements AppPreferences {
     return _prefs.getBool(PreferenceKeys.pushNotificationEnabled) ?? true;
   }
 
+  // Storage Version (for migrations)
+  @override
+  Future<void> setStorageVersion(int version) async {
+    await _prefs.setInt(PreferenceKeys.storageVersion, version);
+  }
+
+  @override
+  int? getStorageVersion() {
+    return _prefs.getInt(PreferenceKeys.storageVersion);
+  }
+
   // Clear
   @override
   Future<void> clear() async {
@@ -236,7 +481,9 @@ class AppPreferencesImpl implements AppPreferences {
 }
 ```
 
-### 3.3 DI 설정
+### 3.3 Legacy DI 설정 (기존 프로젝트용)
+
+> **⚠️ 주의**: 아래는 deprecated된 synchronous API의 DI 설정입니다.
 
 ```dart
 // core/core_storage/lib/src/modules/preferences_module.dart
@@ -246,11 +493,125 @@ import 'package:shared_preferences/shared_preferences.dart';
 @module
 abstract class PreferencesModule {
   @preResolve
+  @Deprecated('Use SharedPreferencesAsync or SharedPreferencesWithCache')
   Future<SharedPreferences> get prefs => SharedPreferences.getInstance();
 }
 ```
 
 ## 4. Isar Database
+
+### 4.0 ⚠️ Isar 개발 중단 - 대안 권장
+
+> **🚨 중요 (2026년 1월 기준)**:
+> - Isar는 2024년 이후 **개발이 사실상 중단**되었습니다.
+> - 메인테이너의 활동이 중단되어 버그 수정 및 새 기능 추가가 없습니다.
+> - **새 프로젝트에는 Isar를 사용하지 마세요.**
+> - 기존 Isar 프로젝트는 동작하지만, 장기적으로 마이그레이션을 고려하세요.
+
+#### 4.0.1 권장 대안
+
+| 대안 | 유형 | 장점 | 단점 | 마이그레이션 난이도 |
+|------|------|------|------|-----------------|
+| **Drift** | SQL | ✅ 활발한 개발<br>✅ 타입 안전<br>✅ 관계형 쿼리 강력<br>✅ 마이그레이션 시스템 | ❌ SQL 지식 필요<br>❌ 코드 생성 필수 | 중간 |
+| **ObjectBox** | NoSQL | ✅ 매우 빠름 (Isar급)<br>✅ 상업적 지원<br>✅ 관계 지원<br>✅ 쿼리 언어 유사 | ❌ 일부 상업 기능 유료<br>❌ 생태계 작음 | 낮음 (Isar 유사) |
+| **Hive** | Key-Value | ✅ 가볍고 빠름<br>✅ 간단한 API<br>✅ 코드 생성 선택적 | ❌ 관계형 쿼리 약함<br>❌ 인덱싱 제한적 | 높음 (구조 단순화) |
+| **SQFlite** | SQL | ✅ 성숙한 생태계<br>✅ Raw SQL 지원<br>✅ 가볍고 안정적 | ❌ 타입 안전 없음<br>❌ 수동 쿼리 작성 | 중간 |
+
+#### 4.0.2 대안 선택 가이드
+
+```
+새 프로젝트 선택 기준:
+
+복잡한 관계형 데이터 + SQL 가능
+  → Drift (추천!)
+
+Isar 같은 NoSQL + 고성능 필수
+  → ObjectBox
+
+간단한 로컬 캐싱만
+  → Hive
+
+Raw SQL 제어 원함
+  → SQFlite
+```
+
+#### 4.0.3 Drift 예제 (Isar 대체)
+
+```dart
+// drift_database.dart
+import 'package:drift/drift.dart';
+import 'package:drift_flutter/drift_flutter.dart';
+
+part 'drift_database.g.dart';
+
+// 테이블 정의 (Isar Collection 대신)
+class Users extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get userId => text().unique()();
+  TextColumn get name => text()();
+  TextColumn get email => text().nullable()();
+  DateTimeColumn get cachedAt => dateTime()();
+}
+
+class SearchHistories extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get query => text()();
+  DateTimeColumn get searchedAt => dateTime()();
+  IntColumn get searchCount => integer().withDefault(const Constant(1))();
+}
+
+// Database 클래스
+@DriftDatabase(tables: [Users, SearchHistories])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase() : super(_openConnection());
+
+  @override
+  int get schemaVersion => 1;
+
+  static QueryExecutor _openConnection() {
+    return driftDatabase(name: 'app_database');
+  }
+
+  // 쿼리 예시 (Isar와 유사하지만 타입 안전)
+  Future<List<SearchHistory>> getSearchHistory({int limit = 10}) {
+    return (select(searchHistories)
+          ..orderBy([(t) => OrderingTerm.desc(t.searchedAt)])
+          ..limit(limit))
+        .get();
+  }
+
+  Future<void> saveSearchQuery(String query) async {
+    final existing = await (select(searchHistories)
+          ..where((tbl) => tbl.query.equals(query)))
+        .getSingleOrNull();
+
+    if (existing != null) {
+      await (update(searchHistories)..where((t) => t.id.equals(existing.id)))
+          .write(SearchHistoriesCompanion(
+        searchCount: Value(existing.searchCount + 1),
+        searchedAt: Value(DateTime.now()),
+      ));
+    } else {
+      await into(searchHistories).insert(SearchHistoriesCompanion.insert(
+        query: query,
+        searchedAt: DateTime.now(),
+      ));
+    }
+  }
+}
+```
+
+**왜 Drift를 추천하나?**
+- ✅ 타입 안전한 쿼리 빌더
+- ✅ 마이그레이션 시스템 내장
+- ✅ 스트림 지원 (watch)
+- ✅ 활발한 커뮤니티와 업데이트
+- ✅ SQLite 기반이라 안정적
+
+---
+
+> **아래 섹션 (4.1-4.4)은 기존 Isar 프로젝트 유지보수용입니다.**
+> 새 프로젝트는 위의 대안을 사용하세요.
 
 ### 4.1 Collection 정의
 
@@ -555,7 +916,18 @@ class CartLocalDataSourceImpl implements CartLocalDataSource {
 
 ## 5. Secure Storage
 
-### 5.1 SecureStorage 클래스
+> **✅ 업데이트 (2026년 1월)**: flutter_secure_storage v10.0.0 새로운 API 적용
+
+### 5.0 v10.0.0 Breaking Changes
+
+flutter_secure_storage v10.0.0에서 초기화 API가 변경되었습니다.
+
+**주요 변경사항:**
+- `const FlutterSecureStorage(aOptions: ..., iOptions: ...)` → `FlutterSecureStorage.standard(androidOptions: ..., iosOptions: ...)`
+- Android/iOS 옵션 객체 변경
+- 더 명확한 네이밍과 타입 안전성
+
+### 5.1 SecureStorage 클래스 (v10.0.0)
 
 ```dart
 // core/core_storage/lib/src/secure/secure_storage.dart
@@ -630,7 +1002,7 @@ class TokenStorageImpl implements TokenStorage {
 }
 ```
 
-### 5.2 SecureStorage DI 설정
+### 5.2 SecureStorage DI 설정 (v10.0.0)
 
 ```dart
 // core/core_storage/lib/src/modules/secure_storage_module.dart
@@ -641,24 +1013,97 @@ import 'package:injectable/injectable.dart';
 abstract class SecureStorageModule {
   @lazySingleton
   FlutterSecureStorage get secureStorage {
-    // Android 옵션 설정
-    const androidOptions = AndroidOptions(
-      encryptedSharedPreferences: true,
-      sharedPreferencesName: 'secure_prefs',
-      preferencesKeyPrefix: 'app_',
-    );
+    return FlutterSecureStorage.standard(
+      // Android 옵션 (v10+ 새 API)
+      androidOptions: const AndroidSecureStorageOptions(
+        encryptedSharedPreferences: true,
+        sharedPreferencesName: 'secure_prefs',
+        keyCipherAlgorithm: KeyCipherAlgorithm.RSA_ECB_OAEPwithSHA_256andMGF1Padding,
+        storageCipherAlgorithm: StorageCipherAlgorithm.AES_GCM_NoPadding,
+      ),
 
-    // iOS 옵션 설정
-    const iosOptions = IOSOptions(
-      accessibility: KeychainAccessibility.first_unlock_this_device,
-    );
+      // iOS 옵션 (v10+ 새 API)
+      iosOptions: const IOSSecureStorageOptions(
+        accessibility: IOSAccessibility.first_unlock_this_device,
+        accountName: 'app_secure_storage',
+      ),
 
-    return const FlutterSecureStorage(
-      aOptions: androidOptions,
-      iOptions: iosOptions,
+      // Linux 옵션 (v10+ 추가)
+      linuxOptions: const LinuxSecureStorageOptions(),
+
+      // macOS 옵션 (v10+ 추가)
+      macOSOptions: const MacOSSecureStorageOptions(
+        accessibility: MacOSAccessibility.first_unlock_this_device,
+        accountName: 'app_secure_storage',
+      ),
+
+      // Web 옵션 (v10+ 추가)
+      webOptions: const WebSecureStorageOptions(),
+
+      // Windows 옵션 (v10+ 추가)
+      windowsOptions: const WindowsSecureStorageOptions(),
     );
   }
 }
+```
+
+#### 5.2.1 v9 → v10 마이그레이션
+
+**Before (v9.x):**
+```dart
+// ❌ Old API (v9)
+const androidOptions = AndroidOptions(
+  encryptedSharedPreferences: true,
+);
+
+const iosOptions = IOSOptions(
+  accessibility: KeychainAccessibility.first_unlock_this_device,
+);
+
+final storage = const FlutterSecureStorage(
+  aOptions: androidOptions,
+  iOptions: iosOptions,
+);
+```
+
+**After (v10+):**
+```dart
+// ✅ New API (v10)
+final storage = FlutterSecureStorage.standard(
+  androidOptions: const AndroidSecureStorageOptions(
+    encryptedSharedPreferences: true,
+  ),
+  iosOptions: const IOSSecureStorageOptions(
+    accessibility: IOSAccessibility.first_unlock_this_device,
+  ),
+);
+```
+
+**주요 차이점:**
+1. `FlutterSecureStorage()` → `FlutterSecureStorage.standard()`
+2. `aOptions`/`iOptions` → `androidOptions`/`iosOptions`
+3. `AndroidOptions` → `AndroidSecureStorageOptions`
+4. `IOSOptions` → `IOSSecureStorageOptions`
+5. `KeychainAccessibility` → `IOSAccessibility`
+6. 더 세밀한 암호화 알고리즘 제어 가능
+7. Linux, macOS, Web, Windows 옵션 추가
+
+#### 5.2.2 Android 암호화 알고리즘 선택 (v10+)
+
+```dart
+// 강력한 보안 (API 23+)
+androidOptions: const AndroidSecureStorageOptions(
+  encryptedSharedPreferences: true,
+  keyCipherAlgorithm: KeyCipherAlgorithm.RSA_ECB_OAEPwithSHA_256andMGF1Padding,
+  storageCipherAlgorithm: StorageCipherAlgorithm.AES_GCM_NoPadding,
+),
+
+// 호환성 우선 (API 18+)
+androidOptions: const AndroidSecureStorageOptions(
+  encryptedSharedPreferences: false,  // EncryptedSharedPreferences는 API 23+
+  keyCipherAlgorithm: KeyCipherAlgorithm.RSA_ECB_PKCS1Padding,
+  storageCipherAlgorithm: StorageCipherAlgorithm.AES_CBC_PKCS7Padding,
+),
 ```
 
 ### 5.3 플랫폼별 설정
@@ -1018,38 +1463,58 @@ void main() {
 
 ## 10. Best Practices
 
-### 10.1 저장소 선택 가이드
+### 10.1 저장소 선택 가이드 (2026년 기준)
 
 | 데이터 유형 | 저장소 | 이유 |
 |------------|--------|------|
-| 앱 설정 | SharedPreferences | 간단한 Key-Value |
-| 토큰/비밀번호 | SecureStorage | 암호화 필요 |
-| 복잡한 객체 | Isar | 쿼리/관계 필요 |
-| 임시 캐시 | 메모리 + Isar | 빠른 접근 + 영속성 |
+| 앱 설정 | SharedPreferencesAsync/WithCache | 간단한 Key-Value (새 async API) |
+| 토큰/비밀번호 | SecureStorage v10+ | 암호화 필요 (플랫폼별 강화) |
+| 복잡한 객체 | Drift 또는 ObjectBox | 쿼리/관계 필요 (⚠️ Isar 개발 중단) |
+| 임시 캐시 | 메모리 + Drift/ObjectBox | 빠른 접근 + 영속성 |
 
-### 10.2 DO (이렇게 하세요)
+### 10.2 DO (이렇게 하세요) - 2026 업데이트
 
-| 항목 | 설명 |
-|------|------|
-| Key 상수화 | PreferenceKeys 클래스로 관리 |
-| 인터페이스 분리 | TokenStorage, AppPreferences 등 |
-| 비동기 초기화 | Isar, SharedPreferences는 async |
-| 타입 안전성 | Generic이 아닌 명시적 메서드 |
+| 항목 | 설명 | 예시 |
+|------|------|------|
+| **새 API 사용** | SharedPreferencesAsync 또는 WithCache 사용 | ✅ `SharedPreferencesAsync()` |
+| **SecureStorage v10** | 새로운 초기화 API 사용 | ✅ `FlutterSecureStorage.standard()` |
+| **Isar 피하기** | 새 프로젝트는 Drift/ObjectBox | ✅ Drift로 시작 |
+| **Key 상수화** | PreferenceKeys 클래스로 관리 | ✅ `PreferenceKeys.themeMode` |
+| **인터페이스 분리** | TokenStorage, AppPreferences 등 | ✅ 단일 책임 원칙 |
+| **비동기 초기화** | WithCache는 앱 시작 시 초기화 | ✅ `@preResolve` 사용 |
+| **타입 안전성** | Generic이 아닌 명시적 메서드 | ✅ `Future<String?>` 반환 |
 
-### 10.3 DON'T (하지 마세요)
+### 10.3 DON'T (하지 마세요) - 2026 업데이트
 
 ```dart
+// ❌ Legacy SharedPreferences API 사용
+final prefs = await SharedPreferences.getInstance();  // Deprecated!
+// ✅ SharedPreferencesAsync 또는 WithCache 사용
+
+// ❌ 구 SecureStorage 초기화 (v9)
+final storage = FlutterSecureStorage(aOptions: ...);  // v10에서 제거됨
+// ✅ FlutterSecureStorage.standard() 사용
+
+// ❌ Isar를 새 프로젝트에 사용
+dependencies:
+  isar: ^3.1.0  // 개발 중단!
+// ✅ Drift 또는 ObjectBox 사용
+
 // ❌ Key 하드코딩
-await prefs.setString('user_token', token);  // Key 상수 사용
+await prefs.setString('user_token', token);
+// ✅ PreferenceKeys.userToken 상수 사용
 
 // ❌ 토큰을 SharedPreferences에 저장
-await prefs.setString('token', accessToken);  // SecureStorage 사용
+await prefs.setString('token', accessToken);
+// ✅ SecureStorage 사용
 
 // ❌ 대용량 데이터를 SharedPreferences에
-await prefs.setString('users', jsonEncode(userList));  // Isar 사용
+await prefs.setString('users', jsonEncode(userList));
+// ✅ Drift/ObjectBox 사용
 
-// ❌ 동기 호출 가정
-final token = secureStorage.read(key: 'token');  // await 필요
+// ❌ 동기 호출 가정 (SharedPreferencesAsync 사용 시)
+final theme = prefs.getString('theme');  // await 필요!
+// ✅ await prefs.getString('theme');
 ```
 
 ## 11. 마이그레이션
@@ -1104,8 +1569,68 @@ class StorageMigration {
 }
 ```
 
-## 12. 참고
+## 12. 2026년 1월 업데이트 요약
+
+이 문서는 2026년 1월 기준 최신 Flutter 로컬 저장소 베스트 프랙티스를 반영합니다.
+
+### 주요 변경사항
+
+#### 1. SharedPreferences - 새로운 Async API
+- **Legacy API Deprecated**: `SharedPreferences.getInstance()` 사용 중단
+- **새 API 2가지**:
+  - `SharedPreferencesAsync`: 완전 비동기, 초기화 불필요
+  - `SharedPreferencesWithCache`: 하이브리드 (동기 읽기 + 비동기 쓰기)
+- **마이그레이션 필수**: 기존 코드 업데이트 권장
+
+#### 2. flutter_secure_storage v10.0.0 - Breaking Changes
+- **초기화 API 변경**: `FlutterSecureStorage()` → `FlutterSecureStorage.standard()`
+- **옵션 객체 변경**:
+  - `AndroidOptions` → `AndroidSecureStorageOptions`
+  - `IOSOptions` → `IOSSecureStorageOptions`
+- **새 플랫폼 지원**: Linux, macOS, Web, Windows 옵션 추가
+- **향상된 암호화**: 더 세밀한 알고리즘 제어
+
+#### 3. Isar 개발 중단 - 대안 필수
+- **⚠️ 개발 중단**: 2024년 이후 업데이트 없음
+- **권장 대안**:
+  - **Drift** (SQL): 타입 안전, 마이그레이션 시스템, 활발한 개발
+  - **ObjectBox** (NoSQL): Isar 유사, 고성능, 상업적 지원
+- **기존 프로젝트**: 동작은 하지만 장기적으로 마이그레이션 고려
+
+### 새 프로젝트 권장 스택 (2026)
+
+```yaml
+dependencies:
+  # Key-Value 설정
+  shared_preferences: ^2.3.3  # Async API 사용
+
+  # 보안 저장소
+  flutter_secure_storage: ^10.0.0  # v10 새 API
+
+  # 데이터베이스 (택 1)
+  drift: ^2.14.0  # SQL, 권장!
+  # objectbox: ^2.4.0  # NoSQL 대안
+
+  injectable: ^2.4.1
+  path_provider: ^2.1.2
+
+dev_dependencies:
+  drift_dev: ^2.14.0  # Drift 사용 시
+  build_runner: ^2.4.7
+```
+
+### 마이그레이션 체크리스트
+
+- [ ] SharedPreferences → SharedPreferencesAsync 또는 WithCache
+- [ ] SecureStorage v9 → v10 (초기화 API 변경)
+- [ ] Isar 의존성 확인 (새 프로젝트면 Drift로 변경)
+- [ ] DI 설정 업데이트 (PreferencesModule, SecureStorageModule)
+- [ ] 테스트 코드 업데이트
+
+## 13. 참고
 
 - [SharedPreferences 공식 문서](https://pub.dev/packages/shared_preferences)
-- [Isar 공식 문서](https://isar.dev/)
 - [Flutter Secure Storage 공식 문서](https://pub.dev/packages/flutter_secure_storage)
+- [Drift 공식 문서](https://drift.simonbinder.eu/)
+- [ObjectBox 공식 문서](https://docs.objectbox.io/getting-started)
+- [Isar 공식 문서 (레거시)](https://isar.dev/)

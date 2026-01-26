@@ -73,12 +73,17 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 ```yaml
 # pubspec.yaml
 dependencies:
-  flutter_bloc: ^8.1.3
+  flutter_bloc: ^9.1.1  # 2026년 1월 기준 최신
   equatable: ^2.0.5
 
 dev_dependencies:
   bloc_test: ^9.1.5
 ```
+
+> **v9.0.0 주요 변경사항 (2025년):**
+> - `BlocListener`가 자동으로 `context.mounted` 체크
+> - 리스너 생명주기 관리 개선
+> - `bloc.stream` 대신 `bloc.state` 변경 스트림 직접 구독 권장하지 않음
 
 ### 권장 VS Code 확장
 

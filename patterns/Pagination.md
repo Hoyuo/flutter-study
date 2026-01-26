@@ -4,6 +4,14 @@
 
 무한 스크롤(Infinite Scroll)과 페이지 기반 페이지네이션을 Bloc 패턴으로 구현합니다. 리스트, 그리드, Pull-to-refresh와 함께 사용하는 패턴을 다룹니다.
 
+## 의존성 추가
+
+```yaml
+# pubspec.yaml
+dependencies:
+  rxdart: ^0.28.0  # 디바운싱에 필요 (FormValidation.md와 버전 일치)
+```
+
 ## 기본 구조
 
 ### Pagination 상태 모델

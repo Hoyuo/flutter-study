@@ -180,7 +180,11 @@ class MyApp extends StatelessWidget {
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
-      title: 'app_name'.tr(),
+      // ⚠️ 주의: title은 앱 스위처에 표시되며,
+      // EasyLocalization 초기화 전에 빌드될 수 있어 번역이 적용 안 될 수 있음
+      // 권장: 고정 문자열 사용하거나 onGenerateTitle 활용
+      title: 'MyApp',  // 또는
+      // onGenerateTitle: (context) => 'app_name'.tr(),
       home: const HomeScreen(),
     );
   }
@@ -377,6 +381,48 @@ class _LanguageTile extends StatelessWidget {
 }
 ```
 
+### 로케일 Fallback 체인 설정
+
+로케일을 찾지 못할 때 여러 단계의 fallback을 거쳐 적절한 번역을 제공할 수 있습니다.
+
+```dart
+/// 로케일 Fallback 체인 설정
+/// zh_TW → zh → ko 순서로 fallback
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
+
+  runApp(
+    EasyLocalization(
+      supportedLocales: const [
+        Locale('ko'),
+        Locale('ja'),
+        Locale('zh', 'TW'),  // 대만 번체 중국어
+        Locale('zh'),        // 중국어 기본
+      ],
+      path: 'assets/translations',
+      fallbackLocale: const Locale('ko'),
+      // startLocale이 없으면 시스템 로케일 → fallbackLocale 순서로 시도
+      child: const MyApp(),
+    ),
+  );
+}
+```
+
+**Fallback 동작 방식:**
+1. 사용자 디바이스의 시스템 로케일 확인
+2. `supportedLocales`에서 일치하는 로케일 찾기
+3. 정확히 일치하지 않으면 언어 코드만으로 매칭 시도 (예: zh_CN → zh)
+4. 그래도 없으면 `fallbackLocale` 사용
+5. `fallbackLocale`도 없으면 `supportedLocales`의 첫 번째 로케일 사용
+
+```dart
+// 예시: zh_CN 사용자의 경우
+// 1. zh_CN (없음)
+// 2. zh (있음) → zh 번역 사용
+// 3. ko (fallback) → 있지만 2단계에서 찾았으므로 사용 안 함
+```
+
 ## 번역 키 타입 안전성
 
 ### 코드 생성 사용 (권장)
@@ -385,8 +431,11 @@ class _LanguageTile extends StatelessWidget {
 
 ```yaml
 # pubspec.yaml
+# ⚠️ 주의: easy_localization_generator는 2022년 이후 업데이트 없음
+# Dart 3 호환성 문제가 있을 수 있음
+# 대안: slang 패키지 또는 수동 LocaleKeys 관리 권장
 dev_dependencies:
-  easy_localization_generator: ^1.4.0
+  # easy_localization_generator: ^1.4.0  # deprecated
   build_runner: ^2.4.0
 ```
 
@@ -681,9 +730,13 @@ String formatCurrency(int amount, BuildContext context) {
 ```dart
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   setUp(() async {
+    // SharedPreferences mock 설정 필요
+    SharedPreferences.setMockInitialValues({});
+
     // 테스트용 번역 초기화
     await EasyLocalization.ensureInitialized();
   });
@@ -694,14 +747,22 @@ void main() {
         supportedLocales: const [Locale('ko'), Locale('ja')],
         path: 'assets/translations',
         fallbackLocale: const Locale('ko'),
-        child: MaterialApp(
-          home: Builder(
-            builder: (context) => Text('common.confirm'.tr()),
+        // useOnlyLangCode: true 사용 시 테스트 단순화
+        useOnlyLangCode: true,
+        child: Builder(
+          builder: (context) => MaterialApp(
+            localizationsDelegates: context.localizationsDelegates,
+            supportedLocales: context.supportedLocales,
+            locale: context.locale,
+            home: Scaffold(
+              body: Text('common.confirm'.tr()),
+            ),
           ),
         ),
       ),
     );
 
+    // 초기화 완료 대기
     await tester.pumpAndSettle();
 
     expect(find.text('확인'), findsOneWidget);
@@ -803,18 +864,20 @@ BlocListener<SomeBloc, SomeState>(
 ### 번역 누락 처리
 
 ```dart
+// easy_localization은 번역 누락 시 자동으로 fallbackLocale 사용
 EasyLocalization(
+  supportedLocales: const [
+    Locale('ko'),
+    Locale('ja'),
+    Locale('zh', 'TW'),
+  ],
+  path: 'assets/translations',
+
   // 번역이 없을 때 키 대신 fallback 텍스트 표시
   fallbackLocale: const Locale('ko'),
 
   // 번역 누락 로깅
   useOnlyLangCode: true,
-
-  // 번역이 없을 때 핸들러
-  errorWidget: (message) => Text(
-    message?.toString() ?? 'Translation missing',
-    style: const TextStyle(color: Colors.red),
-  ),
 
   child: const MyApp(),
 )

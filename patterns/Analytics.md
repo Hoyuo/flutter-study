@@ -11,12 +11,27 @@ Firebase Analytics와 Crashlytics를 통해 사용자 행동 분석, 크래시 �
 ```yaml
 # pubspec.yaml
 dependencies:
-  firebase_core: ^3.0.0
-  firebase_analytics: ^11.0.0
-  firebase_crashlytics: ^4.0.0
-  firebase_performance: ^0.10.0  # 선택
+  firebase_core: ^3.8.0  # 2026년 1월 기준
+  firebase_analytics: ^11.3.0  # 2026년 1월 기준
+  firebase_crashlytics: ^4.3.0  # 2026년 1월 기준
+  firebase_performance: ^0.10.3  # 선택, 2026년 1월 기준
   logger: ^2.0.0  # 개발용 로깅
 ```
+
+**Firebase BoM (Bill of Materials) 호환성:**
+- Firebase Flutter SDK는 네이티브 Firebase SDK에 의존하며, 버전 충돌을 방지하려면 일관된 버전 사용이 중요합니다.
+- Android: `build.gradle`에서 Firebase BoM을 사용하면 모든 Firebase 라이브러리 버전이 자동으로 호환됩니다.
+  ```gradle
+  dependencies {
+    // Firebase BoM (2026년 1월 기준)
+    implementation platform('com.google.firebase:firebase-bom:33.7.0')
+    // 이제 개별 Firebase 라이브러리에 버전 명시 불필요
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+    implementation 'com.google.firebase:firebase-crashlytics-ktx'
+  }
+  ```
+- iOS: CocoaPods가 자동으로 호환 버전을 관리하지만, `Podfile`에서 명시적 버전을 설정할 수도 있습니다.
+- **권장사항:** `firebase_core` 버전을 먼저 업데이트하고, 다른 Firebase 플러그인들은 호환되는 버전으로 함께 업데이트하세요.
 
 ### Android 설정
 

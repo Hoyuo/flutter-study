@@ -42,14 +42,17 @@ core/
 ```yaml
 # core/core_network/pubspec.yaml
 dependencies:
-  dio: ^5.4.0
-  pretty_dio_logger: ^1.3.1
-  connectivity_plus: ^5.0.0
+  dio: ^5.7.0  # 2024-2025 최신
+  pretty_dio_logger: ^1.4.0
+  connectivity_plus: ^6.0.0  # List<ConnectivityResult> 반환
   injectable: ^2.3.0
+  freezed_annotation: ^2.4.0
+  fpdart: ^1.1.0
 
 dev_dependencies:
   injectable_generator: ^2.4.0
   build_runner: ^2.4.0
+  freezed: ^2.5.0
 ```
 
 ## 3. Dio Client 설정
@@ -67,6 +70,10 @@ abstract class DioClient {
 
 @LazySingleton(as: DioClient)
 class DioClientImpl implements DioClient {
+  // 아래 클래스들은 프로젝트에서 별도 정의 필요:
+  // - AppConfig: 환경 설정 (baseUrl 등) - Environment.md 참조
+  // - TokenStorage: 토큰 저장소 - LocalStorage.md 참조
+  // - AuthService: 인증 서비스 - 프로젝트별 구현
   final AppConfig _config;
   Dio? _dio;
 
@@ -156,15 +163,19 @@ class ProdConfig implements AppConfig {
 ```dart
 // core/core_network/lib/src/interceptors/auth_interceptor.dart
 import 'package:dio/dio.dart';
-import 'package:injectable/injectable.dart';
 
-@injectable
+// 주의: @injectable 제거 - DioClient에서 수동으로 생성
 class AuthInterceptor extends Interceptor {
+  final Dio _dio;  // 원본 Dio 참조 (baseUrl 보존용)
   final TokenStorage _tokenStorage;
   final AuthService _authService;
+  final AppConfig _config;
 
-  AuthInterceptor(this._tokenStorage, this._authService);
+  AuthInterceptor(this._dio, this._tokenStorage, this._authService, this._config);
 
+  // ⚠️ 주의: Interceptor의 onRequest/onResponse/onError는 void 반환
+  // async 사용 시 에러가 전파되지 않을 수 있음
+  // 내부에서 try-catch로 에러 처리 필수
   @override
   void onRequest(
     RequestOptions options,
@@ -246,7 +257,8 @@ class AuthInterceptor extends Interceptor {
       },
     );
 
-    return Dio().request<dynamic>(
+    // 원본 Dio 사용 (baseUrl 보존)
+    return _dio.request<dynamic>(
       requestOptions.path,
       data: requestOptions.data,
       queryParameters: requestOptions.queryParameters,
@@ -488,8 +500,10 @@ class ConnectivityInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     final connectivityResult = await _connectivity.checkConnectivity();
+    // connectivity_plus 5.0.0+ 대응 (List<ConnectivityResult> 반환)
+    final hasConnection = !connectivityResult.contains(ConnectivityResult.none);
 
-    if (connectivityResult == ConnectivityResult.none) {
+    if (!hasConnection) {
       return handler.reject(
         DioException(
           requestOptions: options,
@@ -578,7 +592,8 @@ import 'package:injectable/injectable.dart';
 @LazySingleton(as: DioClient)
 class DioClientImpl implements DioClient {
   final AppConfig _config;
-  final AuthInterceptor _authInterceptor;
+  final TokenStorage _tokenStorage;
+  final AuthService _authService;
   final ErrorInterceptor _errorInterceptor;
   final LoggingInterceptor _loggingInterceptor;
   final ConnectivityInterceptor _connectivityInterceptor;
@@ -587,7 +602,8 @@ class DioClientImpl implements DioClient {
 
   DioClientImpl(
     this._config,
-    this._authInterceptor,
+    this._tokenStorage,
+    this._authService,
     this._errorInterceptor,
     this._loggingInterceptor,
     this._connectivityInterceptor,
@@ -617,8 +633,10 @@ class DioClientImpl implements DioClient {
     // 1. Connectivity (연결 체크 먼저)
     dio.interceptors.add(_connectivityInterceptor);
 
-    // 2. Auth (토큰 추가)
-    dio.interceptors.add(_authInterceptor);
+    // 2. Auth (토큰 추가) - Dio 인스턴스를 전달하여 생성
+    dio.interceptors.add(
+      AuthInterceptor(dio, _tokenStorage, _authService, _config),
+    );
 
     // 3. Retry (재시도 로직)
     dio.interceptors.add(RetryInterceptor(dio));

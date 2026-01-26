@@ -142,6 +142,25 @@ class UserRepositoryImpl implements UserRepository {
 }
 ```
 
+### 3.5 유틸리티 생성자
+
+```dart
+// tryCatch - 예외를 Either로 변환
+final result = Either.tryCatch(
+  () => int.parse(input),
+  (error, stackTrace) => 'Invalid number: $input',
+);
+
+// fromNullable - nullable을 Either로 변환
+final either = Either<String, User>.fromNullable(
+  nullableValue,
+  () => 'Value was null',
+);
+
+// fromOption - Option을 Either로 변환
+final either = someOption.toEither(() => 'Option was None');
+```
+
 ### 3.3 UseCase에서 사용
 
 ```dart
@@ -219,13 +238,29 @@ final userName = result.map((user) => user.name);
 
 ```dart
 // 여러 Either 연산을 연결
+// ❌ 잘못된 방법: flatMap은 동기 함수만 받음
+// return userResult.flatMap((user) async { ... });  // 컴파일 에러!
+
+// ✅ 방법 1: fold 사용
 Future<Either<UserFailure, Profile>> getUserProfile(String userId) async {
   final userResult = await _userRepository.getUser(userId);
 
-  return userResult.flatMap((user) async {
-    final profileResult = await _profileRepository.getProfile(user.profileId);
-    return profileResult;
-  });
+  // fold를 사용하면 비동기 처리 가능
+  return userResult.fold(
+    (failure) async => Left(failure),  // 실패는 그대로 전달
+    (user) async {
+      // 성공 시 다음 비동기 작업 수행
+      final profileResult = await _profileRepository.getProfile(user.profileId);
+      return profileResult;
+    },
+  );
+}
+
+// ✅ 방법 2: TaskEither 사용 (더 함수형)
+Future<Either<UserFailure, Profile>> getUserProfile(String userId) async {
+  return TaskEither(() => _userRepository.getUser(userId))
+      .flatMap((user) => TaskEither(() => _profileRepository.getProfile(user.profileId)))
+      .run();
 }
 ```
 
@@ -291,17 +326,53 @@ class CreateOrderUseCase {
 ### 4.4 더 깔끔한 체이닝 (flatMap 사용)
 
 ```dart
+// ❌ 잘못된 방법: Future<Either>에는 mapLeft, flatMap이 없음
+// Future<Either<OrderFailure, Order>> call(CreateOrderParams params) async {
+//   return _cartRepository
+//       .getCart(params.cartId)  // Future<Either> 반환
+//       .mapLeft((f) => ...)     // 에러! Future에는 mapLeft가 없음
+//       .flatMap((cart) => ...); // 에러! Future에는 flatMap이 없음
+// }
+
+// ✅ 방법 1: await 후 Either 메서드 사용
 Future<Either<OrderFailure, Order>> call(CreateOrderParams params) async {
-  return _cartRepository
-      .getCart(params.cartId)
+  // 1. Future를 await로 풀어서 Either 얻기
+  final cartResult = await _cartRepository.getCart(params.cartId);
+
+  // 2. Either에 mapLeft, flatMap 사용 가능
+  return cartResult
       .mapLeft((f) => OrderFailure.cartError(f.message))
-      .flatMap((cart) => _validateStock(cart))
-      .flatMap((cart) => _processPayment(cart, params.paymentMethod))
-      .flatMap((payment) => _createOrder(payment));
+      .fold(
+        (failure) async => Left(failure),
+        (cart) async {
+          final stockResult = await _validateStock(cart);
+          return stockResult.fold(
+            (failure) async => Left(failure),
+            (validCart) async {
+              final paymentResult = await _processPayment(validCart, params.paymentMethod);
+              return paymentResult.fold(
+                (failure) async => Left(failure),
+                (payment) => _createOrder(payment),
+              );
+            },
+          );
+        },
+      );
+}
+
+// ✅ 방법 2: TaskEither로 체이닝 (더 깔끔)
+Future<Either<OrderFailure, Order>> call(CreateOrderParams params) async {
+  return TaskEither(() => _cartRepository.getCart(params.cartId))
+      .mapLeft((f) => OrderFailure.cartError(f.message))
+      .flatMap((cart) => TaskEither(() => _validateStock(cart)))
+      .flatMap((cart) => TaskEither(() => _processPayment(cart, params.paymentMethod)))
+      .flatMap((payment) => TaskEither(() => _createOrder(payment)))
+      .run();
 }
 
 Future<Either<OrderFailure, Cart>> _validateStock(Cart cart) async {
   final result = await _orderRepository.checkStock(cart.items);
+  // 동기적 flatMap 사용 가능
   return result.flatMap((valid) {
     if (!valid) return const Left(OrderFailure.outOfStock());
     return Right(cart);
@@ -498,6 +569,15 @@ final pipeline = getData()
 final result = await pipeline.run();
 ```
 
+### 6.4 Future<Either> vs TaskEither 선택 기준
+
+| 상황 | 권장 |
+|------|------|
+| Repository 구현 | Future<Either> (단순성) |
+| 복잡한 비동기 체이닝 | TaskEither (합성 용이) |
+| 지연 실행 필요 | TaskEither |
+| 팀이 FP에 익숙하지 않음 | Future<Either> |
+
 ## 7. Unit 타입
 
 ### 7.1 기본 개념
@@ -565,14 +645,28 @@ Future<Either<Failure, ProfileData>> getProfileData(String userId) async {
 ### 8.2 Either.Do 문법 (권장)
 
 ```dart
-// Either.Do를 사용한 깔끔한 조합
+// ❌ 잘못된 방법: Either.Do는 동기적으로만 동작
+// Future<Either<Failure, ProfileData>> getProfileData(String userId) async {
+//   return Either.Do(($) async {  // async 사용 불가!
+//     final user = await $(await _userRepository.getUser(userId));  // 에러!
+//     ...
+//   });
+// }
+
+// ✅ 방법 1: Either.Do를 동기적으로 사용 (모든 Future를 먼저 await)
 Future<Either<Failure, ProfileData>> getProfileData(String userId) async {
-  return Either.Do(($) async {
+  // 1. 모든 비동기 작업을 먼저 완료
+  final userResult = await _userRepository.getUser(userId);
+  final settingsResult = await _settingsRepository.getSettings(userId);
+  final statsResult = await _statsRepository.getStats(userId);
+
+  // 2. Either.Do로 동기적 조합
+  return Either.Do(($) {
     // $는 Either에서 Right 값을 추출
     // Left면 즉시 반환됨
-    final user = await $(await _userRepository.getUser(userId));
-    final settings = await $(await _settingsRepository.getSettings(userId));
-    final stats = await $(await _statsRepository.getStats(userId));
+    final user = $(userResult);
+    final settings = $(settingsResult);
+    final stats = $(statsResult);
 
     return ProfileData(
       user: user,
@@ -580,6 +674,22 @@ Future<Either<Failure, ProfileData>> getProfileData(String userId) async {
       stats: stats,
     );
   });
+}
+
+// ✅ 방법 2: TaskEither.Do 사용 (진짜 비동기 Do 표기법)
+Future<Either<Failure, ProfileData>> getProfileData(String userId) async {
+  return TaskEither<Failure, ProfileData>.Do(($) async {
+    // TaskEither.Do는 async 지원!
+    final user = await $(TaskEither(() => _userRepository.getUser(userId)));
+    final settings = await $(TaskEither(() => _settingsRepository.getSettings(userId)));
+    final stats = await $(TaskEither(() => _statsRepository.getStats(userId)));
+
+    return ProfileData(
+      user: user,
+      settings: settings,
+      stats: stats,
+    );
+  }).run();  // .run()으로 실행
 }
 ```
 

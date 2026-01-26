@@ -551,6 +551,12 @@ class App extends StatelessWidget {
       home: const HomeScreen(),
     );
   }
+
+  Locale? _getSavedLocale() {
+    final languageCode = GetIt.I<AppPreferences>().getLanguageCode();
+    if (languageCode == null) return null;
+    return Locale(languageCode);
+  }
 }
 ```
 

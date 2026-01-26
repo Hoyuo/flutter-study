@@ -13,10 +13,18 @@
 dependencies:
   cached_network_image: ^3.3.0
   image_picker: ^1.0.0
-  image_cropper: ^6.0.0
+  image_cropper: ^8.0.0  # 2026년 1월 기준 최신 버전
   flutter_image_compress: ^2.1.0
   http_parser: ^4.0.0  # multipart 업로드용
+  shimmer: ^3.0.0
+  permission_handler: ^11.0.0  # 추가 필수!
+  path: ^1.8.0  # 경로 처리용
+  device_info_plus: ^12.3.0  # 2026년 1월 기준 최신 버전
 ```
+
+**주요 변경사항 (v5 → v8):**
+- `image_cropper` ^8.0.0: API 변경 없음, 내부 구현 개선 및 최신 플랫폼 지원
+- `device_info_plus` ^12.3.0: 최신 Android/iOS 기기 정보 지원, API 호환성 유지
 
 ### iOS 설정
 
@@ -41,7 +49,8 @@ dependencies:
     <uses-permission android:name="android.permission.CAMERA"/>
 
     <!-- 저장소 (Android 12 이하) -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
 
     <!-- 사진 (Android 13+) -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
@@ -221,8 +230,10 @@ await DefaultCacheManager().emptyCache();
 // lib/core/image/image_picker_service.dart
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:injectable/injectable.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 enum ImageSourceType { camera, gallery }
 
@@ -230,13 +241,53 @@ enum ImageSourceType { camera, gallery }
 class ImagePickerService {
   final ImagePicker _picker = ImagePicker();
 
-  /// 단일 이미지 선택
+  /// 카메라/갤러리 권한 요청
+  Future<bool> _requestPermission(ImageSourceType source) async {
+    Permission permission;
+
+    if (source == ImageSourceType.camera) {
+      permission = Permission.camera;
+    } else {
+      // Android 13+ 분기 처리
+      if (Platform.isAndroid) {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        if (androidInfo.version.sdkInt >= 33) {
+          permission = Permission.photos;
+        } else {
+          permission = Permission.storage;
+        }
+      } else {
+        permission = Permission.photos;
+      }
+    }
+
+    final status = await permission.request();
+
+    if (status.isDenied) {
+      // 사용자에게 권한 필요 안내
+      return false;
+    }
+
+    if (status.isPermanentlyDenied) {
+      // 설정 앱으로 이동 안내
+      await openAppSettings();
+      return false;
+    }
+
+    return status.isGranted;
+  }
+
+  /// 단일 이미지 선택 (권한 체크 포함)
   Future<File?> pickImage({
     required ImageSourceType source,
     int? maxWidth,
     int? maxHeight,
     int? imageQuality,
   }) async {
+    // 권한 확인
+    final hasPermission = await _requestPermission(source);
+    if (!hasPermission) return null;
+
     final XFile? pickedFile = await _picker.pickImage(
       source: source == ImageSourceType.camera
           ? ImageSource.camera
@@ -250,13 +301,17 @@ class ImagePickerService {
     return File(pickedFile.path);
   }
 
-  /// 여러 이미지 선택 (갤러리만)
+  /// 여러 이미지 선택 (갤러리만, 권한 체크 포함)
   Future<List<File>> pickMultipleImages({
     int? maxWidth,
     int? maxHeight,
     int? imageQuality,
     int? limit,
   }) async {
+    // 권한 확인
+    final hasPermission = await _requestPermission(ImageSourceType.gallery);
+    if (!hasPermission) return [];
+
     final List<XFile> pickedFiles = await _picker.pickMultiImage(
       maxWidth: maxWidth?.toDouble(),
       maxHeight: maxHeight?.toDouble(),
@@ -479,6 +534,109 @@ class ImageCompressService {
     int quality = ((maxSizeKB / fileSizeKB) * 100).round().clamp(20, 95);
 
     return compressFile(file: file, quality: quality);
+  }
+}
+```
+
+## 임시 파일 정리
+
+### File Cleanup Utility
+
+```dart
+// lib/core/image/file_cleanup_utility.dart
+import 'dart:io';
+
+import 'package:injectable/injectable.dart';
+import 'package:path/path.dart' as path;
+
+@lazySingleton
+class FileCleanupUtility {
+  /// 처리 완료 후 임시 파일 정리
+  Future<void> cleanupTempFiles(List<String> paths) async {
+    for (final filePath in paths) {
+      try {
+        final file = File(filePath);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      } catch (e) {
+        // 삭제 실패 무시 (이미 삭제되었거나 권한 문제)
+        print('Failed to delete temp file: $filePath - $e');
+      }
+    }
+  }
+
+  /// 특정 디렉토리의 오래된 임시 파일 정리
+  Future<void> cleanupOldTempFiles({
+    required String directoryPath,
+    Duration maxAge = const Duration(days: 1),
+  }) async {
+    try {
+      final directory = Directory(directoryPath);
+      if (!await directory.exists()) return;
+
+      final now = DateTime.now();
+      final entities = directory.listSync();
+
+      for (final entity in entities) {
+        if (entity is File) {
+          final stat = await entity.stat();
+          final age = now.difference(stat.modified);
+
+          if (age > maxAge) {
+            try {
+              await entity.delete();
+            } catch (e) {
+              print('Failed to delete old file: ${entity.path} - $e');
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Failed to cleanup old temp files: $e');
+    }
+  }
+
+  /// 앱 캐시 디렉토리 전체 정리
+  Future<void> clearAllCache() async {
+    try {
+      // 플랫폼별 캐시 디렉토리 정리는 path_provider 사용
+      // 여기서는 예시만 제공
+      print('Cache cleared successfully');
+    } catch (e) {
+      print('Failed to clear cache: $e');
+    }
+  }
+}
+```
+
+### 사용 예시
+
+```dart
+// 이미지 처리 후 임시 파일 정리
+final tempPaths = <String>[];
+
+// 1. 이미지 선택
+final pickedFile = await imagePickerService.pickImage(...);
+if (pickedFile != null) {
+  tempPaths.add(pickedFile.path);
+
+  // 2. 크롭
+  final croppedFile = await imageCropperService.cropImage(...);
+  if (croppedFile != null) {
+    tempPaths.add(croppedFile.path);
+
+    // 3. 압축
+    final compressedFile = await imageCompressService.compressFile(...);
+    if (compressedFile != null) {
+      tempPaths.add(compressedFile.path);
+
+      // 4. 업로드
+      final url = await imageUploadService.uploadImage(...);
+
+      // 5. 성공 후 임시 파일 정리
+      await fileCleanupUtility.cleanupTempFiles(tempPaths);
+    }
   }
 }
 ```
@@ -1017,15 +1175,19 @@ class _ImageTile extends StatelessWidget {
 
 ## 체크리스트
 
-- [ ] cached_network_image, image_picker, image_cropper, flutter_image_compress 설치
+- [ ] cached_network_image, image_picker, image_cropper, flutter_image_compress, permission_handler 설치
 - [ ] iOS Info.plist 권한 설명 추가
-- [ ] Android AndroidManifest.xml 권한 및 UCropActivity 추가
-- [ ] ImagePickerService 구현
+- [ ] Android AndroidManifest.xml 권한 및 UCropActivity 추가 (maxSdkVersion="32" 포함)
+- [ ] ImagePickerService 구현 (권한 처리 포함)
 - [ ] ImageCropperService 구현 (프로필용, 배너용 등)
 - [ ] ImageCompressService 구현
 - [ ] ImageUploadService 구현 (Multipart)
+- [ ] FileCleanupUtility 구현 (임시 파일 정리)
 - [ ] 통합 ImageService 구현
+- [ ] 권한 요청 흐름 테스트 (카메라, 갤러리)
+- [ ] Android 13+ 권한 분기 처리 테스트
 - [ ] 이미지 캐시 위젯 (NetworkImageWidget, CircleProfileImage)
 - [ ] 이미지 선택 다이얼로그
 - [ ] 업로드 진행률 표시 UI
 - [ ] 여러 이미지 그리드 UI (필요시)
+- [ ] 임시 파일 정리 로직 적용

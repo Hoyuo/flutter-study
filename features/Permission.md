@@ -11,8 +11,25 @@ permission_handler는 Flutter에서 iOS와 Android의 런타임 권한을 통합
 ```yaml
 # pubspec.yaml
 dependencies:
-  permission_handler: ^11.3.0
+  permission_handler: ^12.0.0
 ```
+
+### Migration Notes (v11 → v12)
+
+**Breaking Changes:**
+- **New Permission Request Flow**: Permissions now require explicit context about usage. Some platforms may show additional prompts.
+- **Android 14+ Support**: Added support for new Android 14 permissions (e.g., `Permission.photos`, `Permission.videos`, `Permission.audio` replacing `Permission.storage`).
+- **iOS Precise Location**: `Permission.locationWhenInUse` now supports requesting precise vs. approximate location.
+- **Notification Permission Changes**: `Permission.notification` behavior updated for iOS 16+ provisional notifications.
+
+**Deprecated APIs:**
+- `Permission.storage` is deprecated on Android 13+. Use `Permission.photos`, `Permission.videos`, or `Permission.audio` instead.
+- Direct `openAppSettings()` calls should now check permission status first to avoid unnecessary navigations.
+
+**New Features:**
+- Support for Android 14 partial photo/video access
+- Enhanced permission status detection for restricted modes
+- Better handling of provisional authorization on iOS
 
 ### iOS 설정
 

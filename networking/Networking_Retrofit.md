@@ -37,9 +37,10 @@ Retrofit은 어노테이션 기반으로 HTTP API를 정의하는 타입 안전�
 ```yaml
 # pubspec.yaml
 dependencies:
-  dio: ^5.4.0
-  retrofit: ^4.1.0
+  dio: ^5.7.0
+  retrofit: ^4.4.0
   json_annotation: ^4.8.0
+  fpdart: ^1.1.0
 
 dev_dependencies:
   retrofit_generator: ^8.1.0

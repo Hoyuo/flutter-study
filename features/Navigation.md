@@ -11,8 +11,21 @@ GoRouter는 Flutter의 Navigator 2.0 API를 기반으로 한 선언적 라우팅
 ```yaml
 # pubspec.yaml
 dependencies:
-  go_router: ^14.0.0
+  go_router: ^16.0.0
 ```
+
+### Migration Notes (v14 → v16)
+
+**Breaking Changes:**
+- `GoRouterState.subloc` has been removed. Use `GoRouterState.uri.path` instead.
+- `GoRouter.routeInformationParser` and `GoRouter.routeInformationProvider` are now deprecated. The router handles these internally.
+- Shell route builders now use `StatefulNavigationShell` instead of just `NavigationShell` for better state management.
+- `GoRoute.redirect` callback signature changed: context parameter is now nullable.
+
+**New Features:**
+- Improved performance for large route trees
+- Better type safety with route parameters
+- Enhanced ShellRoute state preservation
 
 ## 기본 설정
 
@@ -331,6 +344,9 @@ final appRouter = GoRouter(
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+// RouteNames는 프로젝트에서 정의 (route_names.dart 참조)
+// import 'package:your_app/core/router/route_names.dart';
+
 class MainShell extends StatelessWidget {
   final Widget child;
 
@@ -531,12 +547,18 @@ GoRouter createRouter(AuthBloc authBloc) {
 }
 
 // Stream을 Listenable로 변환
+/// GoRouterRefreshStream - 인증 상태 변화 시 라우터 새로고침
+///
+/// ⚠️ 메모리 관리 주의사항:
+/// - GoRouter가 dispose될 때 refreshListenable의 dispose가 자동 호출됨
+/// - 앱 전체 생명주기 동안 유지되므로 일반적으로 문제없음
+/// - 만약 GoRouter를 동적으로 생성/삭제한다면 수동 dispose 필요
 class GoRouterRefreshStream extends ChangeNotifier {
+  late final StreamSubscription<dynamic> _subscription;
+
   GoRouterRefreshStream(Stream<dynamic> stream) {
     _subscription = stream.listen((_) => notifyListeners());
   }
-
-  late final StreamSubscription<dynamic> _subscription;
 
   @override
   void dispose() {
@@ -771,6 +793,7 @@ class AuthBloc extends BaseBloc<AuthEvent, AuthState, AuthEffect> {
 ### BlocListener에서 네비게이션
 
 ```dart
+// 방법 1: 표준 BlocListener 사용 (State 변화 감지)
 BlocListener<AuthBloc, AuthState>(
   listenWhen: (prev, curr) => prev.isAuthenticated != curr.isAuthenticated,
   listener: (context, state) {
@@ -781,18 +804,34 @@ BlocListener<AuthBloc, AuthState>(
   child: ...
 )
 
-// Effect 기반 네비게이션
-BlocEffectListener<AuthBloc, AuthEffect>(
-  listener: (context, effect) {
+// 방법 2: Effect 기반 네비게이션 (BlocUiEffect.md 패턴)
+// BlocEffectListener는 커스텀 위젯입니다.
+// core/BlocUiEffect.md의 패턴과 함께 사용하거나 아래 대안을 사용하세요.
+
+// 대안 2-1: 표준 BlocListener로 Effect 처리
+BlocListener<AuthBloc, AuthState>(
+  listenWhen: (previous, current) => previous.effect != current.effect,
+  listener: (context, state) {
+    final effect = state.effect;
+    if (effect == null) return;
+
+    // Effect 처리
     switch (effect) {
       case NavigateToHome():
         context.go('/home');
       case NavigateToLogin():
         context.go('/login');
     }
+
+    // Effect 소비 후 초기화 (필요시)
+    context.read<AuthBloc>().add(const AuthEvent.clearEffect());
   },
   child: ...
 )
+
+// 대안 2-2: BaseBloc의 effectStream 사용
+// BlocUiEffect.md의 BaseBloc 패턴 참조
+// effectStream을 직접 구독하여 일회성 이벤트 처리
 ```
 
 ## 전체 Router 예시
@@ -915,6 +954,16 @@ class AppRouter {
           name: RouteNames.productDetail,
           builder: (context, state) {
             final id = state.pathParameters['id']!;
+            // Product 클래스는 프로젝트에서 정의해야 합니다.
+            // 예시:
+            // @freezed
+            // class Product with _$Product {
+            //   const factory Product({
+            //     required String id,
+            //     required String name,
+            //     required int price,
+            //   }) = _Product;
+            // }
             final product = state.extra as Product?;
             return ProductDetailScreen(
               productId: id,
@@ -974,6 +1023,147 @@ void main() {
 }
 ```
 
+## 타입 안전한 라우팅 (선택적)
+
+대규모 프로젝트에서는 `go_router_builder`를 사용한 타입 안전 라우팅을 권장합니다. 이를 통해 컴파일 타임에 경로와 파라미터 오류를 방지할 수 있습니다.
+
+### 설치
+
+```yaml
+# pubspec.yaml
+dependencies:
+  go_router: ^16.0.0
+
+dev_dependencies:
+  go_router_builder: ^2.7.0
+  build_runner: ^2.4.0
+```
+
+### 라우트 정의
+
+```dart
+// lib/core/router/app_routes.dart
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+part 'app_routes.g.dart';
+
+// 파라미터 없는 라우트
+@TypedGoRoute<HomeRoute>(path: '/home')
+class HomeRoute extends GoRouteData {
+  const HomeRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const HomeScreen();
+  }
+}
+
+// Path 파라미터가 있는 라우트
+@TypedGoRoute<ProductRoute>(path: '/product/:id')
+class ProductRoute extends GoRouteData {
+  final String id;
+
+  const ProductRoute({required this.id});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return ProductScreen(productId: id);
+  }
+}
+
+// Query 파라미터가 있는 라우트
+@TypedGoRoute<SearchRoute>(path: '/search')
+class SearchRoute extends GoRouteData {
+  final String? query;
+  final int? page;
+
+  const SearchRoute({this.query, this.page});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return SearchScreen(
+      query: query ?? '',
+      page: page ?? 1,
+    );
+  }
+}
+
+// 중첩 라우트
+@TypedGoRoute<UserRoute>(
+  path: '/user/:userId',
+  routes: [
+    TypedGoRoute<UserPostsRoute>(path: 'posts'),
+    TypedGoRoute<UserSettingsRoute>(path: 'settings'),
+  ],
+)
+class UserRoute extends GoRouteData {
+  final String userId;
+
+  const UserRoute({required this.userId});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return UserScreen(userId: userId);
+  }
+}
+
+class UserPostsRoute extends GoRouteData {
+  final String userId;
+
+  const UserPostsRoute({required this.userId});
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return UserPostsScreen(userId: userId);
+  }
+}
+```
+
+### 코드 생성
+
+```bash
+# 라우트 코드 생성
+flutter pub run build_runner build --delete-conflicting-outputs
+
+# Watch 모드 (자동 재생성)
+flutter pub run build_runner watch --delete-conflicting-outputs
+```
+
+### 사용 예시
+
+```dart
+// 타입 안전한 네비게이션
+const HomeRoute().go(context);
+ProductRoute(id: '123').push(context);
+SearchRoute(query: 'flutter', page: 2).go(context);
+
+// URL 생성
+final url = ProductRoute(id: '123').location;  // "/product/123"
+
+// 기존 방식과 혼용 가능
+context.go('/legacy-route');
+```
+
+### GoRouter 연동
+
+```dart
+// lib/core/router/app_router.dart
+import 'app_routes.dart';
+
+final appRouter = GoRouter(
+  routes: $appRoutes,  // 생성된 라우트 사용
+  // ... 기타 설정
+);
+```
+
+### 장점
+
+- **컴파일 타임 안전성**: 잘못된 경로나 파라미터를 컴파일 단계에서 감지
+- **자동완성**: IDE에서 라우트와 파라미터 자동완성 지원
+- **리팩토링 용이**: 라우트 이름 변경 시 모든 참조가 자동 업데이트
+- **명확한 타입**: 파라미터 타입이 명확하여 런타임 오류 감소
+
 ## 체크리스트
 
 - [ ] go_router 패키지 설치
@@ -985,3 +1175,4 @@ void main() {
 - [ ] 에러 페이지 구현
 - [ ] 페이지 전환 애니메이션 커스터마이징 (필요시)
 - [ ] Bloc과 연동하여 네비게이션 Effect 처리
+- [ ] 타입 안전한 라우팅 적용 (대규모 프로젝트)

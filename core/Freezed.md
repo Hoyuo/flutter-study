@@ -302,6 +302,16 @@ final cleared = profile.copyWith(bio: null);  // Profile(name: 'John', bio: null
 
 ## 5. Union 타입 (sealed class)
 
+### Dart 3 sealed class vs Freezed Union
+
+| 항목 | Dart 3 sealed class | Freezed Union |
+|------|---------------------|---------------|
+| 코드 생성 | 불필요 | 필요 (build_runner) |
+| copyWith | 수동 구현 | 자동 생성 |
+| JSON 직렬화 | 수동 구현 | json_serializable 통합 |
+| when/map 메서드 | switch expression 사용 | 자동 생성 |
+| 추천 상황 | 단순한 상태 분기 | 복잡한 데이터 모델 |
+
 ### 기본 Union 타입
 
 ```dart

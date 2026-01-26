@@ -692,10 +692,12 @@ class SystemSettingsObserver extends WidgetsBindingObserver {
   }
 
   @override
-  void didChangeTextScaleFactor() {
-    // 텍스트 크기 변경
+  void didChangeMetrics() {
+    // 텍스트 크기, 화면 크기 등 메트릭 변경
+    // Flutter 3.16+: didChangeTextScaleFactor 대신 didChangeMetrics 사용
     final textScaleFactor = WidgetsBinding.instance.platformDispatcher.textScaleFactor;
-    print('Text scale factor changed: $textScaleFactor');
+    print('Metrics changed - text scale factor: $textScaleFactor');
+    // 위젯에서 context가 있는 경우: MediaQuery.textScalerOf(context) 사용 권장
   }
 
   @override
