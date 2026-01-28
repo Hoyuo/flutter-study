@@ -1,0 +1,38 @@
+# Claude Code / AI tooling
+.claude/
+.omc/
+.todos/
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Flutter/Dart
+.dart_tool/
+.packages
+build/
+*.lock
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+
+# Generated files
+*.g.dart
+*.freezed.dart
+*.gr.dart
+*.config.dart
+
+# Firebase
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
