@@ -71,13 +71,13 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 ### 의존성 추가
 
 ```yaml
-# pubspec.yaml
+# pubspec.yaml (2026년 1월 기준)
 dependencies:
-  flutter_bloc: ^9.1.1  # 2026년 1월 기준 최신
-  equatable: ^2.0.5
+  flutter_bloc: ^9.1.1  # 9.x 최신 stable
+  equatable: ^2.0.8
 
 dev_dependencies:
-  bloc_test: ^9.1.5
+  bloc_test: ^10.0.0    # bloc ^9.0.0 호환
 ```
 
 > **v9.0.0 주요 변경사항 (2025년):**
@@ -866,19 +866,22 @@ MultiBlocListener(
 
 ```yaml
 dev_dependencies:
-  bloc_test: ^9.1.5
-  mocktail: ^1.0.1
+  bloc_test: ^10.0.0
+  mockito: ^5.6.3
+  build_runner: ^2.4.0
 ```
 
 ### Mock 생성
 
 ```dart
-import 'package:mocktail/mocktail.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
 
-class MockAuthRepository extends Mock implements AuthRepository {}
+@GenerateMocks([AuthRepository])
+void main() {}
 
-class FakeLoginEvent extends Fake implements LoginEvent {}
-class FakeLoginState extends Fake implements LoginState {}
+// 생성된 MockAuthRepository는 'test_file.mocks.dart' 파일에서 사용
+// flutter pub run build_runner build 실행 필요
 ```
 
 ### blocTest 사용
@@ -886,14 +889,12 @@ class FakeLoginState extends Fake implements LoginState {}
 ```dart
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
 
+@GenerateMocks([AuthRepository])
 void main() {
   late MockAuthRepository mockAuthRepository;
-
-  setUpAll(() {
-    registerFallbackValue(FakeLoginEvent());
-    registerFallbackValue(FakeLoginState());
-  });
 
   setUp(() {
     mockAuthRepository = MockAuthRepository();
@@ -911,9 +912,9 @@ void main() {
     blocTest<LoginBloc, LoginState>(
       'LoginSubmitted 성공 시 status가 success로 변경',
       setUp: () {
-        when(() => mockAuthRepository.login(
-          email: any(named: 'email'),
-          password: any(named: 'password'),
+        when(mockAuthRepository.login(
+          email: anyNamed('email'),
+          password: anyNamed('password'),
         )).thenAnswer((_) async => User(id: '1', name: 'Test'));
       },
       build: () => LoginBloc(authRepository: mockAuthRepository),
@@ -926,7 +927,7 @@ void main() {
         LoginState.initial().copyWith(status: LoginStatus.success),
       ],
       verify: (_) {
-        verify(() => mockAuthRepository.login(
+        verify(mockAuthRepository.login(
           email: 'test@test.com',
           password: 'password123',
         )).called(1);
@@ -936,9 +937,9 @@ void main() {
     blocTest<LoginBloc, LoginState>(
       'LoginSubmitted 실패 시 status가 failure로 변경',
       setUp: () {
-        when(() => mockAuthRepository.login(
-          email: any(named: 'email'),
-          password: any(named: 'password'),
+        when(mockAuthRepository.login(
+          email: anyNamed('email'),
+          password: anyNamed('password'),
         )).thenThrow(Exception('Invalid credentials'));
       },
       build: () => LoginBloc(authRepository: mockAuthRepository),
@@ -964,7 +965,7 @@ void main() {
 blocTest<DataBloc, DataState>(
   'Stream 데이터 처리',
   setUp: () {
-    when(() => mockRepository.dataStream).thenAnswer(
+    when(mockRepository.dataStream).thenAnswer(
       (_) => Stream.fromIterable([
         Data(id: '1'),
         Data(id: '2'),
@@ -988,8 +989,8 @@ blocTest<DataBloc, DataState>(
 testWidgets('LoginPage 테스트', (tester) async {
   final mockBloc = MockLoginBloc();
 
-  when(() => mockBloc.state).thenReturn(LoginState.initial());
-  when(() => mockBloc.stream).thenAnswer(
+  when(mockBloc.state).thenReturn(LoginState.initial());
+  when(mockBloc.stream).thenAnswer(
     (_) => Stream.value(LoginState.initial()),
   );
 
@@ -1018,7 +1019,7 @@ testWidgets('LoginPage 테스트', (tester) async {
   await tester.tap(find.byType(ElevatedButton));
 
   // 이벤트 발생 확인
-  verify(() => mockBloc.add(const LoginSubmitted(
+  verify(mockBloc.add(const LoginSubmitted(
     email: 'test@test.com',
     password: 'password123',
   ))).called(1);

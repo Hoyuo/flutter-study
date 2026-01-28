@@ -31,20 +31,22 @@ class HomeBloc {
 ### 2.1 의존성 추가
 
 ```yaml
-# pubspec.yaml
+# pubspec.yaml (2026년 1월 기준)
 dependencies:
   get_it: ^9.2.0          # 2026년 1월 기준 최신
-  injectable: ^2.7.1      # get_it 9.x 호환
+  injectable: ^2.7.1      # get_it >=8.3.0 <10.0.0 호환
 
 dev_dependencies:
-  injectable_generator: ^2.6.1
-  build_runner: ^2.4.7
+  injectable_generator: ^2.12.0
+  build_runner: ^2.10.5
 ```
 
-> **get_it v9.0.0 주요 변경사항:**
-> - `registerLazySingleton` 비동기 초기화 개선
-> - `pushNewScope` / `popScope` API 변경
-> - `onDispose` 콜백 시그니처 업데이트
+> **get_it v9.0.0+ 주요 변경사항:**
+> - Dart 3.0 이상 필수
+> - `registerLazySingletonAsync` 추가
+> - Scope 관리 API 개선 (`pushNewScope`, `popScope`)
+> - `onDispose` 콜백에서 비동기 dispose 지원
+> - 성능 최적화 및 메모리 관리 개선
 
 ### 2.2 Feature 모듈 구조
 
@@ -477,11 +479,12 @@ void main() async {
 ```dart
 // test/helpers/test_injection.dart
 import 'package:get_it/get_it.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
 
-class MockHomeRepository extends Mock implements HomeRepository {}
-class MockGetHomeDataUseCase extends Mock implements GetHomeDataUseCase {}
+import 'test_injection.mocks.dart';
 
+@GenerateMocks([HomeRepository, GetHomeDataUseCase])
 void setupTestDependencies() {
   final getIt = GetIt.instance;
 

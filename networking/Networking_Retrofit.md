@@ -35,18 +35,24 @@ Retrofit은 어노테이션 기반으로 HTTP API를 정의하는 타입 안전�
 ### 2.1 의존성 추가
 
 ```yaml
-# pubspec.yaml
+# pubspec.yaml (2026년 1월 기준)
 dependencies:
-  dio: ^5.7.0
-  retrofit: ^4.4.0
-  json_annotation: ^4.8.0
-  fpdart: ^1.1.0
+  dio: ^5.9.0
+  retrofit: ^4.9.2
+  json_annotation: ^4.9.0
+  fpdart: ^1.2.0
 
 dev_dependencies:
-  retrofit_generator: ^8.1.0
-  json_serializable: ^6.7.0
-  build_runner: ^2.4.0
+  retrofit_generator: ^10.2.1
+  json_serializable: ^6.11.4
+  build_runner: ^2.10.5
 ```
+
+> **retrofit 4.9.0+ 주요 변경사항:**
+> - `@BodyExtra` 어노테이션: 요청 body에 개별 필드 추가
+> - `CallAdapters`: 반환 타입 변환 지원
+> - lean_builder 실험적 지원 (빌드 속도 향상)
+> - Dart 3.8 이상 필수
 
 ### 2.2 프로젝트 구조
 
@@ -518,8 +524,9 @@ class HomeRepositoryImpl implements HomeRepository {
     final error = e.error;
 
     // NetworkException이 있으면 사용
+    // 주의: when()은 모든 케이스 필수, 일부만 처리하려면 maybeWhen() 사용
     if (error is NetworkException) {
-      return error.when(
+      return error.maybeWhen(
         noConnection: () => const HomeFailure.network(),
         timeout: () => const HomeFailure.network(),
         unauthorized: () => const HomeFailure.unauthorized(),
@@ -553,10 +560,11 @@ class HomeRepositoryImpl implements HomeRepository {
 
 ```dart
 // test/mocks/mocks.dart
-import 'package:mocktail/mocktail.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
 
-class MockHomeApi extends Mock implements HomeApi {}
-class MockHomeRemoteDataSource extends Mock implements HomeRemoteDataSource {}
+@GenerateMocks([HomeApi, HomeRemoteDataSource])
+import 'mocks.mocks.dart';
 ```
 
 ### 8.2 DataSource 테스트
@@ -564,7 +572,7 @@ class MockHomeRemoteDataSource extends Mock implements HomeRemoteDataSource {}
 ```dart
 // test/data/datasources/home_remote_datasource_test.dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:mockito/mockito.dart';
 
 import '../../fixtures/home_fixture.dart';
 import '../../mocks/mocks.dart';
@@ -582,7 +590,7 @@ void main() {
     test('API 호출 성공 시 HomeDto 반환', () async {
       // Arrange
       final expected = HomeFixture.homeDto;
-      when(() => mockApi.getHomeData())
+      when(mockApi.getHomeData())
           .thenAnswer((_) async => expected);
 
       // Act
@@ -590,7 +598,7 @@ void main() {
 
       // Assert
       expect(result, expected);
-      verify(() => mockApi.getHomeData()).called(1);
+      verify(mockApi.getHomeData()).called(1);
     });
   });
 
@@ -598,7 +606,7 @@ void main() {
     test('페이지네이션 파라미터가 올바르게 전달됨', () async {
       // Arrange
       final expected = HomeFixture.homeItemsResponse;
-      when(() => mockApi.getHomeItems(any(), any()))
+      when(mockApi.getHomeItems(any, any))
           .thenAnswer((_) async => expected);
 
       // Act
@@ -606,7 +614,7 @@ void main() {
 
       // Assert
       expect(result, expected);
-      verify(() => mockApi.getHomeItems(2, 10)).called(1);
+      verify(mockApi.getHomeItems(2, 10)).called(1);
     });
   });
 }

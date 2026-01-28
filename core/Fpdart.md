@@ -54,10 +54,12 @@ Either 기반 에러 처리
 ### 2.1 의존성 추가
 
 ```yaml
-# pubspec.yaml
+# pubspec.yaml (2026년 1월 기준)
 dependencies:
-  fpdart: ^1.1.0
+  fpdart: ^1.2.0  # stable, v2.0 개발 중
 ```
+
+> **참고:** fpdart v2.0은 현재 개발 중 (`2.0.0-dev.x`)입니다. `Effect` 클래스 기반의 완전히 새로운 API를 제공합니다. 프로덕션에서는 1.x stable을 사용하세요.
 
 ## 3. Either
 
@@ -753,7 +755,11 @@ Future<Either<OrderFailure, Order>> createOrder(OrderParams params) async {
 // test/domain/usecases/get_user_usecase_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
+
+@GenerateMocks([UserRepository])
+import 'get_user_usecase_test.mocks.dart';
 
 void main() {
   late GetUserUseCase useCase;
@@ -768,7 +774,7 @@ void main() {
     test('성공 시 Right(User) 반환', () async {
       // Arrange
       final user = User(id: '1', name: 'Test');
-      when(() => mockRepository.getUser(any()))
+      when(mockRepository.getUser(any))
           .thenAnswer((_) async => Right(user));
 
       // Act
@@ -787,7 +793,7 @@ void main() {
 
     test('실패 시 Left(UserFailure) 반환', () async {
       // Arrange
-      when(() => mockRepository.getUser(any()))
+      when(mockRepository.getUser(any))
           .thenAnswer((_) async => const Left(UserFailure.notFound()));
 
       // Act
@@ -810,7 +816,7 @@ void main() {
 test('캐시에 사용자가 있으면 Some 반환', () {
   // Arrange
   final cachedUser = CachedUser()..odId = '1'..name = 'Test';
-  when(() => mockDatabase.getCachedUser('1'))
+  when(mockDatabase.getCachedUser('1'))
       .thenReturn(Some(cachedUser));
 
   // Act
@@ -826,7 +832,7 @@ test('캐시에 사용자가 있으면 Some 반환', () {
 
 test('캐시에 사용자가 없으면 None 반환', () {
   // Arrange
-  when(() => mockDatabase.getCachedUser('999'))
+  when(mockDatabase.getCachedUser('999'))
       .thenReturn(const None());
 
   // Act

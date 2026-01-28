@@ -11,21 +11,19 @@ GoRouter는 Flutter의 Navigator 2.0 API를 기반으로 한 선언적 라우팅
 ```yaml
 # pubspec.yaml
 dependencies:
-  go_router: ^16.0.0
+  go_router: ^17.0.1
 ```
 
-### Migration Notes (v14 → v16)
+### Migration Notes (v16 → v17)
 
 **Breaking Changes:**
-- `GoRouterState.subloc` has been removed. Use `GoRouterState.uri.path` instead.
-- `GoRouter.routeInformationParser` and `GoRouter.routeInformationProvider` are now deprecated. The router handles these internally.
-- Shell route builders now use `StatefulNavigationShell` instead of just `NavigationShell` for better state management.
-- `GoRoute.redirect` callback signature changed: context parameter is now nullable.
+- ShellRoute의 네비게이션 변경이 기본적으로 GoRouter의 observers에 알림을 보냅니다.
+- 최소 지원 버전: Flutter 3.32, Dart 3.8
 
 **New Features:**
-- Improved performance for large route trees
-- Better type safety with route parameters
-- Enhanced ShellRoute state preservation
+- `notifyRootObserver` 파라미터 추가 (ShellRouteBase, ShellRoute, StatefulShellRoute)
+- `onEnter` 콜백 블로킹 시 네비게이션 스택 손실 버그 수정
+- Shell route observer 통합 개선
 
 ## 기본 설정
 
@@ -1032,11 +1030,11 @@ void main() {
 ```yaml
 # pubspec.yaml
 dependencies:
-  go_router: ^16.0.0
+  go_router: ^17.0.1
 
 dev_dependencies:
   go_router_builder: ^2.7.0
-  build_runner: ^2.4.0
+  build_runner: ^2.10.5
 ```
 
 ### 라우트 정의

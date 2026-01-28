@@ -37,8 +37,9 @@
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  bloc_test: ^9.1.0
-  mocktail: ^1.0.0
+  bloc_test: ^10.0.0
+  mockito: ^5.6.3
+  build_runner: ^2.4.0  # mockito 코드 생성용
 ```
 
 ### 2.2 테스트 폴더 구조
@@ -71,40 +72,46 @@ features/{feature_name}/
         └── mocks.dart
 ```
 
-## 3. Mocktail 사용법
+## 3. Mockito 사용법
 
 ### 3.1 Mock 클래스 정의
 
 ```dart
 // test/mocks/mocks.dart
-import 'package:mocktail/mocktail.dart';
+import 'package:mockito/annotations.dart';
 import 'package:home/domain/domain.dart';
 import 'package:home/data/data.dart';
 
-// Repository Mock
-class MockHomeRepository extends Mock implements HomeRepository {}
-
-// DataSource Mock
-class MockHomeRemoteDataSource extends Mock implements HomeRemoteDataSource {}
-
-// UseCase Mock
-class MockGetHomeDataUseCase extends Mock implements GetHomeDataUseCase {}
+// Mock 생성 어노테이션
+@GenerateMocks([
+  HomeRepository,
+  HomeRemoteDataSource,
+  GetHomeDataUseCase,
+])
+void main() {}
 ```
 
-### 3.2 registerFallbackValue 설정
+**Mock 파일 생성:**
+
+```bash
+# Mock 파일 자동 생성
+flutter pub run build_runner build --delete-conflicting-outputs
+```
+
+이 명령어를 실행하면 `test/mocks/mocks.mocks.dart` 파일이 자동 생성됩니다.
+
+### 3.2 테스트 파일에서 Mock 사용
 
 ```dart
-// test/mocks/mocks.dart
-void setupMocks() {
-  // Freezed 클래스나 복잡한 객체는 fallback 등록 필요
-  registerFallbackValue(const HomeEvent.started());
-  registerFallbackValue(const HomeState.initial());
-}
+// test/domain/usecases/get_home_data_usecase_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import '../mocks/mocks.mocks.dart';  // 생성된 Mock 파일 import
 
-// 테스트 파일에서 사용
 void main() {
-  setUpAll(() {
-    setupMocks();
+  late MockHomeRepository mockRepository;
+
+  setUp(() {
+    mockRepository = MockHomeRepository();
   });
 }
 ```
@@ -113,19 +120,19 @@ void main() {
 
 ```dart
 // 성공 케이스
-when(() => mockRepository.getHomeData())
+when(mockRepository.getHomeData())
     .thenAnswer((_) async => Right(homeData));
 
 // 실패 케이스
-when(() => mockRepository.getHomeData())
+when(mockRepository.getHomeData())
     .thenAnswer((_) async => Left(const HomeFailure.network()));
 
 // Exception 발생
-when(() => mockDataSource.fetchData())
+when(mockDataSource.fetchData())
     .thenThrow(DioException(requestOptions: RequestOptions()));
 
 // 여러 번 호출 시 다른 결과
-when(() => mockRepository.getHomeData())
+when(mockRepository.getHomeData())
     .thenAnswer((_) async => Right(homeData1))
     .thenAnswer((_) async => Right(homeData2));
 ```
@@ -138,10 +145,10 @@ when(() => mockRepository.getHomeData())
 // test/domain/usecases/get_home_data_usecase_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:mockito/mockito.dart';
 import 'package:home/domain/domain.dart';
 
-import '../../mocks/mocks.dart';
+import '../../mocks/mocks.mocks.dart';
 import '../../fixtures/home_fixture.dart';
 
 void main() {
@@ -157,7 +164,7 @@ void main() {
     test('성공 시 HomeData 반환', () async {
       // Arrange
       final expected = HomeFixture.homeData;
-      when(() => mockRepository.getHomeData())
+      when(mockRepository.getHomeData())
           .thenAnswer((_) async => Right(expected));
 
       // Act
@@ -165,12 +172,12 @@ void main() {
 
       // Assert
       expect(result, Right(expected));
-      verify(() => mockRepository.getHomeData()).called(1);
+      verify(mockRepository.getHomeData()).called(1);
     });
 
     test('실패 시 HomeFailure 반환', () async {
       // Arrange
-      when(() => mockRepository.getHomeData())
+      when(mockRepository.getHomeData())
           .thenAnswer((_) async => const Left(HomeFailure.network()));
 
       // Act
@@ -189,12 +196,12 @@ void main() {
 // test/data/repositories/home_repository_impl_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:mockito/mockito.dart';
 import 'package:dio/dio.dart';
 import 'package:home/data/data.dart';
 import 'package:home/domain/domain.dart';
 
-import '../../mocks/mocks.dart';
+import '../../mocks/mocks.mocks.dart';
 import '../../fixtures/home_fixture.dart';
 
 void main() {
@@ -212,7 +219,7 @@ void main() {
     test('DataSource 성공 시 Entity 반환', () async {
       // Arrange
       final dto = HomeFixture.homeDto;
-      when(() => mockDataSource.getHomeData())
+      when(mockDataSource.getHomeData())
           .thenAnswer((_) async => dto);
 
       // Act
@@ -231,7 +238,7 @@ void main() {
 
     test('DioException 발생 시 Failure 반환', () async {
       // Arrange
-      when(() => mockDataSource.getHomeData()).thenThrow(
+      when(mockDataSource.getHomeData()).thenThrow(
         DioException(
           type: DioExceptionType.connectionError,
           requestOptions: RequestOptions(),
@@ -247,7 +254,7 @@ void main() {
 
     test('서버 에러(5xx) 시 server Failure 반환', () async {
       // Arrange
-      when(() => mockDataSource.getHomeData()).thenThrow(
+      when(mockDataSource.getHomeData()).thenThrow(
         DioException(
           type: DioExceptionType.badResponse,
           response: Response(
@@ -325,11 +332,11 @@ void main() {
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:mockito/mockito.dart';
 import 'package:home/domain/domain.dart';
 import 'package:home/presentation/presentation.dart';
 
-import '../../mocks/mocks.dart';
+import '../../mocks/mocks.mocks.dart';
 import '../../fixtures/home_fixture.dart';
 
 void main() {
@@ -348,7 +355,7 @@ void main() {
     blocTest<HomeBloc, HomeState>(
       'started 이벤트 시 loading → loaded 상태 변화',
       build: () {
-        when(() => mockUseCase())
+        when(mockUseCase())
             .thenAnswer((_) async => Right(HomeFixture.homeData));
         return HomeBloc(mockUseCase);
       },
@@ -358,14 +365,14 @@ void main() {
         HomeState.loaded(HomeFixture.homeData),
       ],
       verify: (_) {
-        verify(() => mockUseCase()).called(1);
+        verify(mockUseCase()).called(1);
       },
     );
 
     blocTest<HomeBloc, HomeState>(
       '실패 시 loading → error 상태 변화',
       build: () {
-        when(() => mockUseCase())
+        when(mockUseCase())
             .thenAnswer((_) async => const Left(HomeFailure.network()));
         return HomeBloc(mockUseCase);
       },
@@ -379,7 +386,7 @@ void main() {
     blocTest<HomeBloc, HomeState>(
       'refresh 이벤트 시 데이터 다시 로드',
       build: () {
-        when(() => mockUseCase())
+        when(mockUseCase())
             .thenAnswer((_) async => Right(HomeFixture.homeData));
         return HomeBloc(mockUseCase);
       },
@@ -400,7 +407,14 @@ void main() {
 // test/presentation/bloc/login_bloc_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
+
+@GenerateMocks([AuthRepository])
+void main() {}
+
+// 실제 테스트 파일
+import 'login_bloc_test.mocks.dart';
 
 void main() {
   late MockAuthRepository mockAuthRepo;
@@ -412,7 +426,7 @@ void main() {
   group('LoginBloc Effect', () {
     test('로그인 성공 시 NavigateToHome Effect 발행', () async {
       // Arrange
-      when(() => mockAuthRepo.login(any(), any()))
+      when(mockAuthRepo.login(any, any))
           .thenAnswer((_) async => Right(user));
 
       final bloc = LoginBloc(authRepository: mockAuthRepo);
@@ -430,7 +444,7 @@ void main() {
 
     test('로그인 실패 시 ShowErrorDialog Effect 발행', () async {
       // Arrange
-      when(() => mockAuthRepo.login(any(), any()))
+      when(mockAuthRepo.login(any, any))
           .thenAnswer((_) async => const Left(AuthFailure.invalidCredentials()));
 
       final bloc = LoginBloc(authRepository: mockAuthRepo);
@@ -516,10 +530,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:mockito/mockito.dart';
 import 'package:home/presentation/presentation.dart';
 
-import '../../mocks/mocks.dart';
+import '../../mocks/mocks.mocks.dart';
 import '../../fixtures/home_fixture.dart';
 
 class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
@@ -543,7 +557,7 @@ void main() {
   group('HomeScreen', () {
     testWidgets('initial 상태에서 빈 화면 표시', (tester) async {
       // Arrange
-      when(() => mockBloc.state).thenReturn(const HomeState.initial());
+      when(mockBloc.state).thenReturn(const HomeState.initial());
 
       // Act
       await tester.pumpWidget(buildWidget());
@@ -554,7 +568,7 @@ void main() {
 
     testWidgets('loading 상태에서 로딩 인디케이터 표시', (tester) async {
       // Arrange
-      when(() => mockBloc.state).thenReturn(const HomeState.loading());
+      when(mockBloc.state).thenReturn(const HomeState.loading());
 
       // Act
       await tester.pumpWidget(buildWidget());
@@ -565,7 +579,7 @@ void main() {
 
     testWidgets('loaded 상태에서 데이터 표시', (tester) async {
       // Arrange
-      when(() => mockBloc.state)
+      when(mockBloc.state)
           .thenReturn(HomeState.loaded(HomeFixture.homeData));
 
       // Act
@@ -578,7 +592,7 @@ void main() {
     testWidgets('error 상태에서 에러 메시지 표시', (tester) async {
       // Arrange
       const errorMessage = '에러가 발생했습니다.';
-      when(() => mockBloc.state)
+      when(mockBloc.state)
           .thenReturn(const HomeState.error(errorMessage));
 
       // Act
@@ -590,7 +604,7 @@ void main() {
 
     testWidgets('새로고침 버튼 탭 시 refresh 이벤트 발행', (tester) async {
       // Arrange
-      when(() => mockBloc.state)
+      when(mockBloc.state)
           .thenReturn(HomeState.loaded(HomeFixture.homeData));
 
       // Act
@@ -599,7 +613,7 @@ void main() {
       await tester.pump();
 
       // Assert
-      verify(() => mockBloc.add(const HomeEvent.refresh())).called(1);
+      verify(mockBloc.add(const HomeEvent.refresh())).called(1);
     });
   });
 }
@@ -724,7 +738,7 @@ blocTest<HomeBloc, HomeState>(
 test('로그인 성공 시 사용자 정보 반환', () async {
   // Arrange (준비)
   final expected = User(id: '1', name: 'Test');
-  when(() => mockRepo.login(any(), any()))
+  when(mockRepo.login(any, any))
       .thenAnswer((_) async => Right(expected));
 
   // Act (실행)
@@ -732,7 +746,7 @@ test('로그인 성공 시 사용자 정보 반환', () async {
 
   // Assert (검증)
   expect(result, Right(expected));
-  verify(() => mockRepo.login('test@test.com', '1234')).called(1);
+  verify(mockRepo.login('test@test.com', '1234')).called(1);
 });
 ```
 

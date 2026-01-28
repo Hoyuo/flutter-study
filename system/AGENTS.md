@@ -103,7 +103,7 @@ blocTest<UserBloc, UserState>(
 
 - `flutter_test` - Testing Framework
 - `bloc_test` - Bloc Testing
-- `mocktail` - Mocking
+- `mockito` - Mocking
 - `logger` - 구조화된 로깅
 - `firebase_crashlytics` - 크래시 리포팅
 - `sentry_flutter` - 에러 모니터링

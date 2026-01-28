@@ -45,7 +45,7 @@ flutter_secure_storage는 플랫폼별 보안 저장소(iOS Keychain, Android Ke
 ```yaml
 # pubspec.yaml
 dependencies:
-  flutter_secure_storage: ^9.0.0
+  flutter_secure_storage: ^10.0.0
   crypto: ^3.0.0
   pointycastle: ^3.7.0
 ```
@@ -434,7 +434,7 @@ class RSAKeyPair {
 ```yaml
 # pubspec.yaml
 dependencies:
-  dio: ^5.0.0
+  dio: ^5.9.0
   dio_http2_adapter: ^2.0.0
 ```
 

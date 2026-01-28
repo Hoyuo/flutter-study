@@ -11,28 +11,29 @@ Firebase Cloud Messaging(FCM)과 flutter_local_notifications를 조합하여 푸
 ```yaml
 # pubspec.yaml
 dependencies:
-  firebase_core: ^3.0.0
-  firebase_messaging: ^15.0.0
-  flutter_local_notifications: ^19.0.0
+  firebase_core: ^4.4.0
+  firebase_messaging: ^16.1.1
+  flutter_local_notifications: ^20.0.0
 ```
 
-### Migration Notes (v18 → v19)
+### Migration Notes (firebase_messaging v15 → v16, flutter_local_notifications v19 → v20)
 
-**Breaking Changes:**
-- **Notification Channels (Android)**: Channel importance levels now strictly follow Android guidelines. Some importance levels may behave differently.
-- **iOS Notification Attachments**: Attachment handling improved but requires explicit file path validation. URLs must be local file paths, not remote URLs.
-- **Permission Handling**: `requestPermission()` on iOS now returns more detailed authorization status including provisional and ephemeral states.
+**firebase_messaging v16 Breaking Changes:**
+- Deprecated functions 제거
+- iOS SDK 12.0.0으로 업그레이드 (breaking)
+- Android SDK 34.0.0으로 업그레이드 (breaking)
+- iOS 18 알림 처리 및 scene delegate 지원 개선
 
-**API Changes:**
-- `AndroidInitializationSettings` now requires explicit icon resource validation at initialization.
-- `DarwinNotificationDetails.subtitle` parameter renamed for consistency with iOS terminology.
-- Background notification handling callback signature updated to include `NotificationResponse` instead of raw payload strings.
+**flutter_local_notifications v20 Breaking Changes:**
+- Android 15 (API 35) 대응 업데이트
+- `AndroidNotificationDetails` 생성자 파라미터 변경
+- iOS 권한 요청 API 세분화
 
 **New Features:**
-- Android 14 notification permission support with better UX
-- Improved notification grouping and summary management
-- Enhanced badge count handling for iOS
-- Better support for notification actions and interactive notifications
+- Android 15 notification permission 지원
+- iOS 18 알림 처리 개선
+- Scene delegate 지원 강화
+- 향상된 알림 그룹화 및 요약 관리
 
 ### Firebase 프로젝트 설정
 

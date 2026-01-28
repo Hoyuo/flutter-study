@@ -114,16 +114,33 @@ class User with _$User {
 ### 의존성 추가
 
 ```yaml
-# pubspec.yaml
+# pubspec.yaml (2026년 1월 기준)
 dependencies:
-  freezed_annotation: ^2.4.1
-  json_annotation: ^4.8.1
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.9.0
 
 dev_dependencies:
-  build_runner: ^2.4.6
-  freezed: ^2.4.5
-  json_serializable: ^6.7.1
+  build_runner: ^2.10.5
+  freezed: ^3.2.4
+  json_serializable: ^6.11.4
 ```
+
+> **Freezed 3.0 주요 변경사항 (2025년):**
+> - **상속(extends) 지원**: Freezed 클래스가 다른 클래스를 상속 가능
+> - **비상수 기본값**: `@Default`에서 non-constant 값 사용 가능
+> - **Mixed mode**: Factory와 일반 생성자 혼합 가능
+> - Dart 3.6.0 이상 필수
+>
+> ```dart
+> // Freezed 3.0 상속 예시
+> @freezed
+> class Person extends Entity with _$Person {
+>   const factory Person({
+>     required String name,
+>     required super.id,  // 상속된 필드!
+>   }) = _Person;
+> }
+> ```
 
 ### 코드 생성 명령어
 

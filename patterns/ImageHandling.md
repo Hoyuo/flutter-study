@@ -11,13 +11,13 @@
 ```yaml
 # pubspec.yaml
 dependencies:
-  cached_network_image: ^3.3.0
+  cached_network_image: ^3.4.1
   image_picker: ^1.0.0
   image_cropper: ^8.0.0  # 2026년 1월 기준 최신 버전
   flutter_image_compress: ^2.1.0
   http_parser: ^4.0.0  # multipart 업로드용
   shimmer: ^3.0.0
-  permission_handler: ^11.0.0  # 추가 필수!
+  permission_handler: ^12.0.1  # 2026년 1월 기준 최신 버전
   path: ^1.8.0  # 경로 처리용
   device_info_plus: ^12.3.0  # 2026년 1월 기준 최신 버전
 ```

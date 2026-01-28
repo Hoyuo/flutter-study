@@ -11,7 +11,7 @@ permission_handler는 Flutter에서 iOS와 Android의 런타임 권한을 통합
 ```yaml
 # pubspec.yaml
 dependencies:
-  permission_handler: ^12.0.0
+  permission_handler: ^12.0.1
 ```
 
 ### Migration Notes (v11 → v12)
@@ -114,9 +114,10 @@ end
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
-  <!-- 사진/비디오 (Android 13+) -->
+  <!-- 미디어 (Android 13+) -->
   <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
   <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+  <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
 
   <!-- 위치 -->
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
@@ -896,10 +897,12 @@ void showLimitedAccessBanner() {
 
 ```dart
 // test/mocks/mock_permission_service.dart
-import 'package:mocktail/mocktail.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-class MockPermissionService extends Mock implements PermissionService {}
+@GenerateMocks([PermissionService])
+import 'mock_permission_service.mocks.dart';
 
 // 테스트
 void main() {
@@ -917,7 +920,7 @@ void main() {
   blocTest<PermissionBloc, PermissionState>(
     'should update status when permission granted',
     build: () {
-      when(() => mockPermissionService.request(Permission.camera))
+      when(mockPermissionService.request(Permission.camera))
           .thenAnswer((_) async => PermissionStatus.granted);
       return bloc;
     },

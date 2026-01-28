@@ -1,6 +1,6 @@
 # Flutter Local Storage Guide
 
-> 이 문서는 SharedPreferences, Isar, SecureStorage를 사용한 로컬 저장소 패턴을 설명합니다.
+> 이 문서는 SharedPreferences, Isar Plus, SecureStorage를 사용한 로컬 저장소 패턴을 설명합니다.
 
 ## 1. 개요
 
@@ -9,10 +9,8 @@
 | 저장소 | 용도 | 데이터 유형 | 보안 | 상태 |
 |--------|------|------------|------|------|
 | **SharedPreferences** | 간단한 설정값 | Key-Value (primitive) | 낮음 | ✅ 활발 (새 async API) |
-| **Isar** | 복잡한 구조화 데이터 | 객체/컬렉션 | 중간 | ⚠️ 개발 중단 |
+| **Isar Plus** | 복잡한 구조화 데이터 | 객체/컬렉션 | 중간 | ✅ 커뮤니티 포크 (원본 Isar 대체) |
 | **SecureStorage** | 민감한 정보 | Key-Value | 높음 (암호화) | ✅ 활발 (v10+) |
-| **Drift** | SQL 데이터베이스 | 관계형 테이블 | 중간 | ✅ 활발 (Isar 대체) |
-| **ObjectBox** | NoSQL 데이터베이스 | 객체/컬렉션 | 중간 | ✅ 활발 (Isar 대체) |
 
 ### 1.2 사용 시나리오
 
@@ -63,27 +61,21 @@ core/
 # core/core_storage/pubspec.yaml
 dependencies:
   # SharedPreferences - 최신 async API 지원
-  shared_preferences: ^2.3.3
+  shared_preferences: ^2.5.4
 
   # SecureStorage - v10+ 새로운 초기화 API
   flutter_secure_storage: ^10.0.0
 
-  # Isar - ⚠️ 개발 중단, 기존 프로젝트만 사용
-  isar: ^3.1.0
-  isar_flutter_libs: ^3.1.0
+  # Isar Plus - 커뮤니티 포크 (원본 Isar 개발 중단됨)
+  isar_plus: ^1.2.1
 
-  # 추천 대안: Drift (SQL) 또는 ObjectBox (NoSQL)
-  # drift: ^2.14.0  # SQL 래퍼, 타입 안전
-  # objectbox: ^2.4.0  # NoSQL, 고성능
-
-  injectable: ^2.4.1
+  injectable: ^2.7.1  # DI.md와 동일
   path_provider: ^2.1.2
 
 dev_dependencies:
-  isar_generator: ^3.1.0
-  build_runner: ^2.4.7
-  injectable_generator: ^2.6.1
-  # drift_dev: ^2.14.0  # Drift 사용 시
+  isar_plus_generator: ^1.2.1
+  build_runner: ^2.10.5
+  injectable_generator: ^2.12.0  # DI.md와 동일
 ```
 
 ## 3. SharedPreferences
@@ -498,15 +490,14 @@ abstract class PreferencesModule {
 }
 ```
 
-## 4. Isar Database
+## 4. Isar Plus Database
 
-### 4.0 ⚠️ Isar 개발 중단 - 대안 권장
+### 4.0 Isar Plus 소개
 
-> **🚨 중요 (2026년 1월 기준)**:
-> - Isar는 2024년 이후 **개발이 사실상 중단**되었습니다.
-> - 메인테이너의 활동이 중단되어 버그 수정 및 새 기능 추가가 없습니다.
-> - **새 프로젝트에는 Isar를 사용하지 마세요.**
-> - 기존 Isar 프로젝트는 동작하지만, 장기적으로 마이그레이션을 고려하세요.
+> **ℹ️ Isar Plus (2026년 1월 기준)**:
+> - 원본 Isar가 2024년 이후 개발 중단됨에 따라 커뮤니티에서 **Isar Plus**를 포크하여 유지보수하고 있습니다.
+> - `isar_plus: ^1.2.1` 사용을 권장합니다.
+> - 기존 Isar API와 호환되며, 버그 수정 및 Flutter 최신 버전 지원이 이루어지고 있습니다.
 
 #### 4.0.1 권장 대안
 
@@ -1428,10 +1419,12 @@ void main() {
 ```dart
 // test/mocks/mock_secure_storage.dart
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
 
-class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
+import 'mock_secure_storage.mocks.dart';
 
+@GenerateMocks([FlutterSecureStorage])
 void main() {
   late MockFlutterSecureStorage mockStorage;
   late TokenStorageImpl tokenStorage;
@@ -1443,9 +1436,9 @@ void main() {
 
   test('토큰 저장 및 조회', () async {
     // Arrange
-    when(() => mockStorage.write(key: any(named: 'key'), value: any(named: 'value')))
+    when(mockStorage.write(key: anyNamed('key'), value: anyNamed('value')))
         .thenAnswer((_) async {});
-    when(() => mockStorage.read(key: SecureStorageKeys.accessToken))
+    when(mockStorage.read(key: SecureStorageKeys.accessToken))
         .thenAnswer((_) async => 'test_token');
 
     // Act
@@ -1602,7 +1595,7 @@ class StorageMigration {
 ```yaml
 dependencies:
   # Key-Value 설정
-  shared_preferences: ^2.3.3  # Async API 사용
+  shared_preferences: ^2.5.4  # Async API 사용
 
   # 보안 저장소
   flutter_secure_storage: ^10.0.0  # v10 새 API
@@ -1611,12 +1604,12 @@ dependencies:
   drift: ^2.14.0  # SQL, 권장!
   # objectbox: ^2.4.0  # NoSQL 대안
 
-  injectable: ^2.4.1
+  injectable: ^2.7.1
   path_provider: ^2.1.2
 
 dev_dependencies:
   drift_dev: ^2.14.0  # Drift 사용 시
-  build_runner: ^2.4.7
+  build_runner: ^2.10.5
 ```
 
 ### 마이그레이션 체크리스트

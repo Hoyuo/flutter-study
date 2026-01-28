@@ -40,19 +40,19 @@ core/
 ### 2.1 의존성 추가
 
 ```yaml
-# core/core_network/pubspec.yaml
+# core/core_network/pubspec.yaml (2026년 1월 기준)
 dependencies:
-  dio: ^5.7.0  # 2024-2025 최신
+  dio: ^5.9.0
   pretty_dio_logger: ^1.4.0
   connectivity_plus: ^6.0.0  # List<ConnectivityResult> 반환
-  injectable: ^2.3.0
-  freezed_annotation: ^2.4.0
-  fpdart: ^1.1.0
+  injectable: ^2.7.1
+  freezed_annotation: ^3.1.0
+  fpdart: ^1.2.0
 
 dev_dependencies:
-  injectable_generator: ^2.4.0
-  build_runner: ^2.4.0
-  freezed: ^2.5.0
+  injectable_generator: ^2.12.0
+  build_runner: ^2.10.5
+  freezed: ^3.2.4
 ```
 
 ## 3. Dio Client 설정
@@ -742,13 +742,13 @@ class HomeRepositoryImpl implements HomeRepository {
   HomeFailure _mapDioError(DioException e) {
     final error = e.error;
 
+    // 주의: when()은 모든 케이스 필수, 일부만 처리하려면 maybeWhen() 사용
     if (error is NetworkException) {
-      return error.when(
+      return error.maybeWhen(
         noConnection: () => const HomeFailure.network(),
         timeout: () => const HomeFailure.network(),
         unauthorized: () => const HomeFailure.unauthorized(),
         serverError: (_, message) => HomeFailure.server(message ?? 'Server error'),
-        // ... 다른 케이스
         orElse: () => const HomeFailure.unknown(),
       );
     }

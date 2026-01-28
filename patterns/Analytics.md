@@ -9,13 +9,13 @@ Firebase Analytics와 Crashlytics를 통해 사용자 행동 분석, 크래시 �
 ### 의존성 추가
 
 ```yaml
-# pubspec.yaml
+# pubspec.yaml (2026년 1월 기준)
 dependencies:
-  firebase_core: ^3.8.0  # 2026년 1월 기준
-  firebase_analytics: ^11.3.0  # 2026년 1월 기준
-  firebase_crashlytics: ^4.3.0  # 2026년 1월 기준
-  firebase_performance: ^0.10.3  # 선택, 2026년 1월 기준
-  logger: ^2.0.0  # 개발용 로깅
+  firebase_core: ^4.4.0
+  firebase_analytics: ^12.1.1
+  firebase_crashlytics: ^5.0.7
+  firebase_performance: ^0.11.0  # 선택
+  logger: ^2.5.0  # 개발용 로깅
 ```
 
 **Firebase BoM (Bill of Materials) 호환성:**

@@ -33,10 +33,9 @@
 ```yaml
 # pubspec.yaml
 dependencies:
-  logger: ^2.0.0
-  firebase_crashlytics: ^3.5.0
-  sentry_flutter: ^8.0.0
-  dio: ^5.0.0
+  logger: ^2.5.0
+  firebase_crashlytics: ^5.0.7
+  dio: ^5.9.0
 
 dev_dependencies:
   flutter_test:
@@ -623,78 +622,6 @@ class CrashlyticsService {
   /// 커스텀 로그 기록
   static void log(String message) {
     FirebaseCrashlytics.instance.log(message);
-  }
-}
-```
-
-### Sentry 연동
-
-```dart
-// lib/core/logging/sentry_service.dart
-import 'package:sentry_flutter/sentry_flutter.dart';
-import 'package:flutter/foundation.dart';
-import 'app_logger.dart';
-
-class SentryService {
-  static Future<void> initialize({required String dsn}) async {
-    await SentryFlutter.init(
-      (options) {
-        options.dsn = dsn;
-        options.tracesSampleRate = kDebugMode ? 0.0 : 1.0;
-        options.enableAutoSessionTracking = !kDebugMode;
-        options.environment = kDebugMode ? 'development' : 'production';
-      },
-      appRunner: () {
-        // 앱 실행
-      },
-    );
-  }
-
-  /// 에러 기록
-  static Future<SentryId> captureException(
-    Object error,
-    StackTrace? stackTrace, {
-    String? message,
-  }) async {
-    final sentryId = await Sentry.captureException(
-      error,
-      stackTrace: stackTrace,
-    );
-
-    AppLogger.error(
-      '[Sentry] Exception captured: ${sentryId.toString()}',
-      error: error,
-      stackTrace: stackTrace,
-    );
-
-    return sentryId;
-  }
-
-  /// 메시지 기록
-  static Future<SentryId> captureMessage(
-    String message, {
-    SentryLevel level = SentryLevel.info,
-  }) async {
-    return await Sentry.captureMessage(message, level: level);
-  }
-
-  /// 사용자 정보 설정
-  static void setUser(String userId, {String? email, String? username}) {
-    Sentry.configureScope((scope) {
-      scope.setUser(SentryUser(
-        id: userId,
-        email: email,
-        username: username,
-      ));
-    });
-  }
-
-  /// 트랜잭션 시작
-  static ISentrySpan? startTransaction(
-    String name, {
-    String operation = 'http.client',
-  }) {
-    return Sentry.startTransaction(name, operation);
   }
 }
 ```
@@ -1343,7 +1270,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
 - [ ] 커스텀 Logger 클래스 구현
 - [ ] BlocObserver 등록
 - [ ] LoggingInterceptor 등록
-- [ ] Crashlytics/Sentry 초기화
+- [ ] Crashlytics 초기화
 - [ ] RemoteLogger 구현
 - [ ] LogRotation 설정
 - [ ] 프로덕션 로그 레벨 설정
@@ -1439,5 +1366,4 @@ await logRepo.deleteLogs(
 
 - [Logger 패키지](https://pub.dev/packages/logger)
 - [Firebase Crashlytics](https://firebase.google.com/docs/crashlytics)
-- [Sentry Flutter](https://docs.sentry.io/platforms/flutter/)
 - [Flutter 디버깅 가이드](https://flutter.dev/docs/testing/debugging)

@@ -45,16 +45,16 @@ Flutter 앱의 성능은 사용자 경험을 결정하는 핵심 요소입니다
 const 생성자는 위젯이 동일한 파라미터를 가질 때 메모리에서 재사용되므로 불필요한 rebuild를 방지합니다.
 
 ```dart
-// ✅ const 생성자 사용
+// ✅ const 생성자 사용 (Dart 2.17+ super parameters 권장)
 class ProductCard extends StatelessWidget {
   final String title;
   final String price;
 
   const ProductCard({
-    Key? key,
+    super.key,  // Dart 2.17+ 권장 패턴
     required this.title,
     required this.price,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -378,7 +378,7 @@ class CartState with _$CartState {
 ```dart
 // pubspec.yaml
 dependencies:
-  cached_network_image: ^3.2.3
+  cached_network_image: ^3.4.1
 
 // ✅ 이미지 캐싱 (URL 기반)
 class CachedProductImage extends StatelessWidget {

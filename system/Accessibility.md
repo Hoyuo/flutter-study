@@ -595,7 +595,9 @@ class ResponsiveText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    // Flutter 3.16+: textScaleFactor deprecated → textScalerOf 사용
+    final textScaler = MediaQuery.textScalerOf(context);
+    final textScaleFactor = textScaler.textScaleFactor;
     final scale = maxScale != null ? min(textScaleFactor, maxScale!) : textScaleFactor;
 
     return Text(
@@ -611,7 +613,9 @@ class ResponsiveText extends StatelessWidget {
 class ResponsiveLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    // Flutter 3.16+: textScaleFactor deprecated → textScalerOf 사용
+    final textScaler = MediaQuery.textScalerOf(context);
+    final textScaleFactor = textScaler.textScaleFactor;
 
     // 텍스트 크기가 크면 vertical 레이아웃으로 변경
     final isLargeText = textScaleFactor > 1.3;
