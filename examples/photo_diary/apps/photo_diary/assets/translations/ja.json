@@ -1,0 +1,74 @@
+{
+  "app": {
+    "name": "フォト日記"
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "confirm": "確認",
+    "error": "エラー",
+    "loading": "読み込み中...",
+    "retry": "再試行"
+  },
+  "auth": {
+    "login": "ログイン",
+    "register": "新規登録",
+    "logout": "ログアウト",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "confirm_password": "パスワード確認",
+    "name": "名前",
+    "forgot_password": "パスワードをお忘れですか",
+    "biometric_title": "生体認証が必要です",
+    "biometric_description": "アプリを使用するには生体認証が必要です",
+    "biometric_not_available": "生体認証は利用できません",
+    "biometric_failed": "生体認証に失敗しました",
+    "biometric_error": "生体認証中にエラーが発生しました",
+    "biometric_reason": "アプリのロックを解除するには認証してください",
+    "authenticating": "認証中...",
+    "retry_biometric": "再試行"
+  },
+  "diary": {
+    "title": "日記",
+    "new_diary": "新しい日記",
+    "edit_diary": "日記を編集",
+    "delete_diary": "日記を削除",
+    "title_hint": "タイトルを入力してください",
+    "content_hint": "内容を入力してください",
+    "no_entries": "日記がありません",
+    "delete_confirm": "この日記を削除しますか？",
+    "saved": "保存されました",
+    "deleted": "削除されました"
+  },
+  "settings": {
+    "title": "設定",
+    "theme": "テーマ",
+    "theme_system": "システム設定",
+    "theme_light": "ライトモード",
+    "theme_dark": "ダークモード",
+    "language": "言語",
+    "notifications": "通知",
+    "push_notifications": "プッシュ通知",
+    "biometric_lock": "生体認証ロック",
+    "version": "バージョン"
+  },
+  "weather": {
+    "title": "天気",
+    "loading": "天気情報を取得中...",
+    "error": "天気情報を取得できません",
+    "humidity": "湿度"
+  },
+  "search": {
+    "title": "検索",
+    "hint": "日記を検索...",
+    "no_results": "検索結果がありません"
+  },
+  "validation": {
+    "required": "必須入力項目です",
+    "email_invalid": "正しいメール形式ではありません",
+    "password_too_short": "パスワードは6文字以上必要です",
+    "password_mismatch": "パスワードが一致しません"
+  }
+}

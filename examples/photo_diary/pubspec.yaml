@@ -1,0 +1,13 @@
+name: photo_diary_workspace
+publish_to: none
+
+environment:
+  sdk: '>=3.8.0 <4.0.0'
+
+workspace:
+  - apps/photo_diary
+  - packages/core
+  - packages/auth
+  - packages/diary
+  - packages/weather
+  - packages/settings

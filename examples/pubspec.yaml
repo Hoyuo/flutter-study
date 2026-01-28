@@ -1,0 +1,187 @@
+# Flutter Clean Architecture - 통합 pubspec.yaml 예시
+# 2026년 1월 기준 최신 버전 (pub.dev 검증 완료)
+#
+# 이 파일은 모든 참조 문서의 패키지를 통합한 예시입니다.
+# 프로젝트에 필요한 패키지만 선택하여 사용하세요.
+
+name: flutter_clean_architecture
+description: Flutter Clean Architecture Example
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.8.0 <4.0.0'
+  flutter: '>=3.32.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # ============================================================
+  # Core - 상태관리, 함수형 프로그래밍, 코드 생성
+  # ============================================================
+
+  # Bloc (상태관리) - core/Bloc.md
+  flutter_bloc: ^9.1.1
+  equatable: ^2.0.8
+
+  # Freezed (불변 데이터 클래스) - core/Freezed.md
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.9.0
+
+  # fpdart (함수형 프로그래밍) - core/Fpdart.md
+  fpdart: ^1.2.0
+
+  # ============================================================
+  # Infrastructure - DI, 로컬 저장소, 환경 설정
+  # ============================================================
+
+  # DI (의존성 주입) - infrastructure/DI.md
+  get_it: ^9.2.0
+  injectable: ^2.7.1
+
+  # LocalStorage - infrastructure/LocalStorage.md
+  shared_preferences: ^2.5.4
+  flutter_secure_storage: ^10.0.0
+  isar_plus: ^1.2.1  # 커뮤니티 포크 (원본 Isar 개발 중단)
+  path_provider: ^2.1.2
+
+  # Environment - infrastructure/Environment.md
+  flutter_dotenv: ^5.1.0
+
+  # ============================================================
+  # Networking - HTTP 클라이언트, API
+  # ============================================================
+
+  # Dio - networking/Networking_Dio.md
+  dio: ^5.9.0
+  pretty_dio_logger: ^1.4.0
+  connectivity_plus: ^6.0.0
+
+  # Retrofit - networking/Networking_Retrofit.md
+  retrofit: ^4.9.2
+
+  # ============================================================
+  # Features - 네비게이션, 푸시알림, 권한, 다국어
+  # ============================================================
+
+  # Navigation - features/Navigation.md
+  go_router: ^17.0.1
+
+  # Push Notification - features/PushNotification.md
+  firebase_core: ^4.4.0
+  firebase_messaging: ^16.1.1
+  flutter_local_notifications: ^20.0.0
+
+  # Permission - features/Permission.md
+  permission_handler: ^12.0.1
+
+  # Localization - features/Localization.md
+  easy_localization: ^3.0.8
+
+  # ============================================================
+  # Patterns - 분석, 폼 검증, 이미지 처리, 페이지네이션
+  # ============================================================
+
+  # Analytics - patterns/Analytics.md
+  firebase_analytics: ^12.1.1
+  firebase_crashlytics: ^5.0.7
+  firebase_performance: ^0.11.0  # 선택
+
+  # FormValidation - patterns/FormValidation.md
+  rxdart: ^0.28.0
+
+  # ImageHandling - patterns/ImageHandling.md
+  cached_network_image: ^3.4.1
+  image_picker: ^1.0.0
+  image_cropper: ^8.0.0
+  flutter_image_compress: ^2.1.0
+  http_parser: ^4.0.0
+  shimmer: ^3.0.0
+  device_info_plus: ^12.3.0
+  path: ^1.8.0
+
+  # ============================================================
+  # System - 로깅, 보안, 성능
+  # ============================================================
+
+  # Logging - system/Logging.md
+  logger: ^2.5.0
+
+  # Security - system/Security.md
+  crypto: ^3.0.0
+  pointycastle: ^3.7.0
+  dio_http2_adapter: ^2.0.0
+  local_auth: ^2.1.0
+  local_auth_ios: ^1.0.0
+  local_auth_android: ^1.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # ============================================================
+  # 코드 생성 도구
+  # ============================================================
+  build_runner: ^2.10.5
+
+  # Freezed
+  freezed: ^3.2.4
+  json_serializable: ^6.11.4
+
+  # DI
+  injectable_generator: ^2.12.0
+
+  # Retrofit
+  retrofit_generator: ^10.2.1
+
+  # Navigation (타입 안전 라우팅)
+  go_router_builder: ^2.7.0
+
+  # LocalStorage (Isar Plus 사용 시)
+  isar_plus_generator: ^1.2.1
+
+  # ============================================================
+  # 테스트 도구
+  # ============================================================
+  bloc_test: ^10.0.0
+  mockito: ^5.6.3
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - .env
+    - assets/translations/
+
+# ============================================================
+# 패키지 호환성 노트 (2026년 1월 기준)
+# ============================================================
+#
+# Firebase 패키지:
+#   - firebase_core ^4.4.0 필수 (다른 Firebase 패키지의 기반)
+#   - firebase_messaging ^16.1.1: iOS SDK 12.0.0, Android SDK 34.0.0
+#   - firebase_crashlytics ^5.0.7
+#   - firebase_analytics ^12.1.1
+#
+# Bloc 생태계:
+#   - flutter_bloc ^9.1.1, bloc ^9.0.0
+#   - bloc_test ^10.0.0 (bloc ^9.0.0 호환)
+#
+# DI 생태계:
+#   - get_it ^9.2.0
+#   - injectable ^2.7.1 (get_it >=8.3.0 <10.0.0 호환)
+#
+# Freezed 생태계:
+#   - freezed ^3.2.4, freezed_annotation ^3.1.0
+#   - json_serializable ^6.11.4, json_annotation ^4.9.0
+#
+# Retrofit 생태계:
+#   - retrofit ^4.9.2, retrofit_generator ^10.2.1
+#   - dio ^5.9.0
+#
+# 최소 SDK 요구사항:
+#   - Flutter 3.32.0+
+#   - Dart 3.8.0+

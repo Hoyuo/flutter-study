@@ -1,0 +1,46 @@
+name: weather
+description: Weather feature package for Photo Diary app
+version: 1.0.0
+publish_to: none
+
+resolution: workspace
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Core package
+  core:
+    path: ../core
+
+  # State management
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
+
+  # Code generation
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Functional programming
+  fpdart: ^1.1.0
+
+  # Networking
+  dio: ^5.7.0
+  retrofit: ^4.4.1
+
+  # Location
+  geolocator: ^13.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+  retrofit_generator: ^9.1.4
+  flutter_lints: ^5.0.0
+  bloc_test: ^9.1.7
+  mocktail: ^1.0.4

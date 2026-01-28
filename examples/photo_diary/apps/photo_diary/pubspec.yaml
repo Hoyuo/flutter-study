@@ -1,0 +1,89 @@
+name: photo_diary
+description: A beautiful photo diary application with weather integration
+publish_to: none
+version: 1.0.0+1
+
+resolution: workspace
+
+environment:
+  sdk: '>=3.8.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Local Packages
+  core:
+    path: ../../packages/core
+  diary:
+    path: ../../packages/diary
+  auth:
+    path: ../../packages/auth
+  settings:
+    path: ../../packages/settings
+
+  # State Management
+  flutter_bloc: ^8.1.6
+
+  # Routing
+  go_router: ^14.6.2
+
+  # Localization
+  easy_localization: ^3.0.7
+
+  # Firebase
+  firebase_core: ^3.8.1
+  firebase_auth: ^5.3.3
+  cloud_firestore: ^5.5.2
+  firebase_storage: ^12.3.6
+  firebase_analytics: ^11.3.6
+  firebase_crashlytics: ^4.1.6
+
+  # Dependency Injection
+  get_it: ^8.0.2
+  injectable: ^2.5.0
+
+  # Environment Variables
+  flutter_dotenv: ^5.2.1
+
+  # Image Handling
+  image_picker: ^1.1.2
+  cached_network_image: ^3.4.1
+
+  # HTTP Client
+  dio: ^5.7.0
+
+  # Utilities
+  intl: ^0.20.2
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+  fpdart: ^1.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  integration_test:
+    sdk: flutter
+
+  # Code Generation
+  build_runner: ^2.4.13
+  injectable_generator: ^2.6.2
+  go_router_builder: ^2.7.1
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/translations/
+    # - .env.dev  # Uncomment when env files are added
+    # - .env.prod
+
+  # fonts:
+  #   - family: Pretendard
+  #     fonts:
+  #       - asset: assets/fonts/Pretendard-Regular.ttf
+  #       - asset: assets/fonts/Pretendard-Bold.ttf
+  #         weight: 700

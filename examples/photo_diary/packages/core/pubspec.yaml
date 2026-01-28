@@ -1,0 +1,62 @@
+name: core
+description: Core shared types, utilities, and error handling for Photo Diary app
+version: 1.0.0
+publish_to: none
+
+resolution: workspace
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Functional programming
+  fpdart: ^1.1.0
+
+  # Value equality
+  equatable: ^2.0.5
+
+  # Code generation
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Dependency Injection
+  injectable: ^2.5.0
+
+  # Logging
+  logger: ^2.5.0
+
+  # Storage
+  flutter_secure_storage: ^9.2.2
+
+  # Network
+  connectivity_plus: ^6.1.1
+  dio: ^5.7.0
+
+  # Firebase
+  firebase_analytics: ^11.3.6
+  firebase_crashlytics: ^4.1.6
+
+  # Internationalization
+  intl: ^0.20.0
+
+  # Image handling
+  image_picker: ^1.1.2
+  flutter_image_compress: ^2.3.0
+
+  # Biometric authentication
+  local_auth: ^2.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Code generation
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+
+  # Linting
+  flutter_lints: ^5.0.0

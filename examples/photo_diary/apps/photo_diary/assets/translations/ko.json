@@ -1,0 +1,74 @@
+{
+  "app": {
+    "name": "사진 일기"
+  },
+  "common": {
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "edit": "편집",
+    "confirm": "확인",
+    "error": "오류",
+    "loading": "로딩 중...",
+    "retry": "재시도"
+  },
+  "auth": {
+    "login": "로그인",
+    "register": "회원가입",
+    "logout": "로그아웃",
+    "email": "이메일",
+    "password": "비밀번호",
+    "confirm_password": "비밀번호 확인",
+    "name": "이름",
+    "forgot_password": "비밀번호 찾기",
+    "biometric_title": "생체인증 필요",
+    "biometric_description": "앱을 사용하려면 생체인증이 필요합니다",
+    "biometric_not_available": "생체인증을 사용할 수 없습니다",
+    "biometric_failed": "생체인증에 실패했습니다",
+    "biometric_error": "생체인증 중 오류가 발생했습니다",
+    "biometric_reason": "앱 잠금을 해제하려면 인증하세요",
+    "authenticating": "인증 중...",
+    "retry_biometric": "다시 시도"
+  },
+  "diary": {
+    "title": "일기",
+    "new_diary": "새 일기",
+    "edit_diary": "일기 편집",
+    "delete_diary": "일기 삭제",
+    "title_hint": "제목을 입력하세요",
+    "content_hint": "내용을 입력하세요",
+    "no_entries": "작성된 일기가 없습니다",
+    "delete_confirm": "이 일기를 삭제하시겠습니까?",
+    "saved": "저장되었습니다",
+    "deleted": "삭제되었습니다"
+  },
+  "settings": {
+    "title": "설정",
+    "theme": "테마",
+    "theme_system": "시스템 설정",
+    "theme_light": "라이트 모드",
+    "theme_dark": "다크 모드",
+    "language": "언어",
+    "notifications": "알림",
+    "push_notifications": "푸시 알림",
+    "biometric_lock": "생체인증 잠금",
+    "version": "버전"
+  },
+  "weather": {
+    "title": "날씨",
+    "loading": "날씨 정보를 가져오는 중...",
+    "error": "날씨 정보를 가져올 수 없습니다",
+    "humidity": "습도"
+  },
+  "search": {
+    "title": "검색",
+    "hint": "일기 검색...",
+    "no_results": "검색 결과가 없습니다"
+  },
+  "validation": {
+    "required": "필수 입력 항목입니다",
+    "email_invalid": "올바른 이메일 형식이 아닙니다",
+    "password_too_short": "비밀번호는 6자 이상이어야 합니다",
+    "password_mismatch": "비밀번호가 일치하지 않습니다"
+  }
+}
