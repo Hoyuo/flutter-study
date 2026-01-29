@@ -55,7 +55,7 @@ dependencies:
 
   # Utilities
   intl: ^0.20.2
-  freezed_annotation: ^2.4.4
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.9.0
   fpdart: ^1.1.0
 
@@ -67,11 +67,11 @@ dev_dependencies:
     sdk: flutter
 
   # Code Generation
-  build_runner: ^2.4.13
+  build_runner: ^2.4.15
   injectable_generator: ^2.6.2
   go_router_builder: ^2.7.1
-  freezed: ^2.5.7
-  json_serializable: ^6.8.0
+  freezed: ^3.0.0
+  json_serializable: ^6.9.0
 
 flutter:
   uses-material-design: true
