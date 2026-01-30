@@ -36,6 +36,11 @@ dependencies:
   logger: ^2.5.0
   firebase_crashlytics: ^5.0.7
   dio: ^5.9.0
+  sqflite: ^2.3.0
+  path: ^1.8.3
+  path_provider: ^2.1.0
+  intl: ^0.19.0
+  uuid: ^4.0.0
 
 dev_dependencies:
   flutter_test:
@@ -69,7 +74,7 @@ class AppLogger {
       printEmojis: true,
       dateTimeFormat: DateTimeFormat.onlyTimeAndSinceMillis,
     ),
-    level: kDebugMode ? Level.verbose : Level.warning,
+    level: kDebugMode ? Level.trace : Level.warning,
   );
 
   // Private 생성자 - 싱글톤
@@ -221,6 +226,8 @@ Error ($context):
 
 ```dart
 // lib/core/logging/log_filter.dart
+import 'package:logger/logger.dart';
+import 'package:flutter/foundation.dart';
 
 class LogFilter {
   /// 민감한 정보를 마스킹
@@ -252,8 +259,8 @@ class LogFilter {
 
   /// 특정 태그의 로그만 필터링
   static bool shouldLog(String tag, Level level) {
-    // 릴리즈 모드에서는 verbose/debug 제외
-    if (!kDebugMode && (level == Level.verbose || level == Level.debug)) {
+    // 릴리즈 모드에서는 trace/debug 제외
+    if (!kDebugMode && (level == Level.trace || level == Level.debug)) {
       return false;
     }
 
@@ -435,6 +442,9 @@ class LoggingInterceptor extends Interceptor {
     final method = options.method.toUpperCase();
     final url = options.uri.toString();
 
+    // 요청 시작 시간 저장
+    options.extra['requestStartTime'] = DateTime.now().millisecondsSinceEpoch;
+
     // 요청 로깅
     final headers = Map<String, dynamic>.from(options.headers)
       ..removeWhere((key, value) => _isSensitiveHeader(key));
@@ -458,10 +468,12 @@ class LoggingInterceptor extends Interceptor {
     final method = response.requestOptions.method.toUpperCase();
     final url = response.requestOptions.uri.toString();
     final statusCode = response.statusCode ?? 0;
-    final duration = DateTime.now()
-        .difference(DateTime.fromMillisecondsSinceEpoch(
-          response.requestOptions.sendTimeout?.inMilliseconds ?? 0,
-        ));
+
+    // 요청 시작 시간에서 현재까지의 duration 계산
+    final startTime = response.requestOptions.extra['requestStartTime'] as int?;
+    final duration = startTime != null
+        ? Duration(milliseconds: DateTime.now().millisecondsSinceEpoch - startTime)
+        : null;
 
     // 응답 로깅
     AppLogger.logStructured(
@@ -471,7 +483,7 @@ class LoggingInterceptor extends Interceptor {
         'url': url,
         'statusCode': statusCode,
         'body': _maskBody(response.data),
-        'duration_ms': duration.inMilliseconds,
+        'duration_ms': duration?.inMilliseconds ?? 'N/A',
         'timestamp': DateTime.now().toIso8601String(),
       },
     );
@@ -986,7 +998,7 @@ class LogConfig {
   static Level getLogLevel() {
     if (kDebugMode) {
       // 개발 모드: 모든 로그
-      return Level.verbose;
+      return Level.trace;
     } else {
       // 프로덕션: 주요 로그만
       return Level.info;
@@ -994,9 +1006,9 @@ class LogConfig {
   }
 
   /// 환경별 로깅 구성
-  static LogLevel getEnvironmentLogLevel(String environment) {
+  static Level getEnvironmentLogLevel(String environment) {
     return switch (environment) {
-      'development' => Level.verbose,
+      'development' => Level.trace,
       'staging' => Level.debug,
       'production' => Level.warning,
       _ => Level.info,
@@ -1013,7 +1025,8 @@ class LogConfig {
     };
 
     final requiredLevel = moduleLogLevels[moduleName] ?? Level.info;
-    return currentLevel.index <= requiredLevel.index;
+    // 높은 index = 높은 severity, currentLevel이 requiredLevel 이상일 때 로깅
+    return currentLevel.index >= requiredLevel.index;
   }
 }
 ```
@@ -1297,10 +1310,10 @@ AppLogger.info('User password: $password');
 AppLogger.info('User authenticated', error: null);
 
 // ❌ 문제: 예외 처리 부재
-AppLogger.info(responsData.toString()); // null일 수 있음
+AppLogger.info(responseData.toString()); // null일 수 있음
 
 // ✅ 해결: 안전한 로깅
-AppLogger.info('Response: ${responsData?.toString() ?? 'null'}', error: null);
+AppLogger.info('Response: ${responseData?.toString() ?? 'null'}', error: null);
 ```
 
 ---
@@ -1348,6 +1361,193 @@ final logRepo = LogRepository();
 await logRepo.deleteLogs(
   beforeDate: DateTime.now().subtract(const Duration(days: 7)),
 );
+```
+
+---
+
+## 12. Distributed Tracing (분산 추적)
+
+### 12.1 Request ID / Correlation ID
+
+```dart
+// lib/core/network/correlation_interceptor.dart
+import 'package:dio/dio.dart';
+import 'package:uuid/uuid.dart';
+import '../logging/app_logger.dart';
+
+class CorrelationInterceptor extends Interceptor {
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    // 모든 요청에 Correlation ID 추가
+    final correlationId = const Uuid().v4();
+    options.headers['X-Correlation-ID'] = correlationId;
+    options.headers['X-Request-ID'] = correlationId;
+
+    // 로그에 Correlation ID 포함
+    AppLogger.logStructured(
+      'API',
+      'Request',
+      {
+        'correlationId': correlationId,
+        'method': options.method,
+        'path': options.path,
+      },
+    );
+
+    handler.next(options);
+  }
+
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    final correlationId = response.requestOptions.headers['X-Correlation-ID'];
+
+    AppLogger.logStructured(
+      'API',
+      'Response',
+      {
+        'correlationId': correlationId,
+        'statusCode': response.statusCode,
+        'duration': '${response.requestOptions.extra['startTime']}ms',
+      },
+    );
+
+    handler.next(response);
+  }
+}
+```
+
+### 12.2 Sentry 연동
+
+```dart
+// pubspec.yaml
+dependencies:
+  sentry_flutter: ^8.0.0
+  sentry_dio: ^8.0.0
+
+// lib/core/logging/sentry_service.dart
+import 'package:sentry_flutter/sentry_flutter.dart';
+
+class SentryService {
+  static Future<void> init() async {
+    await SentryFlutter.init(
+      (options) {
+        options.dsn = const String.fromEnvironment('SENTRY_DSN');
+        options.environment = const String.fromEnvironment('ENV', defaultValue: 'dev');
+        options.tracesSampleRate = 0.2; // 20% 샘플링
+        options.profilesSampleRate = 0.1; // 10% 프로파일링
+
+        // 민감 정보 필터링
+        options.beforeSend = (event, {hint}) {
+          return _sanitizeEvent(event);
+        };
+
+        // 브레드크럼 커스터마이징
+        options.beforeBreadcrumb = (breadcrumb, {hint}) {
+          if (breadcrumb?.category == 'http') {
+            return _sanitizeBreadcrumb(breadcrumb!);
+          }
+          return breadcrumb;
+        };
+      },
+      appRunner: () => runApp(const MyApp()),
+    );
+  }
+
+  static SentryEvent _sanitizeEvent(SentryEvent event) {
+    // Authorization 헤더 제거
+    // 개인정보 마스킹
+    return event;
+  }
+
+  /// 브레드크럼에서 민감한 정보 제거
+  static Breadcrumb _sanitizeBreadcrumb(Breadcrumb breadcrumb) {
+    // Authorization 헤더나 토큰 등 민감한 정보 제거
+    final data = breadcrumb.data?.map((key, value) {
+      if (key.toLowerCase().contains('auth') ||
+          key.toLowerCase().contains('token') ||
+          key.toLowerCase().contains('password')) {
+        return MapEntry(key, '***REDACTED***');
+      }
+      return MapEntry(key, value);
+    });
+
+    return breadcrumb.copyWith(data: data);
+  }
+
+  /// 이메일 마스킹
+  static String _maskEmail(String email) {
+    final parts = email.split('@');
+    if (parts.length != 2) return email;
+    final username = parts[0];
+    if (username.length <= 2) return email;
+    return '${username.substring(0, 2)}***@${parts[1]}';
+  }
+
+  /// 사용자 정보 설정
+  static void setUser(String userId, String email) {
+    Sentry.configureScope((scope) {
+      scope.setUser(SentryUser(
+        id: userId,
+        email: _maskEmail(email),
+      ));
+    });
+  }
+
+  /// 에러 보고 (자동 스택트레이스)
+  static Future<void> captureException(
+    dynamic exception, {
+    StackTrace? stackTrace,
+    Map<String, dynamic>? extras,
+  }) async {
+    await Sentry.captureException(
+      exception,
+      stackTrace: stackTrace,
+      withScope: (scope) {
+        extras?.forEach((key, value) {
+          scope.setExtra(key, value);
+        });
+      },
+    );
+  }
+
+  /// 메시지 보고
+  static Future<void> captureMessage(
+    String message, {
+    SentryLevel level = SentryLevel.info,
+  }) async {
+    await Sentry.captureMessage(message, level: level);
+  }
+}
+
+// Dio에 Sentry 연동
+final dio = Dio()
+  ..interceptors.add(SentryDioInterceptor()); // sentry_dio 패키지 제공
+```
+
+### 12.3 로그 수준별 Sentry 연동
+
+```dart
+class AppLogger {
+  static void error(String message, {Object? error, StackTrace? stackTrace}) {
+    _logger.e(message, error: error, stackTrace: stackTrace);
+
+    // Error 이상은 Sentry로 전송
+    if (error != null) {
+      SentryService.captureException(error, stackTrace: stackTrace);
+    }
+  }
+
+  static void warning(String message, {Map<String, dynamic>? data}) {
+    _logger.w(message);
+
+    // Warning은 브레드크럼으로만 기록
+    Sentry.addBreadcrumb(Breadcrumb(
+      message: message,
+      level: SentryLevel.warning,
+      data: data,
+    ));
+  }
+}
 ```
 
 ---

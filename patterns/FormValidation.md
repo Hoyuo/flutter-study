@@ -646,6 +646,27 @@ on<MyEvent>(_onEvent, transformer: debounce(...)); // Submit도 지연됨!
 - `debounceTime()`은 내부적으로 타이머를 생성하지만, Bloc의 `close()` 호출 시 자동으로 구독이 취소됩니다.
 - 수동으로 타이머나 구독을 dispose할 필요가 없습니다.
 
+### 회원가입 Event
+
+```dart
+// lib/features/auth/presentation/bloc/register_form_event.dart
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'register_form_event.freezed.dart';
+
+@freezed
+class RegisterFormEvent with _$RegisterFormEvent {
+  const factory RegisterFormEvent.emailChanged(String email) = _EmailChanged;
+  const factory RegisterFormEvent.passwordChanged(String password) = _PasswordChanged;
+  const factory RegisterFormEvent.confirmPasswordChanged(String confirmPassword) = _ConfirmPasswordChanged;
+  const factory RegisterFormEvent.nameChanged(String name) = _NameChanged;
+  const factory RegisterFormEvent.phoneChanged(String phone) = _PhoneChanged;
+  const factory RegisterFormEvent.agreeToTermsChanged(bool agreed) = _AgreeToTermsChanged;
+  const factory RegisterFormEvent.agreeToMarketingChanged(bool agreed) = _AgreeToMarketingChanged;
+  const factory RegisterFormEvent.submitted() = _Submitted;
+}
+```
+
 ### 회원가입 Bloc
 
 ```dart
@@ -1010,10 +1031,11 @@ class _DynamicFocusExampleState extends State<DynamicFocusExample> {
 
     // FocusNode 리스너 - 포커스 상태 변화 감지
     _emailFocus.addListener(() {
+      setState(() {}); // 포커스 변경 시 UI 재빌드
       if (_emailFocus.hasFocus) {
-        print('이메일 필드에 포커스됨');
+        debugPrint('이메일 필드에 포커스됨');
       } else {
-        print('이메일 필드 포커스 해제');
+        debugPrint('이메일 필드 포커스 해제');
       }
     });
   }
@@ -1673,6 +1695,236 @@ class FormBloc extends Bloc<FormEvent, FormState> {
     emit(state.copyWith(fieldError: error));
   }
 }
+```
+
+## 11. Input Formatter (입력 포맷터)
+
+### 11.1 전화번호 포맷터
+
+```dart
+class PhoneNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // 숫자만 추출
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+
+    // 최대 11자리 제한
+    final limited = digits.length > 11 ? digits.substring(0, 11) : digits;
+
+    // 포맷팅: 010-1234-5678
+    String formatted;
+    if (limited.length <= 3) {
+      formatted = limited;
+    } else if (limited.length <= 7) {
+      formatted = '${limited.substring(0, 3)}-${limited.substring(3)}';
+    } else {
+      formatted = '${limited.substring(0, 3)}-${limited.substring(3, 7)}-${limited.substring(7)}';
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
+// 사용
+TextField(
+  keyboardType: TextInputType.phone,
+  inputFormatters: [PhoneNumberFormatter()],
+)
+```
+
+### 11.2 카드번호 포맷터
+
+```dart
+class CardNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    final limited = digits.length > 16 ? digits.substring(0, 16) : digits;
+
+    // 4자리마다 공백: 1234 5678 9012 3456
+    final buffer = StringBuffer();
+    for (int i = 0; i < limited.length; i++) {
+      if (i > 0 && i % 4 == 0) buffer.write(' ');
+      buffer.write(limited[i]);
+    }
+
+    return TextEditingValue(
+      text: buffer.toString(),
+      selection: TextSelection.collapsed(offset: buffer.length),
+    );
+  }
+}
+```
+
+### 11.3 통화 포맷터
+
+```dart
+// pubspec.yaml에 추가 필요:
+// dependencies:
+//   intl: ^0.19.0
+
+import 'package:intl/intl.dart';
+
+class CurrencyFormatter extends TextInputFormatter {
+  final NumberFormat _format = NumberFormat.currency(
+    locale: 'ko_KR',
+    symbol: '₩',
+    decimalDigits: 0,
+  );
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return const TextEditingValue();
+
+    final number = int.tryParse(digits) ?? 0;
+    final formatted = _format.format(number);
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+```
+
+## 12. 서버 에러 매핑
+
+### 12.1 서버 응답 구조
+
+```dart
+// 서버 응답 예시
+// {
+//   "success": false,
+//   "errors": {
+//     "email": ["이미 사용 중인 이메일입니다"],
+//     "password": ["8자 이상 입력해주세요", "특수문자를 포함해주세요"]
+//   }
+// }
+
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:json_annotation/json_annotation.dart';
+
+part 'server_validation_error.freezed.dart';
+part 'server_validation_error.g.dart';
+
+@freezed
+class ServerValidationError with _$ServerValidationError {
+  const factory ServerValidationError({
+    required Map<String, List<String>> fieldErrors,
+    String? generalError,
+  }) = _ServerValidationError;
+
+  factory ServerValidationError.fromJson(Map<String, dynamic> json) {
+    final errors = json['errors'] as Map<String, dynamic>?;
+    return ServerValidationError(
+      fieldErrors: errors?.map(
+        (key, value) => MapEntry(key, List<String>.from(value)),
+      ) ?? {},
+      generalError: json['message'] as String?,
+    );
+  }
+}
+```
+
+### 12.2 폼 블록에서 서버 에러 처리
+
+```dart
+@freezed
+class RegisterState with _$RegisterState {
+  const factory RegisterState({
+    @Default('') String email,
+    @Default('') String password,
+    String? emailError,
+    String? passwordError,
+    String? generalError,
+    @Default(false) bool isSubmitting,
+  }) = _RegisterState;
+}
+
+class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
+  Future<void> _onSubmit(Emitter<RegisterState> emit) async {
+    emit(state.copyWith(isSubmitting: true, generalError: null));
+
+    final result = await _registerUseCase(
+      email: state.email,
+      password: state.password,
+    );
+
+    result.fold(
+      (failure) {
+        if (failure is ValidationFailure) {
+          // 서버 필드별 에러 매핑
+          emit(state.copyWith(
+            isSubmitting: false,
+            emailError: failure.fieldErrors['email']?.first,
+            passwordError: failure.fieldErrors['password']?.first,
+            generalError: failure.message,
+          ));
+        } else {
+          emit(state.copyWith(
+            isSubmitting: false,
+            generalError: failure.message,
+          ));
+        }
+      },
+      (_) => emit(state.copyWith(isSubmitting: false)),
+    );
+  }
+}
+```
+
+### 12.3 UI에서 에러 표시
+
+```dart
+BlocBuilder<RegisterBloc, RegisterState>(
+  builder: (context, state) {
+    return Column(
+      children: [
+        // 일반 에러 (상단 배너)
+        if (state.generalError != null)
+          ErrorBanner(message: state.generalError!),
+
+        // 이메일 필드 에러
+        TextField(
+          decoration: InputDecoration(
+            labelText: '이메일',
+            errorText: state.emailError,
+          ),
+          onChanged: (v) => context.read<RegisterBloc>()
+              .add(RegisterEvent.emailChanged(v)),
+        ),
+
+        // 비밀번호 필드 에러
+        TextField(
+          decoration: InputDecoration(
+            labelText: '비밀번호',
+            errorText: state.passwordError,
+          ),
+          obscureText: true,
+          onChanged: (v) => context.read<RegisterBloc>()
+              .add(RegisterEvent.passwordChanged(v)),
+        ),
+      ],
+    );
+  },
+)
 ```
 
 ## 테스트

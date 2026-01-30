@@ -45,7 +45,7 @@ class HomeBloc extends Bloc { ... }
 // ❌ Screen에 비즈니스 로직 금지
 class MyScreen extends StatefulWidget {
   Future<void> _doSomething() async {
-    await Future.delayed(Duration(seconds: 1));  // 비즈니스 로직
+    await Future.delayed(const Duration(seconds: 1));  // 비즈니스 로직
     await someUseCase.call();  // 직접 호출
   }
 }
@@ -54,7 +54,7 @@ class MyScreen extends StatefulWidget {
 class MyBloc extends Bloc<MyEvent, MyState> {
   Future<void> _onStarted(Emitter<MyState> emit) async {
     emit(const MyState.loading());
-    await Future.delayed(Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 1));
     emit(const MyState.completed());
   }
 }
@@ -409,7 +409,216 @@ class AuthFailureMapper {
 | State | `{feature}_state.dart` | `{Feature}State` |
 | Screen | `{feature}_screen.dart` | `{Feature}Screen` |
 
-## 10. 라이브러리 사용
+## 10. Feature Flag 아키텍처
+
+### 10.1 Feature Flag 서비스
+
+```dart
+// lib/core/feature_flags/feature_flag_service.dart
+abstract class FeatureFlagService {
+  Future<void> initialize();
+  bool isEnabled(FeatureFlag flag);
+  T getValue<T>(FeatureFlag flag);
+  Stream<void> get onConfigUpdated;
+}
+
+enum FeatureFlag {
+  newCheckoutFlow,
+  darkModeV2,
+  aiRecommendations,
+  experimentalCamera,
+}
+
+// Firebase Remote Config 구현
+class RemoteConfigFeatureFlags implements FeatureFlagService {
+  final FirebaseRemoteConfig _remoteConfig;
+  final _updateController = StreamController<void>.broadcast();
+
+  @override
+  Future<void> initialize() async {
+    await _remoteConfig.setDefaults({
+      'new_checkout_flow': false,
+      'dark_mode_v2': false,
+      'ai_recommendations': false,
+    });
+
+    await _remoteConfig.fetchAndActivate();
+
+    // 실시간 업데이트 리스닝
+    _remoteConfig.onConfigUpdated.listen((_) async {
+      await _remoteConfig.activate();
+      _updateController.add(null);
+    });
+  }
+
+  @override
+  bool isEnabled(FeatureFlag flag) {
+    return _remoteConfig.getBool(_flagKey(flag));
+  }
+
+  @override
+  T getValue<T>(FeatureFlag flag) {
+    final key = _flagKey(flag);
+    if (T == bool) return _remoteConfig.getBool(key) as T;
+    if (T == String) return _remoteConfig.getString(key) as T;
+    if (T == int) return _remoteConfig.getInt(key) as T;
+    if (T == double) return _remoteConfig.getDouble(key) as T;
+    throw UnsupportedError('Type $T not supported');
+  }
+
+  String _flagKey(FeatureFlag flag) {
+    return flag.name.replaceAllMapped(
+      RegExp('([A-Z])'),
+      (m) => '_${m.group(1)!.toLowerCase()}',
+    ).replaceFirst('_', '');
+  }
+}
+```
+
+### 10.2 UI에서 Feature Flag 사용
+
+```dart
+class CheckoutPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final featureFlags = context.read<FeatureFlagService>();
+
+    if (featureFlags.isEnabled(FeatureFlag.newCheckoutFlow)) {
+      return const NewCheckoutFlow();
+    }
+    return const LegacyCheckoutFlow();
+  }
+}
+
+// 또는 위젯으로 래핑
+class FeatureGate extends StatelessWidget {
+  final FeatureFlag flag;
+  final Widget enabled;
+  final Widget disabled;
+
+  const FeatureGate({
+    super.key,
+    required this.flag,
+    required this.enabled,
+    required this.disabled,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled = context.watch<FeatureFlagService>().isEnabled(flag);
+    return isEnabled ? enabled : disabled;
+  }
+}
+```
+
+### 10.3 점진적 롤아웃
+
+```dart
+// 사용자 버킷 기반 롤아웃
+bool shouldEnableForUser(String userId, double rolloutPercentage) {
+  final hash = userId.hashCode.abs();
+  final bucket = hash % 100;
+  return bucket < (rolloutPercentage * 100);
+}
+```
+
+## 11. Deep Linking
+
+### 11.1 GoRouter Deep Link 설정
+
+```dart
+final router = GoRouter(
+  routes: [
+    GoRoute(
+      path: '/product/:id',
+      builder: (context, state) {
+        final productId = state.pathParameters['id']!;
+        return ProductDetailPage(productId: productId);
+      },
+    ),
+    GoRoute(
+      path: '/invite/:code',
+      redirect: (context, state) {
+        final code = state.pathParameters['code']!;
+        InviteService.processCode(code);
+        return '/home';
+      },
+    ),
+  ],
+);
+```
+
+### 11.2 Android 설정
+
+```xml
+<!-- android/app/src/main/AndroidManifest.xml -->
+<intent-filter android:autoVerify="true">
+  <action android:name="android.intent.action.VIEW" />
+  <category android:name="android.intent.category.DEFAULT" />
+  <category android:name="android.intent.category.BROWSABLE" />
+  <data
+    android:scheme="https"
+    android:host="example.com"
+    android:pathPrefix="/product" />
+</intent-filter>
+```
+
+### 11.3 iOS 설정
+
+```xml
+<!-- ios/Runner/Info.plist -->
+<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string>myapp</string>
+    </array>
+  </dict>
+</array>
+
+<key>FlutterDeepLinkingEnabled</key>
+<true/>
+```
+
+### 11.4 Universal Links / App Links
+
+```dart
+// Requires: app_links package
+// dependencies:
+//   app_links: ^6.0.0
+
+// 딥링크 핸들러
+class DeepLinkHandler {
+  static Future<void> handleInitialLink() async {
+    final initialLink = await getInitialLink();
+    if (initialLink != null) {
+      _processLink(initialLink);
+    }
+  }
+
+  static void listenToLinks() {
+    linkStream.listen((link) {
+      _processLink(link);
+    });
+  }
+
+  static void _processLink(String link) {
+    final uri = Uri.parse(link);
+
+    // UTM 파라미터 추출
+    final campaign = uri.queryParameters['utm_campaign'];
+    if (campaign != null) {
+      AnalyticsService.trackCampaign(campaign);
+    }
+
+    // 라우팅
+    router.go(uri.path);
+  }
+}
+```
+
+## 12. 라이브러리 사용
 
 | 용도 | 라이브러리 |
 |------|-----------|
@@ -422,9 +631,9 @@ class AuthFailureMapper {
 | 네트워크 | dio |
 | 코드 생성 | build_runner |
 
-## 11. Freezed 사용 패턴
+## 13. Freezed 사용 패턴
 
-### 11.1 Event
+### 13.1 Event
 
 ```dart
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -438,7 +647,7 @@ class HomeEvent with _$HomeEvent {
 }
 ```
 
-### 11.2 State
+### 13.2 State
 
 ```dart
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -453,7 +662,7 @@ class HomeState with _$HomeState {
 }
 ```
 
-### 11.3 Failure
+### 13.3 Failure
 
 ```dart
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -467,7 +676,7 @@ class HomeFailure with _$HomeFailure {
 }
 ```
 
-## 12. DTO 패턴 (json_serializable)
+## 14. DTO 패턴 (json_serializable)
 
 ```dart
 import 'package:json_annotation/json_annotation.dart';
@@ -490,7 +699,7 @@ class HomeDto {
 }
 ```
 
-## 13. UseCase 패턴
+## 15. UseCase 패턴
 
 ```dart
 import 'package:fpdart/fpdart.dart';
@@ -508,7 +717,7 @@ class GetHomeDataUseCase {
 }
 ```
 
-## 14. Repository 패턴
+## 16. Repository 패턴
 
 ### Interface (Domain)
 
@@ -545,7 +754,7 @@ class HomeRepositoryImpl implements HomeRepository {
 }
 ```
 
-## 15. Bloc 패턴
+## 17. Bloc 패턴
 
 ```dart
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -561,6 +770,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     await event.when(
       started: () => _onStarted(emit),
       refresh: () => _onRefresh(emit),
+      loadMore: () => _onLoadMore(emit),
     );
   }
 
@@ -568,14 +778,18 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     emit(const HomeState.loading());
     final result = await _getHomeDataUseCase();
     result.fold(
-      (failure) => emit(HomeState.error(failure.message)),
+      (failure) => emit(HomeState.error(failure.when(
+        network: () => '네트워크 오류가 발생했습니다',
+        server: (message) => message,
+        unknown: () => '알 수 없는 오류가 발생했습니다',
+      ))),
       (data) => emit(HomeState.loaded(data)),
     );
   }
 }
 ```
 
-## 16. Screen 패턴
+## 18. Screen 패턴
 
 ```dart
 import 'package:flutter/material.dart';
@@ -615,12 +829,12 @@ class _HomeView extends StatelessWidget {
 }
 ```
 
-## 17. 코드 생성 명령어
+## 19. 코드 생성 명령어
 
 ```bash
 # 특정 feature에서 build_runner 실행
 cd features/{feature_name}
-fvm flutter pub run build_runner build --delete-conflicting-outputs
+fvm dart run build_runner build --delete-conflicting-outputs
 
 # 전체 프로젝트 분석
 melos run analyze
@@ -629,7 +843,7 @@ melos run analyze
 melos run build_runner
 ```
 
-## 18. 새 Feature 생성 체크리스트
+## 20. 새 Feature 생성 체크리스트
 
 1. [ ] `features/{feature_name}/` 폴더 생성
 2. [ ] `pubspec.yaml` 작성
@@ -643,7 +857,7 @@ melos run build_runner
 10. [ ] melos bootstrap 실행
 11. [ ] analyze 통과 확인
 
-## 19. 자주 하는 실수
+## 21. 자주 하는 실수
 
 ### ❌ 여러 클래스를 한 파일에
 
@@ -668,7 +882,7 @@ class HomeBloc extends Bloc { ... }
 // ❌ 금지
 class MyScreen extends StatefulWidget {
   void _onTap() async {
-    await Future.delayed(Duration(seconds: 1));  // Bloc으로 이동
+    await Future.delayed(const Duration(seconds: 1));  // Bloc으로 이동
   }
 }
 ```
@@ -696,7 +910,7 @@ class CommonFailure { ... }
 class HomeFailure { ... }
 ```
 
-## 20. 참고 사항
+## 22. 참고 사항
 
 - **언어**: 코드 주석은 한글 가능, 변수/함수/클래스명은 영문
 - **분석 도구**: `melos run analyze`로 전체 프로젝트 린트 체크

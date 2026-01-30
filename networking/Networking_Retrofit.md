@@ -52,7 +52,7 @@ dev_dependencies:
 > - `@BodyExtra` 어노테이션: 요청 body에 개별 필드 추가
 > - `CallAdapters`: 반환 타입 변환 지원
 > - lean_builder 실험적 지원 (빌드 속도 향상)
-> - Dart 3.8 이상 필수
+> - Dart 3.5 이상 필수
 
 ### 2.2 프로젝트 구조
 
@@ -771,7 +771,7 @@ abstract class HomeApi {
 ```bash
 # 특정 패키지
 cd features/home
-fvm flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner build --delete-conflicting-outputs
 
 # Melos로 전체
 melos run build_runner
@@ -864,8 +864,32 @@ class FileDownloader {
 | WebSocket | Dio (별도 패키지) |
 | GraphQL | Dio + graphql_flutter |
 
-## 13. 참고
+## 13. 보안
+
+### 13.1 SSL Pinning
+
+Retrofit은 내부적으로 Dio를 사용하므로, SSL Pinning 설정은 Dio Client에서 처리합니다.
+
+```dart
+// core/core_network/lib/src/injection.dart
+@module
+abstract class HomeApiModule {
+  @lazySingleton
+  HomeApi homeApi(Dio dio) => HomeApi(dio);  // SSL Pinning이 설정된 Dio 주입
+}
+```
+
+**SSL Pinning 설정 방법:**
+- Dio 가이드의 "4.6 SSL Pinning / Certificate Pinning" 섹션 참조
+- DioClient에서 SSL Pinning 설정 후, Retrofit API에 주입하여 사용
+
+**주의사항:**
+- Retrofit API 생성 시 이미 SSL Pinning이 적용된 Dio 인스턴스를 전달
+- 별도로 Retrofit에서 SSL 설정을 추가할 필요 없음
+- 모든 보안 설정은 DI를 통해 주입되는 Dio에서 일괄 관리
+
+## 14. 참고
 
 - [Retrofit 공식 문서](https://pub.dev/packages/retrofit)
 - [json_serializable 공식 문서](https://pub.dev/packages/json_serializable)
-- Part 1: [Dio 가이드](./Networking_Dio.md)
+- Part 1: [Dio 가이드](./Networking_Dio.md) - SSL Pinning, 토큰 갱신 동시성 처리 포함

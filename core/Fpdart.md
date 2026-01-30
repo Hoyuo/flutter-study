@@ -118,6 +118,7 @@ class UserRepositoryImpl implements UserRepository {
     try {
       final dto = await _dataSource.getUser(id);
       return Right(_mapper.toEntity(dto));
+    // import 'package:dio/dio.dart';
     } on DioException catch (e) {
       return Left(_mapDioError(e));
     } catch (e) {
@@ -144,7 +145,7 @@ class UserRepositoryImpl implements UserRepository {
 }
 ```
 
-### 3.5 유틸리티 생성자
+### 3.3 유틸리티 생성자
 
 ```dart
 // tryCatch - 예외를 Either로 변환
@@ -163,7 +164,7 @@ final either = Either<String, User>.fromNullable(
 final either = someOption.toEither(() => 'Option was None');
 ```
 
-### 3.3 UseCase에서 사용
+### 3.4 UseCase에서 사용
 
 ```dart
 // features/user/lib/domain/usecases/get_user_usecase.dart
@@ -182,7 +183,7 @@ class GetUserUseCase {
 }
 ```
 
-### 3.4 Bloc에서 Either 처리
+### 3.5 Bloc에서 Either 처리
 
 ```dart
 // features/user/lib/presentation/bloc/user_bloc.dart
@@ -735,15 +736,19 @@ Future<Either<OrderFailure, Order>> createOrder(OrderParams params) async {
   final cartResult = await _cartRepository.getCart(params.cartId);
 
   return cartResult
-      .mapLeft((cartFailure) => OrderFailure.fromCartFailure(cartFailure))
-      .flatMap((cart) async {
-        // PaymentFailure를 OrderFailure로 변환
-        final paymentResult = await _paymentRepository.process(cart.total);
-
-        return paymentResult
-            .mapLeft((paymentFailure) => OrderFailure.fromPaymentFailure(paymentFailure))
-            .flatMap((payment) => _orderRepository.create(cart, payment));
-      });
+      .mapLeft((f) => OrderFailure.fromCartFailure(f))
+      .fold(
+        (failure) async => Left(failure),
+        (cart) async {
+          final paymentResult = await _paymentRepository.process(cart.total);
+          return paymentResult
+              .mapLeft((f) => OrderFailure.fromPaymentFailure(f))
+              .fold(
+                (failure) async => Left(failure),
+                (payment) => _orderRepository.create(cart, payment),
+              );
+        },
+      );
 }
 ```
 
@@ -872,8 +877,15 @@ result.fold(
 
 // ✅ 에러 타입을 도메인에 맞게 정의
 sealed class UserFailure {
-  const factory UserFailure.network() = _Network;
-  const factory UserFailure.notFound() = _NotFound;
+  const UserFailure();
+}
+
+final class NetworkFailure extends UserFailure {
+  const NetworkFailure();
+}
+
+final class NotFoundFailure extends UserFailure {
+  const NotFoundFailure();
 }
 ```
 

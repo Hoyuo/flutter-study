@@ -17,14 +17,19 @@ dependencies:
   flutter_image_compress: ^2.1.0
   http_parser: ^4.0.0  # multipart 업로드용
   shimmer: ^3.0.0
-  permission_handler: ^12.0.1  # 2026년 1월 기준 최신 버전
+  permission_handler: ^13.0.0  # 2026년 1월 기준 최신 버전
   path: ^1.8.0  # 경로 처리용
   device_info_plus: ^12.3.0  # 2026년 1월 기준 최신 버전
 ```
 
-**주요 변경사항 (v5 → v8):**
-- `image_cropper` ^8.0.0: API 변경 없음, 내부 구현 개선 및 최신 플랫폼 지원
+**주요 변경사항:**
+- `image_cropper` ^8.0.0 (v5 → v8): API 변경 없음, 내부 구현 개선 및 최신 플랫폼 지원
 - `device_info_plus` ^12.3.0: 최신 Android/iOS 기기 정보 지원, API 호환성 유지
+- `permission_handler` ^13.0.0 (v12 → v13): **Breaking Changes**
+  - **Android**: `compileSdkVersion 35` 필요 (android/app/build.gradle.kts 확인)
+  - **iOS**: minimum deployment target `12.0` 필요 (ios/Podfile 확인)
+  - 기존 프로젝트에서 빌드 설정 업데이트 필요
+  - v12.x 사용 시: 위 요구사항 충족 못할 경우 `^12.0.1` 유지 가능
 
 ### iOS 설정
 
@@ -219,6 +224,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 await CachedNetworkImage.evictFromCache(imageUrl);
 
 // 전체 캐시 삭제
+// import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 await DefaultCacheManager().emptyCache();
 ```
 
@@ -561,7 +567,7 @@ class FileCleanupUtility {
         }
       } catch (e) {
         // 삭제 실패 무시 (이미 삭제되었거나 권한 문제)
-        print('Failed to delete temp file: $filePath - $e');
+        debugPrint('Warning: Failed to delete temp file: $filePath');
       }
     }
   }
@@ -686,12 +692,18 @@ class ImageUploadService {
       data: formData,
       options: Options(
         headers: {'Content-Type': 'multipart/form-data'},
+        sendTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
       ),
       onSendProgress: onProgress,
     );
 
     // 서버 응답에서 이미지 URL 추출 (서버 구현에 따라 다름)
-    return response.data['url'] as String;
+    final url = response.data['url'];
+    if (url == null) {
+      throw Exception('Upload response does not contain URL');
+    }
+    return url as String;
   }
 
   /// 여러 이미지 업로드
@@ -739,6 +751,8 @@ class ImageUploadService {
 // lib/core/image/image_service.dart
 import 'dart:io';
 
+// pubspec.yaml dependencies 섹션에 추가:
+// fpdart: ^1.1.0  # Either, Option 타입 사용
 import 'package:fpdart/fpdart.dart';
 import 'package:injectable/injectable.dart';
 
@@ -1168,6 +1182,253 @@ class _ImageTile extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+```
+
+## 10. 업로드 재시도 및 취소
+
+### 10.1 CancelToken을 활용한 업로드 취소
+
+```dart
+class ImageUploadService {
+  final Dio _dio;
+  final Map<String, CancelToken> _cancelTokens = {};
+
+  /// 취소 가능한 업로드
+  Future<String?> uploadWithCancel(
+    String filePath, {
+    required String uploadId,
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    // 기존 업로드가 있으면 취소
+    await cancelUpload(uploadId);
+
+    final cancelToken = CancelToken();
+    _cancelTokens[uploadId] = cancelToken;
+
+    try {
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(filePath),
+      });
+
+      final response = await _dio.post(
+        '/upload',
+        data: formData,
+        cancelToken: cancelToken,
+        onSendProgress: (sent, total) {
+          if (!cancelToken.isCancelled) {
+            onProgress?.call(sent, total);
+          }
+        },
+      );
+
+      return response.data['url'];
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.cancel) {
+        return null; // 사용자가 취소함
+      }
+      rethrow;
+    } finally {
+      _cancelTokens.remove(uploadId);
+    }
+  }
+
+  /// 업로드 취소
+  Future<void> cancelUpload(String uploadId) async {
+    final token = _cancelTokens[uploadId];
+    if (token != null && !token.isCancelled) {
+      token.cancel('사용자가 업로드를 취소했습니다');
+      _cancelTokens.remove(uploadId);
+    }
+  }
+
+  /// 모든 업로드 취소
+  void cancelAll() {
+    for (final token in _cancelTokens.values) {
+      if (!token.isCancelled) {
+        token.cancel('모든 업로드 취소');
+      }
+    }
+    _cancelTokens.clear();
+  }
+}
+```
+
+### 10.2 지수 백오프 재시도
+
+```dart
+class RetryableImageUpload extends StatefulWidget {
+  final String imageUrl;
+
+  const RetryableImageUpload({
+    super.key,
+    required this.imageUrl,
+  });
+
+  @override
+  State<RetryableImageUpload> createState() => _RetryableImageUploadState();
+}
+
+class _RetryableImageUploadState extends State<RetryableImageUpload> {
+  final ImageUploadService _uploadService = ImageUploadService();
+
+  Future<String?> uploadWithRetry(
+    String filePath, {
+    required String uploadId,
+    int maxRetries = 3,
+    void Function(int attempt, int maxAttempts)? onRetry,
+  }) async {
+    int attempt = 0;
+
+    while (attempt < maxRetries) {
+      try {
+        return await _uploadService.uploadWithCancel(
+          filePath,
+          uploadId: uploadId,
+        );
+      } on DioException catch (e) {
+        if (e.type == DioExceptionType.cancel) {
+          return null; // 취소된 경우 재시도 안함
+        }
+
+        attempt++;
+        if (attempt >= maxRetries) rethrow;
+
+        onRetry?.call(attempt, maxRetries);
+
+        // 지수 백오프: 1초, 2초, 4초...
+        await Future.delayed(Duration(seconds: 1 << (attempt - 1)));
+      }
+    }
+
+    return null;
+  }
+}
+```
+
+## 11. 메모리 관리
+
+### 11.1 ListView 이미지 최적화
+
+```dart
+class OptimizedImageList extends StatelessWidget {
+  final List<String> imageUrls;
+
+  const OptimizedImageList({
+    super.key,
+    required this.imageUrls,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      // 화면에 보이는 항목만 렌더링
+      addAutomaticKeepAlives: false,
+      addRepaintBoundaries: true,
+
+      itemCount: imageUrls.length,
+      itemBuilder: (context, index) {
+        return CachedNetworkImage(
+          imageUrl: imageUrls[index],
+          // 메모리 캐시 크기 제한
+          memCacheWidth: 400,
+          memCacheHeight: 400,
+          // 플레이스홀더
+          // ShimmerPlaceholder는 shimmer 패키지를 래핑한 커스텀 위젯입니다
+          // 사용 예: Shimmer.fromColors(baseColor: Colors.grey[300]!, highlightColor: Colors.grey[100]!, child: Container(...))
+          placeholder: (_, __) => const ShimmerPlaceholder(),
+          // 에러 시 대체 이미지
+          errorWidget: (_, __, ___) => const Icon(Icons.error),
+        );
+      },
+    );
+  }
+}
+```
+
+### 11.2 대용량 이미지 처리
+
+```dart
+class LargeImageHandler {
+  /// 이미지 로드 전 유효성 검사
+  static Future<ImageValidationResult> validate(File file) async {
+    final bytes = await file.length();
+
+    // 10MB 초과 시 거부
+    if (bytes > 10 * 1024 * 1024) {
+      return ImageValidationResult.tooLarge(bytes);
+    }
+
+    // 이미지 디코딩하여 해상도 확인
+    final codec = await instantiateImageCodec(await file.readAsBytes());
+    final frame = await codec.getNextFrame();
+    final image = frame.image;
+
+    // 4000x4000 초과 시 리사이즈 필요
+    if (image.width > 4000 || image.height > 4000) {
+      return ImageValidationResult.needsResize(
+        width: image.width,
+        height: image.height,
+      );
+    }
+
+    return ImageValidationResult.valid();
+  }
+
+  /// Isolate에서 이미지 처리
+  // import 'package:image/image.dart' as img;
+  // import 'package:flutter/foundation.dart'; // for compute
+  static Future<Uint8List> processInIsolate(String filePath) async {
+    return await compute(_processImage, filePath);
+  }
+
+  static Uint8List _processImage(String filePath) {
+    // 백그라운드 Isolate에서 무거운 이미지 처리
+    final bytes = File(filePath).readAsBytesSync();
+    final image = img.decodeImage(bytes);
+    if (image == null) throw Exception('이미지 디코딩 실패');
+
+    // 리사이즈
+    final resized = img.copyResize(image, width: 1200);
+    return Uint8List.fromList(img.encodeJpg(resized, quality: 85));
+  }
+}
+```
+
+### 11.3 BlurHash 플레이스홀더
+
+```dart
+// pubspec.yaml
+dependencies:
+  flutter_blurhash: ^0.8.0
+
+class BlurHashImage extends StatelessWidget {
+  final String imageUrl;
+  final String blurHash;
+  final double? width;
+  final double? height;
+
+  const BlurHashImage({
+    super.key,
+    required this.imageUrl,
+    required this.blurHash,
+    this.width,
+    this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      placeholder: (_, __) {
+        if (blurHash != null) {
+          return BlurHash(hash: blurHash!);
+        }
+        return const ShimmerPlaceholder();
+      },
+      errorWidget: (_, __, ___) => const Icon(Icons.error),
     );
   }
 }

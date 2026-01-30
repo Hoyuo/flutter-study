@@ -15,8 +15,11 @@ Flutter에서 Bloc(Business Logic Component) 패턴을 사용한 상태 관리 �
 7. [Transformer](#7-transformer)
 8. [UI 연동](#8-ui-연동)
 9. [Bloc 통신](#9-bloc-통신)
-10. [테스트](#10-테스트)
-11. [Best Practices](#11-best-practices)
+10. [BlocObserver](#10-blocobserver)
+11. [Pagination Pattern](#11-pagination-pattern)
+12. [HydratedBloc](#12-hydratedbloc)
+13. [테스트](#13-테스트)
+14. [Best Practices](#14-best-practices)
 
 ---
 
@@ -466,7 +469,7 @@ on<ConnectionStatusChanged>((event, emit) async {
 
 ### isClosed 체크 (중요)
 
-비동기 작업 후에는 반드시 `isClosed`를 체크해야 합니다.
+비동기 작업 후에는 반드시 `isClosed`와 `emit.isDone`을 체크해야 합니다.
 
 ```dart
 on<DataFetchRequested>((event, emit) async {
@@ -474,8 +477,8 @@ on<DataFetchRequested>((event, emit) async {
 
   final result = await _repository.fetchData();
 
-  // 비동기 작업 중 Bloc이 close될 수 있음
-  if (isClosed) return;
+  // 비동기 작업 중 Bloc이 close되거나 emit이 완료될 수 있음
+  if (isClosed || emit.isDone) return;
 
   emit(state.copyWith(status: Status.success, data: result));
 });
@@ -791,6 +794,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 ```dart
 // 공유 Repository
 class SessionRepository {
+  // import 'package:rxdart/rxdart.dart';
   final _sessionController = BehaviorSubject<Session?>.seeded(null);
 
   Stream<Session?> get sessionStream => _sessionController.stream;
@@ -860,7 +864,797 @@ MultiBlocListener(
 
 ---
 
-## 10. 테스트
+## 10. BlocObserver
+
+### BlocObserver란?
+
+`BlocObserver`는 앱의 모든 Bloc/Cubit 상태 변경을 전역적으로 관찰하고 로깅할 수 있는 클래스입니다.
+
+### 기본 구현
+
+```dart
+// app_bloc_observer.dart
+import 'package:flutter/foundation.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+class AppBlocObserver extends BlocObserver {
+  @override
+  void onCreate(BlocBase bloc) {
+    super.onCreate(bloc);
+    debugPrint('onCreate -- ${bloc.runtimeType}');
+  }
+
+  @override
+  void onEvent(Bloc bloc, Object? event) {
+    super.onEvent(bloc, event);
+    debugPrint('onEvent -- ${bloc.runtimeType} | $event');
+  }
+
+  @override
+  void onChange(BlocBase bloc, Change change) {
+    super.onChange(bloc, change);
+    debugPrint('onChange -- ${bloc.runtimeType} | $change');
+  }
+
+  @override
+  void onTransition(Bloc bloc, Transition transition) {
+    super.onTransition(bloc, transition);
+    debugPrint('onTransition -- ${bloc.runtimeType} | $transition');
+  }
+
+  @override
+  void onError(BlocBase bloc, Object error, StackTrace stackTrace) {
+    super.onError(bloc, error, stackTrace);
+    debugPrint('onError -- ${bloc.runtimeType} | $error');
+  }
+
+  @override
+  void onClose(BlocBase bloc) {
+    super.onClose(bloc);
+    debugPrint('onClose -- ${bloc.runtimeType}');
+  }
+}
+```
+
+### Firebase Crashlytics 연동
+
+프로덕션 환경에서 에러를 자동으로 리포팅합니다.
+
+```dart
+// app_bloc_observer.dart
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+class AppBlocObserver extends BlocObserver {
+  @override
+  void onEvent(Bloc bloc, Object? event) {
+    super.onEvent(bloc, event);
+
+    // 개발 환경에서만 로깅
+    if (kDebugMode) {
+      debugPrint('${bloc.runtimeType} | $event');
+    }
+  }
+
+  @override
+  void onChange(BlocBase bloc, Change change) {
+    super.onChange(bloc, change);
+
+    if (kDebugMode) {
+      debugPrint('${bloc.runtimeType} | ${change.currentState} -> ${change.nextState}');
+    }
+  }
+
+  @override
+  void onError(BlocBase bloc, Object error, StackTrace stackTrace) {
+    super.onError(bloc, error, stackTrace);
+
+    // 개발/프로덕션 모두 에러 로깅
+    debugPrint('ERROR in ${bloc.runtimeType}: $error');
+
+    // 프로덕션에서 Crashlytics로 리포팅
+    if (kReleaseMode) {
+      FirebaseCrashlytics.instance.recordError(
+        error,
+        stackTrace,
+        reason: 'Bloc Error in ${bloc.runtimeType}',
+        fatal: false,
+      );
+    }
+  }
+}
+```
+
+### main.dart에서 설정
+
+```dart
+// main.dart
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase 초기화
+  await Firebase.initializeApp();
+
+  // BlocObserver 설정
+  Bloc.observer = AppBlocObserver();
+
+  // Flutter 프레임워크 에러도 Crashlytics로 전송
+  if (kReleaseMode) {
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+
+    // 비동기 에러 처리
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+  }
+
+  runApp(const MyApp());
+}
+```
+
+### 환경별 설정 패턴
+
+```dart
+// app_bloc_observer.dart
+class AppBlocObserver extends BlocObserver {
+  final bool enableDetailedLogs;
+  final bool reportToCrashlytics;
+
+  AppBlocObserver({
+    this.enableDetailedLogs = kDebugMode,
+    this.reportToCrashlytics = kReleaseMode,
+  });
+
+  @override
+  void onEvent(Bloc bloc, Object? event) {
+    super.onEvent(bloc, event);
+
+    if (enableDetailedLogs) {
+      debugPrint('[EVENT] ${bloc.runtimeType}: $event');
+    }
+  }
+
+  @override
+  void onError(BlocBase bloc, Object error, StackTrace stackTrace) {
+    super.onError(bloc, error, stackTrace);
+
+    // 항상 콘솔에 출력
+    debugPrint('[ERROR] ${bloc.runtimeType}: $error\n$stackTrace');
+
+    // 프로덕션에서만 Crashlytics 리포팅
+    if (reportToCrashlytics) {
+      FirebaseCrashlytics.instance.recordError(
+        error,
+        stackTrace,
+        reason: 'Bloc: ${bloc.runtimeType}',
+        information: ['State: ${bloc.state}'],
+      );
+    }
+  }
+}
+
+// main.dart
+void main() {
+  Bloc.observer = AppBlocObserver(
+    enableDetailedLogs: kDebugMode,
+    reportToCrashlytics: kReleaseMode,
+  );
+
+  runApp(const MyApp());
+}
+```
+
+### 커스텀 로깅 서비스 연동
+
+```dart
+// logging_service.dart
+abstract class LoggingService {
+  void logEvent(String message);
+  void logError(String message, Object error, StackTrace stackTrace);
+}
+
+// firebase_logging_service.dart
+class FirebaseLoggingService implements LoggingService {
+  @override
+  void logEvent(String message) {
+    if (kDebugMode) {
+      debugPrint(message);
+    }
+  }
+
+  @override
+  void logError(String message, Object error, StackTrace stackTrace) {
+    debugPrint('$message: $error');
+
+    if (kReleaseMode) {
+      FirebaseCrashlytics.instance.recordError(
+        error,
+        stackTrace,
+        reason: message,
+      );
+    }
+  }
+}
+
+// app_bloc_observer.dart
+class AppBlocObserver extends BlocObserver {
+  final LoggingService _loggingService;
+
+  AppBlocObserver({required LoggingService loggingService})
+      : _loggingService = loggingService;
+
+  @override
+  void onEvent(Bloc bloc, Object? event) {
+    super.onEvent(bloc, event);
+    _loggingService.logEvent('${bloc.runtimeType} | $event');
+  }
+
+  @override
+  void onError(BlocBase bloc, Object error, StackTrace stackTrace) {
+    super.onError(bloc, error, stackTrace);
+    _loggingService.logError(
+      'Error in ${bloc.runtimeType}',
+      error,
+      stackTrace,
+    );
+  }
+}
+```
+
+### 주의사항
+
+| 항목 | 설명 |
+|------|------|
+| **성능** | 과도한 로깅은 성능에 영향을 줄 수 있으므로 프로덕션에서는 필수 로깅만 활성화 |
+| **민감정보** | 로그에 비밀번호, 토큰 등 민감한 정보가 포함되지 않도록 주의 |
+| **로그 레벨** | 개발/스테이징/프로덕션 환경별로 로그 레벨을 다르게 설정 |
+| **Crashlytics 쿼터** | Firebase 무료 플랜은 일일 Crashlytics 이벤트 제한이 있음 |
+
+---
+
+## 11. Pagination Pattern
+
+### 11.1 PaginationState 정의
+
+```dart
+// lib/core/pagination/pagination_state.dart
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'pagination_state.freezed.dart';
+
+@freezed
+class PaginationState<T> with _$PaginationState<T> {
+  const factory PaginationState({
+    @Default([]) List<T> items,
+    @Default(1) int currentPage,
+    @Default(20) int pageSize,
+    @Default(false) bool isLoading,
+    @Default(false) bool hasReachedEnd,
+    String? error,
+  }) = _PaginationState<T>;
+
+  const PaginationState._();
+
+  bool get canLoadMore => !isLoading && !hasReachedEnd && error == null;
+}
+```
+
+### 11.2 Pagination Bloc 구현
+
+```dart
+// lib/features/products/presentation/bloc/product_list_bloc.dart
+import 'package:bloc/bloc.dart';
+import 'package:bloc_concurrency/bloc_concurrency.dart';
+
+class ProductListBloc extends Bloc<ProductListEvent, PaginationState<Product>> {
+  final GetProductsUseCase _getProducts;
+
+  ProductListBloc(this._getProducts) : super(const PaginationState()) {
+    on<ProductListEvent>(
+      (event, emit) => event.map(
+        started: (_) => _onStarted(emit),
+        loadMore: (_) => _onLoadMore(emit),
+        refresh: (_) => _onRefresh(emit),
+      ),
+      // 중복 요청 방지: 이전 요청 취소
+      transformer: droppable(),
+    );
+  }
+
+  Future<void> _onStarted(Emitter<PaginationState<Product>> emit) async {
+    if (state.items.isNotEmpty) return; // 이미 로드됨
+
+    emit(state.copyWith(isLoading: true, error: null));
+
+    final result = await _getProducts(page: 1, pageSize: state.pageSize);
+
+    result.fold(
+      (failure) => emit(state.copyWith(
+        isLoading: false,
+        error: failure.message,
+      )),
+      (products) => emit(state.copyWith(
+        items: products,
+        currentPage: 1,
+        isLoading: false,
+        hasReachedEnd: products.length < state.pageSize,
+      )),
+    );
+  }
+
+  Future<void> _onLoadMore(Emitter<PaginationState<Product>> emit) async {
+    if (!state.canLoadMore) return;
+
+    emit(state.copyWith(isLoading: true));
+
+    final nextPage = state.currentPage + 1;
+    final result = await _getProducts(page: nextPage, pageSize: state.pageSize);
+
+    result.fold(
+      (failure) => emit(state.copyWith(
+        isLoading: false,
+        error: failure.message,
+      )),
+      (products) => emit(state.copyWith(
+        items: [...state.items, ...products],
+        currentPage: nextPage,
+        isLoading: false,
+        hasReachedEnd: products.length < state.pageSize,
+      )),
+    );
+  }
+
+  Future<void> _onRefresh(Emitter<PaginationState<Product>> emit) async {
+    emit(const PaginationState(isLoading: true));
+
+    final result = await _getProducts(page: 1, pageSize: state.pageSize);
+
+    result.fold(
+      (failure) => emit(state.copyWith(
+        isLoading: false,
+        error: failure.message,
+      )),
+      (products) => emit(state.copyWith(
+        items: products,
+        currentPage: 1,
+        isLoading: false,
+        hasReachedEnd: products.length < state.pageSize,
+      )),
+    );
+  }
+}
+```
+
+### 11.3 UI 연동
+
+```dart
+class ProductListPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ProductListBloc, PaginationState<Product>>(
+      builder: (context, state) {
+        return NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            // 스크롤이 80% 이상 내려가면 다음 페이지 로드
+            if (notification is ScrollEndNotification &&
+                notification.metrics.pixels >=
+                notification.metrics.maxScrollExtent * 0.8) {
+              context.read<ProductListBloc>().add(
+                const ProductListEvent.loadMore(),
+              );
+            }
+            return false;
+          },
+          child: RefreshIndicator(
+            onRefresh: () async {
+              context.read<ProductListBloc>().add(
+                const ProductListEvent.refresh(),
+              );
+              // Bloc 상태가 업데이트될 때까지 대기
+              await context.read<ProductListBloc>().stream
+                  .firstWhere((s) => !s.isLoading);
+            },
+            child: ListView.builder(
+              itemCount: state.items.length + (state.canLoadMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index >= state.items.length) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                return ProductCard(product: state.items[index]);
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+```
+
+### 11.4 중요 패턴
+
+| 패턴 | 설명 |
+|-----|------|
+| `droppable()` | 이전 요청 취소, 최신 요청만 처리 |
+| `canLoadMore` | 중복 로드 방지 |
+| `ScrollEndNotification` | 스크롤 80% 지점에서 미리 로드 |
+| `RefreshIndicator` | Pull-to-refresh 지원 |
+
+---
+
+## 12. HydratedBloc
+
+### HydratedBloc이란?
+
+`HydratedBloc`은 Bloc의 상태를 로컬 저장소에 자동으로 저장하고, 앱 재시작 시 복원하는 패키지입니다.
+
+### 설치
+
+```yaml
+# pubspec.yaml
+dependencies:
+  hydrated_bloc: ^10.0.0  # bloc ^9.0.0 호환
+  path_provider: ^2.1.5
+```
+
+### 기본 설정
+
+```dart
+// main.dart
+import 'package:flutter/material.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:path_provider/path_provider.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // HydratedStorage 초기화
+  HydratedBloc.storage = await HydratedStorage.build(
+    storageDirectory: await getApplicationDocumentsDirectory(),
+  );
+
+  runApp(const MyApp());
+}
+```
+
+### HydratedBloc 구현
+
+```dart
+// counter_bloc.dart
+import 'package:hydrated_bloc/hydrated_bloc.dart';
+
+// Event
+sealed class CounterEvent {}
+class Increment extends CounterEvent {}
+class Decrement extends CounterEvent {}
+
+// Bloc
+class CounterBloc extends HydratedBloc<CounterEvent, int> {
+  CounterBloc() : super(0) {
+    on<Increment>((event, emit) => emit(state + 1));
+    on<Decrement>((event, emit) => emit(state - 1));
+  }
+
+  /// 상태를 JSON으로 직렬화
+  @override
+  int? fromJson(Map<String, dynamic> json) {
+    return json['value'] as int?;
+  }
+
+  /// JSON에서 상태 복원
+  @override
+  Map<String, dynamic>? toJson(int state) {
+    return {'value': state};
+  }
+}
+```
+
+### 복잡한 State 직렬화
+
+```dart
+// todo_state.dart
+import 'package:equatable/equatable.dart';
+
+class TodoState extends Equatable {
+  final List<Todo> todos;
+  final TodoFilter filter;
+
+  const TodoState({
+    this.todos = const [],
+    this.filter = TodoFilter.all,
+  });
+
+  @override
+  List<Object?> get props => [todos, filter];
+
+  /// JSON으로 직렬화
+  Map<String, dynamic> toJson() {
+    return {
+      'todos': todos.map((todo) => todo.toJson()).toList(),
+      'filter': filter.name,
+    };
+  }
+
+  /// JSON에서 복원
+  factory TodoState.fromJson(Map<String, dynamic> json) {
+    return TodoState(
+      todos: (json['todos'] as List<dynamic>?)
+          ?.map((e) => Todo.fromJson(e as Map<String, dynamic>))
+          .toList() ?? const [],
+      filter: TodoFilter.values.firstWhere(
+        (f) => f.name == json['filter'],
+        orElse: () => TodoFilter.all,
+      ),
+    );
+  }
+}
+
+// todo_bloc.dart
+class TodoBloc extends HydratedBloc<TodoEvent, TodoState> {
+  TodoBloc() : super(const TodoState()) {
+    on<AddTodo>(_onAddTodo);
+    on<DeleteTodo>(_onDeleteTodo);
+  }
+
+  @override
+  TodoState? fromJson(Map<String, dynamic> json) {
+    try {
+      return TodoState.fromJson(json);
+    } catch (e) {
+      // 복원 실패 시 기본 상태 반환
+      return null;
+    }
+  }
+
+  @override
+  Map<String, dynamic>? toJson(TodoState state) {
+    try {
+      return state.toJson();
+    } catch (e) {
+      return null;
+    }
+  }
+}
+```
+
+### Freezed와 함께 사용
+
+```dart
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
+
+part 'settings_state.freezed.dart';
+part 'settings_state.g.dart';  // json_serializable
+
+@freezed
+class SettingsState with _$SettingsState {
+  const factory SettingsState({
+    @Default(false) bool isDarkMode,
+    @Default('ko') String language,
+    @Default(true) bool notificationsEnabled,
+  }) = _SettingsState;
+
+  factory SettingsState.fromJson(Map<String, dynamic> json) =>
+      _$SettingsStateFromJson(json);
+}
+
+class SettingsBloc extends HydratedBloc<SettingsEvent, SettingsState> {
+  SettingsBloc() : super(const SettingsState()) {
+    on<ToggleDarkMode>(_onToggleDarkMode);
+    on<ChangeLanguage>(_onChangeLanguage);
+  }
+
+  @override
+  SettingsState? fromJson(Map<String, dynamic> json) {
+    try {
+      return SettingsState.fromJson(json);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Map<String, dynamic>? toJson(SettingsState state) {
+    return state.toJson();
+  }
+}
+```
+
+### HydratedCubit 사용
+
+```dart
+// theme_cubit.dart
+import 'package:flutter/material.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
+
+class ThemeCubit extends HydratedCubit<ThemeMode> {
+  ThemeCubit() : super(ThemeMode.system);
+
+  void setTheme(ThemeMode mode) => emit(mode);
+
+  void toggleTheme() {
+    emit(state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light);
+  }
+
+  @override
+  ThemeMode? fromJson(Map<String, dynamic> json) {
+    final modeString = json['themeMode'] as String?;
+    return ThemeMode.values.firstWhere(
+      (mode) => mode.name == modeString,
+      orElse: () => ThemeMode.system,
+    );
+  }
+
+  @override
+  Map<String, dynamic>? toJson(ThemeMode state) {
+    return {'themeMode': state.name};
+  }
+}
+```
+
+### 저장소 초기화 옵션
+
+```dart
+// main.dart
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 기본 경로 사용
+  HydratedBloc.storage = await HydratedStorage.build(
+    storageDirectory: await getApplicationDocumentsDirectory(),
+  );
+
+  // 또는 커스텀 경로 사용
+  // HydratedBloc.storage = await HydratedStorage.build(
+  //   storageDirectory: Directory('/custom/path'),
+  // );
+
+  runApp(const MyApp());
+}
+```
+
+### 저장소 초기화 및 삭제
+
+```dart
+// 특정 Bloc의 저장된 데이터 삭제
+await HydratedBloc.storage.delete('CounterBloc');
+
+// 모든 저장된 데이터 삭제
+await HydratedBloc.storage.clear();
+
+// 저장소 직접 읽기
+final data = await HydratedBloc.storage.read('CounterBloc');
+```
+
+### 마이그레이션 패턴
+
+버전 업데이트 시 저장된 데이터 구조가 변경될 경우:
+
+```dart
+class UserBloc extends HydratedBloc<UserEvent, UserState> {
+  static const int _currentVersion = 2;
+
+  UserBloc() : super(UserState.initial());
+
+  @override
+  UserState? fromJson(Map<String, dynamic> json) {
+    try {
+      final version = json['version'] as int? ?? 1;
+
+      // 버전별 마이그레이션
+      if (version == 1) {
+        return _migrateFromV1(json);
+      }
+
+      return UserState.fromJson(json);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  @override
+  Map<String, dynamic>? toJson(UserState state) {
+    final json = state.toJson();
+    json['version'] = _currentVersion;
+    return json;
+  }
+
+  UserState _migrateFromV1(Map<String, dynamic> json) {
+    // V1 데이터를 V2 형식으로 변환
+    return UserState(
+      id: json['userId'] as String,  // 필드명 변경
+      name: json['name'] as String,
+      // 새로운 필드는 기본값
+      email: '',
+    );
+  }
+}
+```
+
+### 주의사항
+
+| 항목 | 설명 |
+|------|------|
+| **민감 정보** | 토큰, 비밀번호 등 민감한 정보는 저장하지 말 것 (secure_storage 사용) |
+| **데이터 크기** | 대용량 데이터는 성능 저하 원인 (이미지, 파일 등은 별도 저장) |
+| **직렬화 가능** | fromJson/toJson이 가능한 데이터만 저장 가능 |
+| **에러 처리** | fromJson에서 예외 발생 시 null 반환하여 기본 상태로 복원 |
+| **플랫폼 제한** | 웹에서는 localStorage 사용 (용량 제한 있음) |
+
+### 테스트
+
+```dart
+// counter_bloc_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockStorage extends Mock implements Storage {}
+
+void main() {
+  late Storage storage;
+
+  setUp(() {
+    storage = MockStorage();
+    when(() => storage.write(any(), any<dynamic>())).thenAnswer((_) async {});
+    HydratedBloc.storage = storage;
+  });
+
+  group('CounterBloc', () {
+    test('초기 상태는 0', () {
+      expect(CounterBloc().state, 0);
+    });
+
+    test('저장된 상태 복원', () {
+      when<dynamic>(() => storage.read('CounterBloc'))
+          .thenReturn({'value': 42});
+
+      expect(CounterBloc().state, 42);
+    });
+
+    test('상태 변경 시 저장', () async {
+      final bloc = CounterBloc();
+      bloc.add(Increment());
+      await bloc.close();
+
+      verify(() => storage.write('CounterBloc', {'value': 1})).called(1);
+    });
+  });
+}
+```
+
+### Best Practices
+
+```dart
+// 좋은 예: 작은 설정 데이터 저장
+class SettingsBloc extends HydratedBloc<SettingsEvent, SettingsState> {
+  // 사용자 설정, 테마, 언어 등
+}
+
+// 나쁜 예: 대용량 데이터 저장
+class MediaBloc extends HydratedBloc<MediaEvent, MediaState> {
+  // 이미지, 비디오 데이터 (X)
+  // 파일 경로만 저장하고 실제 데이터는 별도 저장
+}
+
+// 나쁜 예: 민감한 정보 저장
+class AuthBloc extends HydratedBloc<AuthEvent, AuthState> {
+  // 비밀번호, API 키 (X)
+  // flutter_secure_storage 사용 필요
+}
+```
+
+---
+
+## 13. 테스트
 
 ### 의존성 추가
 
@@ -877,11 +1671,20 @@ dev_dependencies:
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 
-@GenerateMocks([AuthRepository])
+@GenerateMocks([AuthRepository, LoginBloc])
 void main() {}
 
-// 생성된 MockAuthRepository는 'test_file.mocks.dart' 파일에서 사용
-// flutter pub run build_runner build 실행 필요
+// 생성된 Mock 클래스들은 'test_file.mocks.dart' 파일에서 사용
+// dart run build_runner build 실행 필요
+```
+
+또는 수동으로 Mock Bloc 정의:
+
+```dart
+import 'package:bloc_test/bloc_test.dart';
+
+class MockLoginBloc extends MockBloc<LoginEvent, LoginState>
+    implements LoginBloc {}
 ```
 
 ### blocTest 사용
@@ -989,9 +1792,10 @@ blocTest<DataBloc, DataState>(
 testWidgets('LoginPage 테스트', (tester) async {
   final mockBloc = MockLoginBloc();
 
-  when(mockBloc.state).thenReturn(LoginState.initial());
-  when(mockBloc.stream).thenAnswer(
-    (_) => Stream.value(LoginState.initial()),
+  whenListen(
+    mockBloc,
+    Stream<LoginState>.empty(),
+    initialState: LoginState.initial(),
   );
 
   await tester.pumpWidget(
@@ -1028,7 +1832,7 @@ testWidgets('LoginPage 테스트', (tester) async {
 
 ---
 
-## 11. Best Practices
+## 14. Best Practices
 
 ### DO (이렇게 하세요)
 

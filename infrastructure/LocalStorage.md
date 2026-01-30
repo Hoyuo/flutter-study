@@ -66,8 +66,12 @@ dependencies:
   # SecureStorage - v10+ 새로운 초기화 API
   flutter_secure_storage: ^10.0.0
 
-  # Isar Plus - 커뮤니티 포크 (원본 Isar 개발 중단됨)
-  isar_plus: ^1.2.1
+  # ⚠️ 경고: Isar Plus는 커뮤니티 포크로 장기 유지보수 불확실
+  # 새 프로젝트는 Drift 사용 권장 (섹션 4.0.3 참조)
+  # isar_plus: ^1.2.1  # 개발 중단된 Isar의 포크
+
+  # 권장 대안: Drift (타입 안전, 활발한 개발)
+  drift: ^2.14.0
 
   injectable: ^2.7.1  # DI.md와 동일
   path_provider: ^2.1.2
@@ -440,7 +444,17 @@ class AppPreferencesImpl implements AppPreferences {
   @override
   DateTime? getLastLoginAt() {
     final value = _prefs.getString(PreferenceKeys.lastLoginAt);
-    return value != null ? DateTime.parse(value) : null;
+    if (value == null) return null;
+
+    // DateTime.tryParse 사용 (안전한 파싱)
+    return DateTime.tryParse(value);
+
+    // 또는 try-catch 사용:
+    // try {
+    //   return DateTime.parse(value);
+    // } catch (e) {
+    //   return null;
+    // }
   }
 
   // Notifications
@@ -608,7 +622,9 @@ class AppDatabase extends _$AppDatabase {
 
 ```dart
 // core/core_storage/lib/src/database/collections/cached_user.dart
-import 'package:isar/isar.dart';
+// 참고: isar_plus 사용 시
+// import 'package:isar_plus/isar_plus.dart';
+import 'package:isar/isar.dart';  // 또는 isar_plus 사용
 
 part 'cached_user.g.dart';
 
@@ -1002,6 +1018,9 @@ import 'package:injectable/injectable.dart';
 
 @module
 abstract class SecureStorageModule {
+  // ⚠️ 주의: flutter_secure_storage v10.0.0은 아직 beta 버전입니다.
+  // Production에서는 v9.x stable 버전 사용을 권장합니다.
+  // v10 API는 변경될 수 있습니다.
   @lazySingleton
   FlutterSecureStorage get secureStorage {
     return FlutterSecureStorage.standard(
@@ -1207,6 +1226,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _preferences.setLastLoginAt(DateTime.now());
 
       return Right(response.user.toEntity());
+    // import 'package:dio/dio.dart';
     } on DioException catch (e) {
       return Left(_mapError(e));
     }
@@ -1326,7 +1346,7 @@ abstract class CacheManager {
 
 @LazySingleton(as: CacheManager)
 class CacheManagerImpl implements CacheManager {
-  final IsarDatabase _database;
+  final IsarDatabase _database;  // TODO: 디스크 캐싱에 사용 예정
   final Map<String, CacheEntry> _memoryCache = {};
 
   CacheManagerImpl(this._database);
@@ -1454,9 +1474,130 @@ void main() {
 }
 ```
 
-## 10. Best Practices
+## 10. 데이터베이스 암호화
 
-### 10.1 저장소 선택 가이드 (2026년 기준)
+### 10.1 SQLCipher (Drift 암호화)
+
+```yaml
+# pubspec.yaml
+dependencies:
+  drift: ^2.15.0
+  sqlite3_flutter_libs: ^0.5.0
+  sqlcipher_flutter_libs: ^0.6.0  # SQLCipher 지원
+```
+
+```dart
+// lib/core/database/encrypted_database.dart
+// import 'dart:io';
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
+import 'package:sqlcipher_flutter_libs/sqlcipher_flutter_libs.dart';
+import 'package:sqlite3/open.dart';
+// import 'package:path/path.dart' as p;
+
+LazyDatabase openEncryptedDatabase(String name, String password) {
+  return LazyDatabase(() async {
+    // SQLCipher 라이브러리 로드
+    open.overrideFor(OperatingSystem.android, openCipherOnAndroid);
+
+    final dbFolder = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dbFolder.path, '$name.db'));
+
+    return NativeDatabase.createInBackground(
+      file,
+      setup: (db) {
+        // 암호화 키 설정
+        db.execute("PRAGMA key = '$password';");
+        // 암호화 검증
+        db.execute('SELECT count(*) FROM sqlite_master;');
+      },
+    );
+  });
+}
+```
+
+### 10.2 암호화 키 관리
+
+```dart
+// import 'dart:math';
+// import 'dart:convert';
+class DatabaseKeyManager {
+  final FlutterSecureStorage _secureStorage;
+
+  /// 암호화 키 생성 또는 로드
+  Future<String> getOrCreateKey() async {
+    const keyName = 'database_encryption_key';
+
+    var key = await _secureStorage.read(key: keyName);
+    if (key == null) {
+      // 256비트 랜덤 키 생성
+      final random = Random.secure();
+      final bytes = List<int>.generate(32, (_) => random.nextInt(256));
+      key = base64Encode(bytes);
+      await _secureStorage.write(key: keyName, value: key);
+    }
+
+    return key;
+  }
+
+  /// 키 마이그레이션 (비밀번호 변경)
+  Future<void> rotateKey(String oldKey, String newKey) async {
+    final db = await openEncryptedDatabase('app', oldKey);
+    await db.customStatement("PRAGMA rekey = '$newKey';");
+    await _secureStorage.write(key: 'database_encryption_key', value: newKey);
+  }
+}
+```
+
+### 10.3 ObjectBox 암호화
+
+```dart
+// ObjectBox 암호화 설정
+final store = await openStore(
+  directory: dbPath,
+  // 256비트 암호화 키
+  encryptionKey: await _getEncryptionKey(),
+);
+
+Future<Uint8List> _getEncryptionKey() async {
+  final keyString = await _keyManager.getOrCreateKey();
+  return base64Decode(keyString);
+}
+```
+
+### 10.4 마이그레이션 시 암호화 유지
+
+```dart
+@override
+MigrationStrategy get migration => MigrationStrategy(
+  onCreate: (m) async {
+    await m.createAll();
+  },
+  onUpgrade: (m, from, to) async {
+    // 암호화된 상태에서 마이그레이션 수행
+    if (from < 2) {
+      await m.addColumn(users, users.profileImage);
+    }
+  },
+  beforeOpen: (details) async {
+    // 암호화 상태 검증
+    await customStatement('SELECT count(*) FROM sqlite_master;');
+  },
+);
+```
+
+### 10.5 주의사항
+
+| 항목 | 설명 |
+|-----|------|
+| 성능 | 암호화는 약 5-15% 성능 오버헤드 발생 |
+| 키 분실 | 암호화 키 분실 시 데이터 복구 불가 |
+| 백업 | 암호화된 DB 백업 시 키도 함께 관리 필요 |
+| 디버깅 | DB Browser에서 암호화된 DB 열람 불가 |
+
+## 11. Best Practices
+
+### 11.1 저장소 선택 가이드 (2026년 기준)
 
 | 데이터 유형 | 저장소 | 이유 |
 |------------|--------|------|
@@ -1465,7 +1606,7 @@ void main() {
 | 복잡한 객체 | Drift 또는 ObjectBox | 쿼리/관계 필요 (⚠️ Isar 개발 중단) |
 | 임시 캐시 | 메모리 + Drift/ObjectBox | 빠른 접근 + 영속성 |
 
-### 10.2 DO (이렇게 하세요) - 2026 업데이트
+### 11.2 DO (이렇게 하세요) - 2026 업데이트
 
 | 항목 | 설명 | 예시 |
 |------|------|------|
@@ -1477,7 +1618,7 @@ void main() {
 | **비동기 초기화** | WithCache는 앱 시작 시 초기화 | ✅ `@preResolve` 사용 |
 | **타입 안전성** | Generic이 아닌 명시적 메서드 | ✅ `Future<String?>` 반환 |
 
-### 10.3 DON'T (하지 마세요) - 2026 업데이트
+### 11.3 DON'T (하지 마세요) - 2026 업데이트
 
 ```dart
 // ❌ Legacy SharedPreferences API 사용
@@ -1510,9 +1651,9 @@ final theme = prefs.getString('theme');  // await 필요!
 // ✅ await prefs.getString('theme');
 ```
 
-## 11. 마이그레이션
+## 12. 마이그레이션
 
-### 11.1 Isar 스키마 변경
+### 12.1 Isar 스키마 변경
 
 ```dart
 // 버전 관리가 필요한 경우
@@ -1528,7 +1669,7 @@ class CachedUser {
 }
 ```
 
-### 11.2 데이터 마이그레이션
+### 12.2 데이터 마이그레이션
 
 ```dart
 // app/lib/src/migration/storage_migration.dart
@@ -1562,7 +1703,7 @@ class StorageMigration {
 }
 ```
 
-## 12. 2026년 1월 업데이트 요약
+## 13. 2026년 1월 업데이트 요약
 
 이 문서는 2026년 1월 기준 최신 Flutter 로컬 저장소 베스트 프랙티스를 반영합니다.
 
@@ -1620,7 +1761,7 @@ dev_dependencies:
 - [ ] DI 설정 업데이트 (PreferencesModule, SecureStorageModule)
 - [ ] 테스트 코드 업데이트
 
-## 13. 참고
+## 14. 참고
 
 - [SharedPreferences 공식 문서](https://pub.dev/packages/shared_preferences)
 - [Flutter Secure Storage 공식 문서](https://pub.dev/packages/flutter_secure_storage)

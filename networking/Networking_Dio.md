@@ -44,10 +44,11 @@ core/
 dependencies:
   dio: ^5.9.0
   pretty_dio_logger: ^1.4.0
-  connectivity_plus: ^6.0.0  # List<ConnectivityResult> 반환
+  connectivity_plus: ^7.0.0  # List<ConnectivityResult> 반환
   injectable: ^2.7.1
   freezed_annotation: ^3.1.0
   fpdart: ^1.2.0
+  crypto: ^3.0.3  # for SSL pinning (sha256)
 
 dev_dependencies:
   injectable_generator: ^2.12.0
@@ -176,6 +177,11 @@ class AuthInterceptor extends Interceptor {
   // ⚠️ 주의: Interceptor의 onRequest/onResponse/onError는 void 반환
   // async 사용 시 에러가 전파되지 않을 수 있음
   // 내부에서 try-catch로 에러 처리 필수
+  //
+  // ⚠️ async void 경고:
+  // - void 반환 타입과 async를 함께 사용하면 에러가 호출자에게 전파되지 않음
+  // - 반드시 내부에서 try-catch로 모든 예외를 처리해야 함
+  // - Dio의 Interceptor는 void를 요구하므로 이 패턴 불가피
   @override
   void onRequest(
     RequestOptions options,
@@ -451,8 +457,11 @@ class RetryInterceptor extends Interceptor {
       final retryCount = err.requestOptions.extra['retryCount'] ?? 0;
 
       if (retryCount < maxRetries) {
-        // 재시도 전 대기
-        await Future.delayed(retryDelay * (retryCount + 1));
+        // 재시도 전 대기 (지수 백오프)
+        final delay = Duration(
+          milliseconds: retryDelay.inMilliseconds * (retryCount + 1),
+        );
+        await Future.delayed(delay);
 
         // 재시도 횟수 증가
         err.requestOptions.extra['retryCount'] = retryCount + 1;
@@ -517,6 +526,417 @@ class ConnectivityInterceptor extends Interceptor {
   }
 }
 ```
+
+### 4.6 SSL Pinning / Certificate Pinning
+
+SSL Pinning은 중간자 공격(MITM)을 방지하기 위해 서버의 인증서를 앱에 고정하는 보안 기법입니다.
+
+#### 4.6.1 http_certificate_pinning 사용
+
+```yaml
+# core/core_network/pubspec.yaml
+dependencies:
+  # SSL Pinning 옵션:
+  # Option 1: http_certificate_pinning (권장)
+  http_certificate_pinning: ^2.0.0
+  # Option 2: 직접 구현 (4.6.3 섹션 참조)
+```
+
+```dart
+// core/core_network/lib/src/dio_client.dart
+import 'package:http_certificate_pinning/http_certificate_pinning.dart';
+import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
+import 'package:injectable/injectable.dart';
+
+@LazySingleton(as: DioClient)
+class DioClientImpl implements DioClient {
+  final AppConfig _config;
+  Dio? _dio;
+
+  DioClientImpl(this._config);
+
+  @override
+  Dio get dio {
+    _dio ??= _createDio();
+    return _dio!;
+  }
+
+  Dio _createDio() {
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: _config.baseUrl,
+        connectTimeout: _config.timeout,
+        receiveTimeout: _config.timeout,
+        sendTimeout: _config.timeout,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ),
+    );
+
+    // SSL Pinning 설정 (프로덕션에서만)
+    if (_config.enableSslPinning) {
+      _configureSslPinning(dio);
+    }
+
+    // Interceptors 추가...
+    return dio;
+  }
+
+  void _configureSslPinning(Dio dio) {
+    // http_certificate_pinning 패키지 사용
+    // 주의: 아래는 개념적 예시이며, 실제 API는 패키지 문서를 참고하세요.
+    // 패키지 문서: https://pub.dev/packages/http_certificate_pinning
+
+    (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+      final client = HttpClient();
+
+      client.badCertificateCallback = (cert, host, port) {
+        // SHA-256 핀 검증
+        // http_certificate_pinning 패키지의 실제 API를 사용하거나
+        // 아래 4.6.3의 수동 구현 방식을 참고하세요.
+        final validPins = {
+          'api.example.com': [
+            'sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+            'sha256/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=',
+          ],
+        };
+
+        // 실제 검증 로직은 패키지 또는 4.6.3 섹션 참조
+        return _checkCertificate(cert, host, validPins[host] ?? []);
+      };
+
+      return client;
+    };
+  }
+
+  bool _checkCertificate(dynamic cert, String host, List<String> validPins) {
+    // 실제 구현은 4.6.3 섹션의 수동 SSL Pinning 참조
+    // 또는 http_certificate_pinning 패키지의 API 사용
+    return true; // Placeholder
+  }
+}
+```
+
+#### 4.6.2 인증서 해시 추출 방법
+
+```bash
+# OpenSSL로 서버 인증서 다운로드
+openssl s_client -servername api.example.com -connect api.example.com:443 < /dev/null | openssl x509 -outform DER > cert.der
+
+# SHA-256 해시 계산
+openssl x509 -in cert.der -inform DER -pubkey -noout | openssl pkey -pubin -outform DER | openssl dgst -sha256 -binary | openssl enc -base64
+```
+
+#### 4.6.3 수동 SSL Pinning (패키지 없이 직접 구현)
+
+```dart
+import 'dart:io';
+import 'dart:convert'; // for utf8
+import 'package:crypto/crypto.dart'; // for sha256
+import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
+
+void _configureSslPinning(Dio dio) {
+  (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+    final client = HttpClient();
+
+    client.badCertificateCallback = (cert, host, port) {
+      // 인증서 공개키 추출
+      // 주의: X509Certificate는 .pem 속성만 제공
+      // SHA256 핀 비교를 위해서는 pem을 파싱하거나 전체 인증서 체인 검증 필요
+      final certPem = cert.pem;
+      final certSha256 = sha256.convert(utf8.encode(certPem));
+      final certPin = base64.encode(certSha256.bytes);
+
+      // 등록된 핀 목록
+      const validPins = [
+        'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+        'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=',
+      ];
+
+      // 핀 검증
+      if (host == 'api.example.com' && validPins.contains(certPin)) {
+        return true;
+      }
+
+      // 검증 실패 시 로깅
+      debugPrint('SSL Pinning failed for $host');
+      debugPrint('Expected pins: $validPins');
+      debugPrint('Received pin: $certPin');
+
+      return false;
+    };
+
+    return client;
+  };
+}
+```
+
+#### 4.6.4 개발 환경 처리
+
+```dart
+// core/core_network/lib/src/config/app_config.dart
+abstract class AppConfig {
+  String get baseUrl;
+  bool get enableLogging;
+  bool get enableSslPinning;  // 추가
+  Duration get timeout;
+}
+
+@LazySingleton(as: AppConfig)
+@Environment('dev')
+class DevConfig implements AppConfig {
+  @override
+  String get baseUrl => 'https://api.dev.example.com';
+
+  @override
+  bool get enableLogging => true;
+
+  @override
+  bool get enableSslPinning => false;  // 개발에서는 비활성화
+
+  @override
+  Duration get timeout => const Duration(seconds: 30);
+}
+
+@LazySingleton(as: AppConfig)
+@Environment('prod')
+class ProdConfig implements AppConfig {
+  @override
+  String get baseUrl => 'https://api.example.com';
+
+  @override
+  bool get enableLogging => false;
+
+  @override
+  bool get enableSslPinning => true;  // 프로덕션에서 활성화
+
+  @override
+  Duration get timeout => const Duration(seconds: 15);
+}
+```
+
+#### 4.6.5 주의사항
+
+| 항목 | 설명 |
+|------|------|
+| **인증서 갱신** | 서버 인증서 갱신 시 앱도 업데이트 필요 (여러 핀 등록 권장) |
+| **개발 환경** | 로컬/개발 서버는 SSL Pinning 비활성화 |
+| **에러 처리** | Pinning 실패 시 명확한 에러 메시지 제공 |
+| **백업 핀** | 현재 인증서 + 다음 인증서 핀을 함께 등록 |
+| **테스트** | Charles Proxy 등 테스트 도구 사용 불가 |
+
+### 4.7 토큰 갱신 동시성 처리 (Mutex/Lock)
+
+여러 요청이 동시에 401을 받았을 때, 토큰 갱신이 중복으로 실행되는 것을 방지합니다.
+
+#### 4.7.1 Mutex 구현
+
+```dart
+// core/core_network/lib/src/utils/mutex.dart
+import 'dart:async';
+
+/// 비동기 작업의 동시 실행을 방지하는 Mutex
+class Mutex {
+  Completer<void>? _completer;
+
+  /// Mutex를 획득하고 작업 실행
+  Future<T> acquire<T>(Future<T> Function() operation) async {
+    // 이미 잠금이 있으면 대기
+    while (_completer != null) {
+      await _completer!.future;
+    }
+
+    // 새 잠금 생성
+    _completer = Completer<void>();
+
+    try {
+      // 작업 실행
+      return await operation();
+    } finally {
+      // 잠금 해제
+      final completer = _completer;
+      _completer = null;
+      completer?.complete();
+    }
+  }
+
+  /// 현재 잠금 상태 확인
+  bool get isLocked => _completer != null;
+}
+```
+
+#### 4.7.2 AuthInterceptor에서 Mutex 사용
+
+```dart
+// core/core_network/lib/src/interceptors/auth_interceptor.dart
+import 'package:dio/dio.dart';
+
+class AuthInterceptor extends Interceptor {
+  final Dio _dio;
+  final TokenStorage _tokenStorage;
+  final AuthService _authService;
+  final AppConfig _config;
+  final Mutex _refreshMutex = Mutex();  // Mutex 추가
+
+  AuthInterceptor(this._dio, this._tokenStorage, this._authService, this._config);
+
+  @override
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    if (_isPublicEndpoint(options.path)) {
+      return handler.next(options);
+    }
+
+    final token = await _tokenStorage.getAccessToken();
+    if (token != null) {
+      options.headers['Authorization'] = 'Bearer $token';
+    }
+
+    handler.next(options);
+  }
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
+    if (err.response?.statusCode == 401) {
+      // Mutex로 토큰 갱신 동시성 제어
+      final refreshed = await _refreshMutex.acquire(() => _refreshToken());
+
+      if (refreshed) {
+        // 원래 요청 재시도
+        try {
+          final response = await _retry(err.requestOptions);
+          return handler.resolve(response);
+        } catch (e) {
+          // 재시도 실패 시 원래 에러 전달
+        }
+      } else {
+        // 갱신 실패 - 로그아웃 처리
+        await _authService.logout();
+      }
+    }
+
+    handler.next(err);
+  }
+
+  bool _isPublicEndpoint(String path) {
+    const publicEndpoints = [
+      '/auth/login',
+      '/auth/register',
+      '/auth/refresh',
+    ];
+    return publicEndpoints.any((e) => path.contains(e));
+  }
+
+  Future<bool> _refreshToken() async {
+    try {
+      final refreshToken = await _tokenStorage.getRefreshToken();
+      if (refreshToken == null) return false;
+
+      debugPrint('[AuthInterceptor] Refreshing token...');
+
+      // 새 Dio 인스턴스로 갱신 (순환 방지)
+      final dio = Dio();
+      final response = await dio.post(
+        '${_config.baseUrl}/auth/refresh',
+        data: {'refresh_token': refreshToken},
+      );
+
+      final newAccessToken = response.data['access_token'];
+      final newRefreshToken = response.data['refresh_token'];
+
+      await _tokenStorage.saveTokens(
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      );
+
+      debugPrint('[AuthInterceptor] Token refreshed successfully');
+      return true;
+    } catch (e) {
+      debugPrint('[AuthInterceptor] Token refresh failed: $e');
+      return false;
+    }
+  }
+
+  Future<Response<dynamic>> _retry(RequestOptions requestOptions) async {
+    final token = await _tokenStorage.getAccessToken();
+    final options = Options(
+      method: requestOptions.method,
+      headers: {
+        ...requestOptions.headers,
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    return _dio.request<dynamic>(
+      requestOptions.path,
+      data: requestOptions.data,
+      queryParameters: requestOptions.queryParameters,
+      options: options,
+    );
+  }
+}
+```
+
+#### 4.7.3 대안: synchronized 패키지 사용
+
+```dart
+// core/core_network/pubspec.yaml
+dependencies:
+  synchronized: ^3.3.0+3
+```
+
+```dart
+// core/core_network/lib/src/interceptors/auth_interceptor.dart
+import 'package:synchronized/synchronized.dart';
+
+class AuthInterceptor extends Interceptor {
+  final Dio _dio;
+  final TokenStorage _tokenStorage;
+  final AuthService _authService;
+  final AppConfig _config;
+  final Lock _refreshLock = Lock();  // Lock 사용
+
+  AuthInterceptor(this._dio, this._tokenStorage, this._authService, this._config);
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
+    if (err.response?.statusCode == 401) {
+      // Lock으로 동시성 제어
+      final refreshed = await _refreshLock.synchronized(() => _refreshToken());
+
+      if (refreshed) {
+        try {
+          final response = await _retry(err.requestOptions);
+          return handler.resolve(response);
+        } catch (e) {
+          // 재시도 실패
+        }
+      } else {
+        await _authService.logout();
+      }
+    }
+
+    handler.next(err);
+  }
+
+  // _refreshToken, _retry 메서드는 동일
+}
+```
+
+#### 4.7.4 시나리오 비교
+
+| 상황 | Mutex 없이 | Mutex 사용 |
+|------|----------|-----------|
+| 3개 요청 동시 401 | 토큰 갱신 3번 실행 | 토큰 갱신 1번만 실행 |
+| 갱신 실패 | 3개 모두 재시도 → 실패 | 1번 갱신 실패 → 모두 로그아웃 |
+| 서버 부하 | /auth/refresh 3번 호출 | /auth/refresh 1번만 호출 |
+| 갱신 중 새 요청 | 또 갱신 시도 | 갱신 완료 대기 후 새 토큰 사용 |
 
 ## 5. Network Exception
 
@@ -923,6 +1343,8 @@ dio.interceptors.add(authInterceptor);     // 순서가 중요함
 ### 11.1 cURL 명령어 출력
 
 ```dart
+// import 'dart:convert'; // for jsonEncode
+
 @injectable
 class CurlInterceptor extends Interceptor {
   @override
@@ -973,9 +1395,166 @@ class PerformanceInterceptor extends Interceptor {
 }
 ```
 
-## 12. 참고
+## 12. HTTP 캐싱 전략
+
+### 12.1 dio_cache_interceptor 설정
+
+```yaml
+# pubspec.yaml
+dependencies:
+  dio_cache_interceptor: ^3.5.0
+  dio_cache_interceptor_hive_store: ^3.2.0
+```
+
+```dart
+import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
+import 'package:dio_cache_interceptor_hive_store/dio_cache_interceptor_hive_store.dart';
+
+class CachedDioClient {
+  late final Dio _dio;
+  late final CacheOptions _cacheOptions;
+
+  Future<void> init() async {
+    // Hive 기반 영구 캐시 저장소
+    final cacheStore = HiveCacheStore(
+      await getApplicationDocumentsDirectory().then((d) => d.path),
+    );
+
+    _cacheOptions = CacheOptions(
+      store: cacheStore,
+      policy: CachePolicy.request, // 캐시 먼저, 없으면 네트워크
+      maxStale: const Duration(days: 7), // 오프라인 시 7일 된 캐시도 사용
+      priority: CachePriority.normal,
+      hitCacheOnErrorExcept: [401, 403], // 에러 시 캐시 사용 (인증 에러 제외)
+    );
+
+    _dio = Dio()
+      ..interceptors.add(DioCacheInterceptor(options: _cacheOptions));
+  }
+
+  /// 캐시 정책 오버라이드 가능한 GET
+  Future<Response> get(
+    String path, {
+    CachePolicy? cachePolicy,
+    Duration? maxStale,
+  }) {
+    return _dio.get(
+      path,
+      options: _cacheOptions
+          .copyWith(
+            policy: cachePolicy,
+            maxStale: maxStale != null ? Nullable(maxStale) : null,
+          )
+          .toOptions(),
+    );
+  }
+}
+```
+
+### 12.2 캐시 정책 종류
+
+```dart
+// 1. CachePolicy.request (기본)
+// 캐시 있으면 캐시, 없으면 네트워크
+await dio.get('/products', options: Options(
+  extra: {'cachePolicy': CachePolicy.request},
+));
+
+// 2. CachePolicy.forceCache
+// 무조건 캐시만 (오프라인 모드)
+await dio.get('/products', options: Options(
+  extra: {'cachePolicy': CachePolicy.forceCache},
+));
+
+// 3. CachePolicy.refresh
+// 무조건 네트워크 (Pull-to-refresh)
+await dio.get('/products', options: Options(
+  extra: {'cachePolicy': CachePolicy.refresh},
+));
+
+// 4. CachePolicy.noCache
+// 캐시 사용 안함 (민감한 데이터)
+await dio.get('/user/profile', options: Options(
+  extra: {'cachePolicy': CachePolicy.noCache},
+));
+```
+
+### 12.3 엔드포인트별 캐시 전략
+
+```dart
+class ApiEndpoints {
+  // 정적 데이터: 긴 캐시
+  static CacheOptions categories = CacheOptions(
+    policy: CachePolicy.request,
+    maxStale: const Duration(days: 30),
+  );
+
+  // 자주 변경: 짧은 캐시
+  static CacheOptions products = CacheOptions(
+    policy: CachePolicy.request,
+    maxStale: const Duration(hours: 1),
+  );
+
+  // 사용자 데이터: 캐시 안함
+  static CacheOptions userProfile = CacheOptions(
+    policy: CachePolicy.noCache,
+  );
+}
+
+// 사용
+await dio.get('/categories', options: ApiEndpoints.categories.toOptions());
+```
+
+### 12.4 캐시 무효화
+
+```dart
+class CacheManager {
+  final CacheStore _store;
+
+  /// 특정 URL 캐시 삭제
+  Future<void> invalidate(String path) async {
+    await _store.delete(CacheOptions.defaultCacheKeyBuilder(
+      RequestOptions(path: path),
+    ));
+  }
+
+  /// 패턴 매칭으로 캐시 삭제
+  Future<void> invalidatePattern(String pattern) async {
+    // 상품 관련 모든 캐시 삭제: /products/*
+    await _store.deleteFromPath(RegExp(pattern));
+  }
+
+  /// 전체 캐시 삭제
+  Future<void> clearAll() async {
+    await _store.clean();
+  }
+}
+
+// 상품 수정 후 캐시 무효화
+await updateProduct(product);
+await cacheManager.invalidate('/products/${product.id}');
+await cacheManager.invalidatePattern(r'/products\?.*'); // 목록 캐시도 삭제
+```
+
+### 12.5 캐시 헤더 존중
+
+```dart
+// 서버의 Cache-Control 헤더 존중
+_cacheOptions = CacheOptions(
+  policy: CachePolicy.request,
+  // 서버 헤더 우선 사용
+  maxStale: null, // 서버의 max-age 사용
+);
+
+// 응답 헤더 예시:
+// Cache-Control: public, max-age=3600
+// → 1시간 캐시
+```
+
+## 13. 참고
 
 - [Dio 공식 문서](https://pub.dev/packages/dio)
 - [Pretty Dio Logger](https://pub.dev/packages/pretty_dio_logger)
 - [Connectivity Plus](https://pub.dev/packages/connectivity_plus)
+- [dio_cache_interceptor](https://pub.dev/packages/dio_cache_interceptor)
 - Part 2: [Retrofit 가이드](./Networking_Retrofit.md)

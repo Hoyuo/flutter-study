@@ -30,8 +30,9 @@ assets/
 
 ### 번역 파일 예시
 
+**assets/translations/ko.json:**
+
 ```json
-// assets/translations/ko.json
 {
   "app_name": "내 앱",
   "common": {
@@ -68,8 +69,9 @@ assets/
 }
 ```
 
+**assets/translations/ja.json:**
+
 ```json
-// assets/translations/ja.json
 {
   "app_name": "マイアプリ",
   "common": {
@@ -106,8 +108,9 @@ assets/
 }
 ```
 
+**assets/translations/zh_TW.json:**
+
 ```json
-// assets/translations/zh_TW.json
 {
   "app_name": "我的應用",
   "common": {
@@ -882,6 +885,161 @@ EasyLocalization(
   child: const MyApp(),
 )
 ```
+
+## 11. RTL (Right-to-Left) 언어 지원
+
+### 11.1 RTL 언어란?
+
+아랍어, 히브리어, 페르시아어 등은 **오른쪽에서 왼쪽**으로 읽습니다.
+글로벌 앱을 위해 RTL 지원은 필수입니다.
+
+### 11.2 Flutter의 RTL 자동 지원
+
+Flutter는 locale에 따라 자동으로 방향을 조정합니다:
+
+```dart
+MaterialApp(
+  localizationsDelegates: [
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ],
+  supportedLocales: [
+    const Locale('ko'),
+    const Locale('en'),
+    const Locale('ar'), // 아랍어 (RTL)
+    const Locale('he'), // 히브리어 (RTL)
+  ],
+);
+```
+
+### 11.3 방향 감지 및 조건부 스타일
+
+```dart
+class DirectionalWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final isRTL = Directionality.of(context) == TextDirection.rtl;
+
+    return Row(
+      children: [
+        // RTL에서는 아이콘이 오른쪽에
+        if (!isRTL) const Icon(Icons.arrow_back),
+        Expanded(child: Text('콘텐츠')),
+        if (isRTL) const Icon(Icons.arrow_forward),
+      ],
+    );
+  }
+}
+
+// 또는 Directionality 위젯으로 명시적 설정
+Directionality(
+  textDirection: TextDirection.rtl,
+  child: MyWidget(),
+)
+```
+
+### 11.4 RTL 안전한 여백/패딩
+
+```dart
+// ❌ 잘못된 예: LTR 고정
+Padding(
+  padding: EdgeInsets.only(left: 16, right: 8),
+  child: Text('텍스트'),
+)
+
+// ✅ 올바른 예: 방향 인식
+Padding(
+  padding: EdgeInsetsDirectional.only(start: 16, end: 8),
+  child: Text('텍스트'),
+)
+
+// RTL에서: start=오른쪽, end=왼쪽으로 자동 변환
+```
+
+### 11.5 RTL 안전한 위치/정렬
+
+```dart
+// ❌ 잘못된 예
+Positioned(left: 16, child: widget)
+Align(alignment: Alignment.centerLeft, child: widget)
+
+// ✅ 올바른 예
+PositionedDirectional(start: 16, child: widget)
+Align(alignment: AlignmentDirectional.centerStart, child: widget)
+```
+
+### 11.6 아이콘 미러링
+
+일부 아이콘은 RTL에서 뒤집어야 합니다:
+
+```dart
+class DirectionalIcon extends StatelessWidget {
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final isRTL = Directionality.of(context) == TextDirection.rtl;
+
+    // 방향성 있는 아이콘만 뒤집기
+    final shouldMirror = _isDirectionalIcon(icon) && isRTL;
+
+    return Transform(
+      alignment: Alignment.center,
+      transform: shouldMirror
+          ? Matrix4.rotationY(3.14159) // 180도 회전
+          : Matrix4.identity(),
+      child: Icon(icon),
+    );
+  }
+
+  bool _isDirectionalIcon(IconData icon) {
+    // 방향성 아이콘 목록
+    const directionalIcons = [
+      Icons.arrow_back,
+      Icons.arrow_forward,
+      Icons.chevron_left,
+      Icons.chevron_right,
+      Icons.keyboard_arrow_left,
+      Icons.keyboard_arrow_right,
+    ];
+    return directionalIcons.contains(icon);
+  }
+}
+```
+
+### 11.7 테스트 방법
+
+```dart
+testWidgets('RTL layout test', (tester) async {
+  await tester.pumpWidget(
+    Directionality(
+      textDirection: TextDirection.rtl,
+      child: MaterialApp(
+        home: MyPage(),
+      ),
+    ),
+  );
+
+  // RTL에서 시작 위치가 오른쪽인지 확인
+  final startButton = find.byKey(const Key('start_button'));
+  final buttonPosition = tester.getTopRight(startButton);
+
+  expect(buttonPosition.dx, greaterThan(300)); // 오른쪽에 위치
+});
+```
+
+### 11.8 RTL 체크리스트
+
+| 항목 | 확인 |
+|-----|-----|
+| EdgeInsets → EdgeInsetsDirectional | ☐ |
+| Alignment → AlignmentDirectional | ☐ |
+| Positioned → PositionedDirectional | ☐ |
+| left/right → start/end | ☐ |
+| 방향성 아이콘 미러링 | ☐ |
+| 숫자/전화번호 방향 유지 | ☐ |
+| RTL 언어로 실제 테스트 | ☐ |
 
 ## 체크리스트
 

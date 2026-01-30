@@ -1,6 +1,6 @@
 # Flutter Clean Architecture Reference Guide
 
-Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 26개의 문서와 실제 구현 예제를 제공합니다.
+Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 32개의 문서와 실제 구현 예제를 제공합니다.
 
 ## Overview
 
@@ -16,15 +16,15 @@ Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architect
 ```
 flutter-study/
 ├── core/           # 핵심 아키텍처 (5개)
-├── infrastructure/ # 인프라 (3개)
+├── infrastructure/ # 인프라 (5개)
 ├── networking/     # 네트워킹 (2개)
 ├── features/       # 기능별 가이드 (4개)
-├── patterns/       # 필수 패턴 (4개)
-├── system/         # 시스템 (8개)
+├── patterns/       # 필수 패턴 (7개)
+├── system/         # 시스템 (9개)
 └── examples/       # 실제 구현 예제
 ```
 
-**총 26개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
+**총 32개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
 
 ## Quick Start
 
@@ -42,7 +42,7 @@ flutter-study/
 
 ### 2. 예제 앱 실행
 
-[Photo Diary](./examples/photo_diary/) 앱은 26개 문서의 모든 패턴을 구현한 완전한 예제입니다.
+[Photo Diary](./examples/photo_diary/) 앱은 32개 문서의 모든 패턴을 구현한 완전한 예제입니다.
 
 ```bash
 cd examples/photo_diary
@@ -57,9 +57,9 @@ flutter run
 핵심 아키텍처 패턴
 - Architecture, Bloc, BlocUiEffect, Freezed, Fpdart
 
-### Infrastructure (3개)
+### Infrastructure (5개)
 인프라 설정
-- DI, Environment, LocalStorage
+- DI, Environment, LocalStorage, CICD, StoreSubmission
 
 ### Networking (2개)
 네트워크 통신
@@ -69,24 +69,24 @@ flutter run
 기능별 구현
 - Navigation, Localization, Permission, PushNotification
 
-### Patterns (4개)
+### Patterns (7개)
 공통 패턴
-- Analytics, ImageHandling, Pagination, FormValidation
+- Analytics, ImageHandling, Pagination, FormValidation, InAppPurchase, Animation, OfflineSupport
 
-### System (8개)
+### System (9개)
 시스템 품질
-- ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging
+- ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring
 
 ## Tech Stack
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| flutter_bloc | ^8.1.6 | State Management |
-| freezed | ^2.5.7 | Immutable Data Classes |
+| flutter_bloc | ^9.1.1 | State Management |
+| freezed | ^3.1.0 | Immutable Data Classes |
 | fpdart | ^1.1.0 | Functional Programming |
 | get_it + injectable | ^8.0.2 | Dependency Injection |
 | go_router | ^14.6.2 | Navigation |
-| dio + retrofit | ^5.7.0 | HTTP Client |
+| dio + retrofit | ^5.9.0 | HTTP Client |
 | easy_localization | ^3.0.7 | i18n (KR/JP/TW) |
 
 ## For AI Agents

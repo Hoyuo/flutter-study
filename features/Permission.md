@@ -11,8 +11,77 @@ permission_handler는 Flutter에서 iOS와 Android의 런타임 권한을 통합
 ```yaml
 # pubspec.yaml
 dependencies:
-  permission_handler: ^12.0.1
+  permission_handler: ^13.0.0
+  device_info_plus: ^10.1.0  # Android SDK 버전 확인용 (저장소 권한 처리 시 필요)
 ```
+
+### Migration Notes (v12 → v13)
+
+**Breaking Changes:**
+- **Android 15 Support**: `compileSdkVersion` 35 이상 필요 (Android 15 대응)
+  ```kotlin
+  // android/app/build.gradle.kts
+  android {
+      compileSdk = 35
+  }
+  ```
+- **iOS Minimum Version**: iOS deployment target 12.0 이상 필수
+  ```ruby
+  # ios/Podfile
+  platform :ios, '12.0'
+  ```
+- **Android Plugin Update**: `permission_handler_android` 13.0.0 이상 필요
+- **Permission.storage 완전 제거**: Android 13+ 에서 `Permission.storage` 사용 불가
+  - 대신 세분화된 권한 사용 필수:
+    - `Permission.photos` - 이미지/사진 접근
+    - `Permission.videos` - 비디오 접근
+    - `Permission.audio` - 오디오 파일 접근
+    - `Permission.manageExternalStorage` - 전체 저장소 접근 (특수 용도)
+
+**마이그레이션 가이드:**
+
+1. **저장소 권한 업데이트**
+```dart
+// ❌ 기존 (v12)
+await Permission.storage.request();
+
+// ✅ 새로운 방식 (v13)
+if (Platform.isAndroid) {
+  final androidInfo = await DeviceInfoPlugin().androidInfo;
+  if (androidInfo.version.sdkInt >= 33) {
+    // Android 13+
+    await [
+      Permission.photos,
+      Permission.videos,
+      Permission.audio,
+    ].request();
+  } else {
+    // Android 12 이하
+    await Permission.storage.request();
+  }
+} else {
+  await Permission.photos.request();
+}
+```
+
+2. **Android Manifest 업데이트**
+```xml
+<!-- Android 12 이하용 (호환성 유지) -->
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+                 android:maxSdkVersion="32"/>
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+                 android:maxSdkVersion="32"/>
+
+<!-- Android 13+ 필수 -->
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+<uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+<uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
+```
+
+**주의사항:**
+- Android 13+ 기기에서 `Permission.storage` 사용 시 런타임 에러 발생 가능
+- iOS는 기존 `Permission.photos` 사용 (변경 없음)
+- 전체 저장소 접근이 필요한 경우 `Permission.manageExternalStorage` 사용 (Play Store 승인 필요)
 
 ### Migration Notes (v11 → v12)
 
@@ -71,6 +140,12 @@ dependencies:
 
 ### iOS Podfile 설정
 
+**v13 요구사항:**
+```ruby
+# ios/Podfile
+platform :ios, '12.0'  # v13부터 최소 12.0 이상 필수
+```
+
 ```ruby
 # ios/Podfile
 post_install do |installer|
@@ -102,6 +177,19 @@ end
 ```
 
 ### Android 설정
+
+**v13 요구사항:**
+```kotlin
+// android/app/build.gradle.kts
+android {
+    compileSdk = 35  // v13부터 필수: Android 15 대응
+
+    defaultConfig {
+        minSdk = 21
+        targetSdk = 35  // 최신 targetSdk 권장
+    }
+}
+```
 
 ```xml
 <!-- android/app/src/main/AndroidManifest.xml -->
@@ -221,14 +309,14 @@ if (status.isGranted) {
 final statuses = await [
   Permission.camera,
   Permission.microphone,
-  Permission.storage,
+  Permission.photos,  // v13: storage 대신 photos 사용
 ].request();
 
 final cameraGranted = statuses[Permission.camera]?.isGranted ?? false;
 final micGranted = statuses[Permission.microphone]?.isGranted ?? false;
-final storageGranted = statuses[Permission.storage]?.isGranted ?? false;
+final photosGranted = statuses[Permission.photos]?.isGranted ?? false;
 
-if (cameraGranted && micGranted && storageGranted) {
+if (cameraGranted && micGranted && photosGranted) {
   // 모든 권한 허용됨
   startVideoRecording();
 }
@@ -809,6 +897,97 @@ class PermissionRequiredButton extends StatelessWidget {
 
 ## 권한별 처리 패턴
 
+### 저장소/미디어 권한 (v13 중요 변경사항)
+
+**Android 13+ 저장소 권한 처리:**
+
+```dart
+import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+Future<bool> requestStoragePermission() async {
+  if (Platform.isAndroid) {
+    final androidInfo = await DeviceInfoPlugin().androidInfo;
+
+    if (androidInfo.version.sdkInt >= 33) {
+      // Android 13+ (API 33+): 세분화된 미디어 권한 사용
+      final statuses = await [
+        Permission.photos,      // 이미지 접근
+        Permission.videos,      // 비디오 접근
+        Permission.audio,       // 오디오 파일 접근
+      ].request();
+
+      // 필요한 권한이 모두 허용되었는지 확인
+      return statuses.values.every((status) => status.isGranted);
+
+    } else {
+      // Android 12 이하: 기존 storage 권한 사용
+      final status = await Permission.storage.request();
+      return status.isGranted;
+    }
+  } else {
+    // iOS: photos 권한 사용
+    final status = await Permission.photos.request();
+    return status.isGranted || status.isLimited;
+  }
+}
+
+// 특정 미디어 타입만 필요한 경우
+Future<bool> requestPhotoOnlyPermission() async {
+  if (Platform.isAndroid) {
+    final androidInfo = await DeviceInfoPlugin().androidInfo;
+
+    if (androidInfo.version.sdkInt >= 33) {
+      // Android 13+: 사진만 요청
+      final status = await Permission.photos.request();
+      return status.isGranted;
+    } else {
+      // Android 12 이하
+      final status = await Permission.storage.request();
+      return status.isGranted;
+    }
+  } else {
+    final status = await Permission.photos.request();
+    return status.isGranted || status.isLimited;
+  }
+}
+
+// 전체 저장소 접근이 필요한 경우 (파일 관리자 앱 등)
+Future<bool> requestManageExternalStorage() async {
+  if (Platform.isAndroid) {
+    final androidInfo = await DeviceInfoPlugin().androidInfo;
+
+    if (androidInfo.version.sdkInt >= 30) {
+      // Android 11+ (API 30+): MANAGE_EXTERNAL_STORAGE 필요
+      // 주의: Play Store 승인 필요!
+      final status = await Permission.manageExternalStorage.request();
+      return status.isGranted;
+    } else {
+      final status = await Permission.storage.request();
+      return status.isGranted;
+    }
+  }
+  return false;
+}
+```
+
+**권한별 사용 사례:**
+
+| 권한 | Android 버전 | 사용 목적 | Play Store 승인 |
+|------|-------------|----------|----------------|
+| `Permission.photos` | 13+ (API 33+) | 이미지/사진 읽기 | 불필요 |
+| `Permission.videos` | 13+ (API 33+) | 비디오 파일 읽기 | 불필요 |
+| `Permission.audio` | 13+ (API 33+) | 오디오 파일 읽기 | 불필요 |
+| `Permission.storage` | 12 이하 (API ≤32) | 전체 외부 저장소 | 불필요 |
+| `Permission.manageExternalStorage` | 11+ (API 30+) | 전체 파일 시스템 접근 | **필수** |
+
+**중요 참고사항:**
+- `Permission.storage`는 Android 13+에서 deprecated되어 작동하지 않음
+- Android 13+에서는 반드시 세분화된 미디어 권한(`photos`, `videos`, `audio`) 사용
+- `manageExternalStorage`는 파일 관리자, 백업 앱 등 특수한 경우에만 사용
+- Play Store에서 `manageExternalStorage` 사용 시 별도 승인 절차 필요
+
 ### 위치 권한
 
 ```dart
@@ -888,6 +1067,192 @@ Future<void> requestPhotoPermission() async {
 
 void showLimitedAccessBanner() {
   // "선택한 사진만 볼 수 있습니다. 더 많은 사진에 접근하려면 설정을 변경하세요."
+}
+```
+
+## 10. Pre-permission Rationale (권한 요청 전 설명)
+
+### 10.1 왜 필요한가?
+
+시스템 권한 팝업 전에 사용자에게 이유를 설명하면 **권한 승인율이 30% 이상 향상**됩니다.
+
+### 10.2 구현 패턴
+
+```dart
+// lib/core/permission/permission_rationale_dialog.dart
+class PermissionRationaleDialog extends StatelessWidget {
+  final String title;
+  final String description;
+  final IconData icon;
+  final VoidCallback onContinue;
+  final VoidCallback onCancel;
+
+  const PermissionRationaleDialog({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.onContinue,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      icon: Icon(icon, size: 48, color: Theme.of(context).primaryColor),
+      title: Text(title),
+      content: Text(description),
+      actions: [
+        TextButton(
+          onPressed: onCancel,
+          child: const Text('나중에'),
+        ),
+        ElevatedButton(
+          onPressed: onContinue,
+          child: const Text('계속'),
+        ),
+      ],
+    );
+  }
+}
+
+// 사용 예시
+Future<bool> requestCameraWithRationale(BuildContext context) async {
+  // 이미 승인된 경우 바로 true 반환
+  if (await Permission.camera.isGranted) return true;
+
+  // 설명 다이얼로그 표시
+  final shouldContinue = await showDialog<bool>(
+    context: context,
+    builder: (_) => PermissionRationaleDialog(
+      title: '카메라 접근 필요',
+      description: '사진 일기를 작성하려면 카메라 접근이 필요합니다.\n'
+                   '촬영된 사진은 기기에만 저장되며 서버로 전송되지 않습니다.',
+      icon: Icons.camera_alt,
+      onContinue: () => Navigator.pop(context, true),
+      onCancel: () => Navigator.pop(context, false),
+    ),
+  );
+
+  if (shouldContinue != true) return false;
+
+  // 시스템 권한 요청
+  final status = await Permission.camera.request();
+  return status.isGranted;
+}
+```
+
+## 11. iOS App Tracking Transparency (ATT)
+
+### 11.1 ATT란?
+
+iOS 14.5+에서 광고 추적(IDFA)을 위해 **반드시 사용자 동의**가 필요합니다.
+App Store 심사 시 ATT 없이 IDFA 접근 시 **리젝** 됩니다.
+
+### 11.2 설정
+
+```xml
+<!-- ios/Runner/Info.plist -->
+<key>NSUserTrackingUsageDescription</key>
+<string>맞춤형 광고와 앱 사용 분석을 위해 활동 추적 권한이 필요합니다.</string>
+```
+
+### 11.3 구현
+
+```dart
+// pubspec.yaml
+dependencies:
+  app_tracking_transparency: ^2.0.0
+
+// lib/services/tracking_service.dart
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
+
+class TrackingService {
+  /// ATT 상태 확인
+  Future<TrackingStatus> getStatus() async {
+    return await AppTrackingTransparency.trackingAuthorizationStatus;
+  }
+
+  /// ATT 권한 요청 (iOS 14.5+)
+  Future<bool> requestTracking() async {
+    // iOS가 아닌 경우 항상 true
+    if (!Platform.isIOS) return true;
+
+    final status = await AppTrackingTransparency.trackingAuthorizationStatus;
+
+    switch (status) {
+      case TrackingStatus.authorized:
+        return true;
+      case TrackingStatus.denied:
+      case TrackingStatus.restricted:
+        return false;
+      case TrackingStatus.notDetermined:
+        // 아직 요청하지 않은 경우에만 요청
+        final result = await AppTrackingTransparency.requestTrackingAuthorization();
+        return result == TrackingStatus.authorized;
+      default:
+        return false;
+    }
+  }
+
+  /// IDFA 가져오기 (권한 있는 경우에만)
+  Future<String?> getIDFA() async {
+    if (await requestTracking()) {
+      return await AppTrackingTransparency.getAdvertisingIdentifier();
+    }
+    return null;
+  }
+}
+
+// 앱 시작 시 적절한 시점에 요청
+class SplashPage extends StatefulWidget {
+  @override
+  State<SplashPage> createState() => _SplashPageState();
+}
+
+class _SplashPageState extends State<SplashPage> {
+  @override
+  void initState() {
+    super.initState();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    // 스플래시 표시 후 ATT 요청
+    await Future.delayed(const Duration(seconds: 1));
+
+    // ATT 요청 (결과와 관계없이 앱 진행)
+    await TrackingService().requestTracking();
+
+    // 홈으로 이동
+    if (mounted) context.go('/home');
+  }
+}
+```
+
+### 11.4 ATT 요청 시점 권장사항
+
+| 시점 | 권장 여부 | 이유 |
+|-----|---------|------|
+| 앱 첫 실행 즉시 | ❌ | 문맥 없이 요청하면 거부율 높음 |
+| 온보딩 완료 후 | ✅ | 앱 가치를 경험한 후 요청 |
+| 첫 광고 표시 전 | ✅ | 광고 관련 문맥에서 자연스러움 |
+| 프리미엄 기능 사용 시 | ❌ | 기능과 무관해 보임 |
+
+### 11.5 ATT 상태별 Analytics 설정
+
+```dart
+// Firebase Analytics에 ATT 상태 반영
+Future<void> configureAnalyticsConsent() async {
+  final status = await TrackingService().getStatus();
+
+  final granted = status == TrackingStatus.authorized;
+
+  await FirebaseAnalytics.instance.setConsent(
+    adStorageConsentGranted: granted,
+    adUserDataConsentGranted: granted,
+    adPersonalizationSignalsConsentGranted: granted,
+    analyticsStorageConsentGranted: true, // 분석은 항상 허용 가능
+  );
 }
 ```
 

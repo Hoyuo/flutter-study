@@ -113,26 +113,55 @@ class User with _$User {
 
 ### 의존성 추가
 
+> **⚠️ 버전 선택 가이드 (2026년 1월 기준)**
+>
+> Freezed는 현재 두 가지 버전이 공존하고 있습니다:
+> - **안정 버전 (2.5.x)**: 프로덕션 환경 권장
+> - **개발 버전 (3.x)**: 베타/실험 기능 포함, 프로덕션 사용 주의
+
+#### 옵션 1: 안정 버전 (프로덕션 권장)
+
 ```yaml
-# pubspec.yaml (2026년 1월 기준)
+# pubspec.yaml - 안정 버전 (Stable)
 dependencies:
-  freezed_annotation: ^3.1.0
+  freezed_annotation: ^2.2.0  # 안정
   json_annotation: ^4.9.0
 
 dev_dependencies:
   build_runner: ^2.10.5
-  freezed: ^3.2.4
+  freezed: ^2.5.7  # 안정
   json_serializable: ^6.11.4
 ```
 
-> **Freezed 3.0 주요 변경사항 (2025년):**
+#### 옵션 2: 개발 버전 (실험적 기능 필요 시)
+
+```yaml
+# pubspec.yaml - 개발 버전 (Development/Beta)
+dependencies:
+  freezed_annotation: ^3.1.0  # 개발 버전
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  build_runner: ^2.10.5
+  freezed: ^3.2.4  # 개발 버전
+  json_serializable: ^6.11.4
+```
+
+> **⚠️ Freezed 3.x 주의사항:**
+>
+> Freezed 3.x는 **아직 개발/베타 단계**입니다.
+> - **프로덕션 환경**: 안정 버전 2.5.x 사용 강력 권장
+> - **실험 프로젝트**: 3.x의 새 기능 테스트 가능
+> - **마이그레이션**: 충분한 테스트 후 점진적 전환
+>
+> **Freezed 3.0 새 기능 (개발 중):**
 > - **상속(extends) 지원**: Freezed 클래스가 다른 클래스를 상속 가능
 > - **비상수 기본값**: `@Default`에서 non-constant 값 사용 가능
 > - **Mixed mode**: Factory와 일반 생성자 혼합 가능
 > - Dart 3.6.0 이상 필수
 >
 > ```dart
-> // Freezed 3.0 상속 예시
+> // Freezed 3.0 상속 예시 (개발 버전만 지원)
 > @freezed
 > class Person extends Entity with _$Person {
 >   const factory Person({
@@ -228,6 +257,12 @@ class Profile with _$Profile {
 
 ### Assert 추가
 
+> **⚠️ 중요: @Assert는 debug 모드에서만 동작합니다**
+>
+> - **Debug 모드**: Assert 검증 실행 → 조건 위반 시 AssertionError 발생
+> - **Release 모드**: Assert 검증 무시 → 성능 최적화를 위해 무시됨
+> - 프로덕션 환경에서는 별도의 유효성 검사 로직이 필요합니다
+
 ```dart
 @freezed
 class Product with _$Product {
@@ -240,9 +275,9 @@ class Product with _$Product {
   }) = _Product;
 }
 
-// 사용
-final product = Product(name: '', price: 100);  // AssertionError!
-final product2 = Product(name: 'Item', price: -1);  // AssertionError!
+// 사용 (Debug 모드에서만 AssertionError 발생)
+final product = Product(name: '', price: 100);  // AssertionError! (Debug only)
+final product2 = Product(name: 'Item', price: -1);  // AssertionError! (Debug only)
 ```
 
 ---
@@ -542,6 +577,10 @@ class PaymentMethod with _$PaymentMethod {
 ### 커스텀 타입 변환
 
 ```dart
+// import 'dart:ui' show Color;
+// 또는
+// import 'package:flutter/material.dart';
+
 @freezed
 class Event with _$Event {
   const factory Event({
@@ -559,7 +598,7 @@ DateTime _dateFromJson(String json) => DateTime.parse(json);
 String _dateToJson(DateTime date) => date.toIso8601String();
 
 Color _colorFromJson(int json) => Color(json);
-int _colorToJson(Color color) => color.value;
+int _colorToJson(Color color) => color.toARGB32();
 ```
 
 ### Generic JSON 직렬화
@@ -702,15 +741,15 @@ user.name = 'Jane';  // OK
 ### toString 커스터마이징
 
 ```dart
-@Freezed(toStringOverride: false)
-class User with _$User {
-  const User._();
+@freezed
+class CustomToString with _$CustomToString {
+  const CustomToString._();  // private 생성자로 toString 오버라이드 가능하게
 
-  const factory User({
+  const factory CustomToString({
     required String id,
     required String name,
     required String email,
-  }) = _User;
+  }) = _CustomToString;
 
   @override
   String toString() => 'User($name)';  // 커스텀 toString

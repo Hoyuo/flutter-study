@@ -12,28 +12,24 @@ Firebase Cloud Messaging(FCM)과 flutter_local_notifications를 조합하여 푸
 # pubspec.yaml
 dependencies:
   firebase_core: ^4.4.0
-  firebase_messaging: ^16.1.1
-  flutter_local_notifications: ^20.0.0
+  firebase_messaging: ^16.0.4
+  flutter_local_notifications: ^19.5.0
 ```
 
-### Migration Notes (firebase_messaging v15 → v16, flutter_local_notifications v19 → v20)
+### Migration Notes (firebase_messaging v15 → v16)
 
-**firebase_messaging v16 Breaking Changes:**
+**firebase_messaging v16.0.4 (Latest Stable):**
 - Deprecated functions 제거
 - iOS SDK 12.0.0으로 업그레이드 (breaking)
 - Android SDK 34.0.0으로 업그레이드 (breaking)
 - iOS 18 알림 처리 및 scene delegate 지원 개선
 
-**flutter_local_notifications v20 Breaking Changes:**
-- Android 15 (API 35) 대응 업데이트
-- `AndroidNotificationDetails` 생성자 파라미터 변경
-- iOS 권한 요청 API 세분화
+**flutter_local_notifications v19.5.0 (Stable Recommended):**
+- 안정적인 프로덕션 사용 권장
+- Android 14 완전 지원
+- iOS 17 호환성 보장
 
-**New Features:**
-- Android 15 notification permission 지원
-- iOS 18 알림 처리 개선
-- Scene delegate 지원 강화
-- 향상된 알림 그룹화 및 요약 관리
+> **참고**: flutter_local_notifications v20.0.0은 아직 개발 버전(dev)입니다. 프로덕션 환경에서는 v19.5.0 사용을 권장합니다.
 
 ### Firebase 프로젝트 설정
 
@@ -127,6 +123,7 @@ import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';  // for debugPrint
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 // 백그라운드 메시지 핸들러 (top-level function)
@@ -202,7 +199,7 @@ class NotificationService {
       criticalAlert: false,
     );
 
-    print('Permission status: ${settings.authorizationStatus}');
+    debugPrint('[FCM] Permission status: ${settings.authorizationStatus}');
   }
 
   /// Local Notifications 초기화
@@ -228,10 +225,11 @@ class NotificationService {
 
   /// Foreground 메시지 처리
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    print('Foreground message: ${message.messageId}');
+    debugPrint('[FCM] Foreground message: ${message.messageId}');
 
     final notification = message.notification;
-    final android = message.notification?.android;
+    // Android 특정 알림 속성 (향후 사용 예정)
+    // final android = message.notification?.android;
 
     // Notification 메시지 처리
     if (notification != null) {
@@ -293,7 +291,7 @@ class NotificationService {
 
   /// 알림 클릭 처리
   void _handleNotificationTap(RemoteMessage message) {
-    print('Notification tapped: ${message.data}');
+    debugPrint('[FCM] Notification tapped: ${message.data}');
     // 딥링크 처리 등
     final data = message.data;
     if (data.containsKey('route')) {
@@ -304,7 +302,7 @@ class NotificationService {
 
   /// Local Notification 응답 처리
   void _onNotificationResponse(NotificationResponse response) {
-    print('Local notification tapped: ${response.payload}');
+    debugPrint('[FCM] Local notification tapped: ${response.payload}');
     // payload 파싱하여 화면 이동 등 처리
   }
 
@@ -327,6 +325,17 @@ class NotificationService {
   Future<void> unsubscribeFromTopic(String topic) async {
     await _messaging.unsubscribeFromTopic(topic);
   }
+
+  /// 테스트용: private 메서드 접근
+  @visibleForTesting
+  Future<void> showLocalNotificationForTest({
+    required String title,
+    required String body,
+  }) => _showLocalNotification(
+    id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+    title: title,
+    body: body,
+  );
 }
 ```
 
@@ -335,6 +344,7 @@ class NotificationService {
 ```dart
 // lib/main.dart
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
 import 'core/notification/notification_service.dart';
@@ -428,6 +438,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
 ```dart
 // lib/features/notification/domain/entities/push_notification.dart
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'push_notification.freezed.dart';
@@ -758,6 +769,8 @@ Future<void> clearBadge() async {
 // lib/features/notification/presentation/bloc/notification_event.dart
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../domain/entities/push_notification.dart';
+
 part 'notification_event.freezed.dart';
 
 @freezed
@@ -775,6 +788,8 @@ class NotificationEvent with _$NotificationEvent {
 ```dart
 // lib/features/notification/presentation/bloc/notification_state.dart
 import 'package:freezed_annotation/freezed_annotation.dart';
+
+import '../../domain/entities/push_notification.dart';
 
 part 'notification_state.freezed.dart';
 
@@ -1039,6 +1054,153 @@ class _NotificationTypeTileState extends State<_NotificationTypeTile> {
 }
 ```
 
+## 11. FCM 메시지 유형 이해 (중요!)
+
+### 11.1 메시지 유형 비교
+
+| 항목 | Notification Message | Data Message |
+|-----|---------------------|--------------|
+| 페이로드 | `notification: {...}` | `data: {...}` |
+| Foreground | `onMessage` 호출 | `onMessage` 호출 |
+| Background | **시스템이 자동 표시** | `onBackgroundMessage` 호출 |
+| Terminated | **시스템이 자동 표시** | `onBackgroundMessage` 호출 |
+| 커스터마이징 | 제한적 | 완전한 제어 |
+| 권장 용도 | 단순 알림 | 복잡한 로직 필요 시 |
+
+### 11.2 서버 페이로드 예시
+
+```json
+// Notification Message (시스템이 처리)
+{
+  "message": {
+    "token": "device_token",
+    "notification": {
+      "title": "새 메시지",
+      "body": "John님이 메시지를 보냈습니다"
+    }
+  }
+}
+
+// Data Message (앱이 처리)
+{
+  "message": {
+    "token": "device_token",
+    "data": {
+      "type": "new_message",
+      "sender_id": "123",
+      "sender_name": "John",
+      "message_preview": "안녕하세요..."
+    }
+  }
+}
+
+// 혼합 메시지 (주의 필요!)
+{
+  "message": {
+    "token": "device_token",
+    "notification": {
+      "title": "새 메시지",
+      "body": "John님이 메시지를 보냈습니다"
+    },
+    "data": {
+      "chat_id": "456",
+      "sender_id": "123"
+    }
+  }
+}
+```
+
+### 11.3 앱 상태별 동작
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    FCM 메시지 수신 흐름                          │
+├─────────────────┬───────────────────┬───────────────────────────┤
+│ 앱 상태          │ Notification Msg  │ Data Message              │
+├─────────────────┼───────────────────┼───────────────────────────┤
+│ Foreground      │ onMessage ✓       │ onMessage ✓               │
+│                 │ 알림 표시 안됨     │ 알림 표시 안됨             │
+├─────────────────┼───────────────────┼───────────────────────────┤
+│ Background      │ 시스템 알림 표시   │ onBackgroundMessage ✓     │
+│                 │ onMessage 안됨 ❌  │ 직접 알림 표시 필요        │
+├─────────────────┼───────────────────┼───────────────────────────┤
+│ Terminated      │ 시스템 알림 표시   │ onBackgroundMessage ✓     │
+│                 │ 탭 시 initial msg │ 직접 알림 표시 필요        │
+└─────────────────┴───────────────────┴───────────────────────────┘
+```
+
+### 11.4 Data Message 처리 (권장 패턴)
+
+```dart
+// 백그라운드 핸들러 (top-level 함수)
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+
+  // Data Message인 경우 직접 알림 표시
+  if (message.notification == null && message.data.isNotEmpty) {
+    await _showLocalNotification(message);
+  }
+}
+
+Future<void> _showLocalNotification(RemoteMessage message) async {
+  final data = message.data;
+
+  final notification = NotificationDetails(
+    android: AndroidNotificationDetails(
+      'data_channel',
+      'Data Notifications',
+      importance: Importance.high,
+      priority: Priority.high,
+    ),
+    iOS: const DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    ),
+  );
+
+  await FlutterLocalNotificationsPlugin().show(
+    message.hashCode,
+    data['title'] ?? '알림',
+    data['body'] ?? '',
+    notification,
+    payload: jsonEncode(data),
+  );
+}
+```
+
+### 11.5 권장사항
+
+| 상황 | 권장 메시지 유형 |
+|-----|----------------|
+| 단순 알림 (프로모션, 공지) | Notification Message |
+| 채팅 앱 | Data Message (읽음 상태, 뱃지 업데이트) |
+| Silent Push (데이터 동기화) | Data Message (content_available: true) |
+| 커스텀 알림 UI | Data Message |
+| 알림 그룹핑 | Data Message |
+
+### 11.6 흔한 실수
+
+```dart
+// ❌ 잘못된 예: Notification Message를 Background에서 처리하려 함
+void setupFCM() {
+  FirebaseMessaging.onBackgroundMessage(_handler);
+}
+
+Future<void> _handler(RemoteMessage message) async {
+  // Notification Message는 여기서 호출되지 않음!
+  print(message.notification?.title); // null일 수 있음
+}
+
+// ✅ 올바른 예: Data Message 사용
+Future<void> _handler(RemoteMessage message) async {
+  final data = message.data;
+  print(data['title']); // 항상 접근 가능
+  await _showLocalNotification(message);
+}
+```
+
 ## 테스트
 
 ### 알림 테스트 (Firebase Console)
@@ -1067,6 +1229,9 @@ Future<void> testLocalNotification() async {
 ### Mock NotificationService
 
 ```dart
+import 'package:bloc_test/bloc_test.dart';
+import 'package:mocktail/mocktail.dart';
+
 class MockNotificationService extends Mock implements NotificationService {}
 
 void main() {

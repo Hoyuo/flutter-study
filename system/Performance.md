@@ -123,7 +123,7 @@ class ComplexListPage extends StatelessWidget {
 class ComplexListItem extends StatelessWidget {
   final int index;
 
-  const ComplexListItem({required this.index});
+  const ComplexListItem({super.key, required this.index});
 
   @override
   Widget build(BuildContext context) {
@@ -387,6 +387,7 @@ class CachedProductImage extends StatelessWidget {
   final double height;
 
   const CachedProductImage({
+    super.key,
     required this.imageUrl,
     this.width = 200,
     this.height = 200,
@@ -432,7 +433,8 @@ class ImageCacheManager {
 
   /// 최대 메모리 크기 설정 (기본 100MB)
   void setMaxCacheSize(int bytes) {
-    imageCache.maximumSize = bytes ~/ (1024 * 1024); // MB로 변환
+    imageCache.maximumSizeBytes = bytes;  // 바이트 단위
+    // maximumSize는 이미지 개수 제한 (예: imageCache.maximumSize = 100)
   }
 
   /// 특정 이미지 캐시 제거
@@ -447,10 +449,17 @@ class ImageCacheManager {
   }
 
   /// 백그라운드에서 주기적으로 캐시 정리
+  Timer? _cleanupTimer;
+
   void setupAutoCleanup({Duration interval = const Duration(minutes: 10)}) {
-    Timer.periodic(interval, (_) {
+    _cleanupTimer?.cancel();
+    _cleanupTimer = Timer.periodic(interval, (_) {
       clearCache();
     });
+  }
+
+  void dispose() {
+    _cleanupTimer?.cancel();
   }
 }
 
@@ -589,7 +598,7 @@ class PaginatedListPage extends StatelessWidget {
             itemBuilder: (context, index) {
               // 마지막 아이템에 도달했을 때 다음 페이지 로드
               if (index == state.items.length) {
-                return _buildLoadMoreButton(context);
+                return _buildLoadMoreButton(context, state);
               }
 
               return ProductListTile(product: state.items[index]);
@@ -600,7 +609,7 @@ class PaginatedListPage extends StatelessWidget {
     );
   }
 
-  Widget _buildLoadMoreButton(BuildContext context) {
+  Widget _buildLoadMoreButton(BuildContext context, PaginatedListState state) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: state.isLoading
@@ -788,6 +797,7 @@ class MemoryMonitor {
 
   Future<void> logMemoryUsage() async {
     // DevTools에서 메모리 모니터링 활용
+    // import 'package:flutter/foundation.dart';
     if (kDebugMode) {
       print('Memory usage: ${await _getMemoryUsage()}');
     }
@@ -808,6 +818,7 @@ class MemoryMonitor {
 
 ```dart
 import 'dart:isolate';
+import 'package:flutter/foundation.dart';  // compute 함수 포함
 
 // ✅ 오래 걸리는 계산을 Isolate에서 처리
 Future<String> _expensiveComputation(int count) async {
@@ -903,6 +914,7 @@ class _JsonParsingExampleState extends State<JsonParsingExample> {
 
   Future<String> _loadJsonFile() async {
     // JSON 파일 로드
+    // import 'package:flutter/services.dart';
     final data = await rootBundle.loadString('assets/products.json');
     return data;
   }
@@ -996,6 +1008,7 @@ class BroadcastStreamExample {
 // ✅ Stream 변환 최적화
 // rxdart 패키지 import 필요
 // import 'package:rxdart/rxdart.dart';
+// import 'dart:convert';
 class StreamTransformExample extends StatelessWidget {
   final _repository = DataRepository();
 
@@ -1009,10 +1022,13 @@ class StreamTransformExample extends StatelessWidget {
           // 0.5초 단위로 배치 처리
           .throttleTime(const Duration(milliseconds: 500))
           // 최신 10개만 유지
-          .scan((previous, current) => [
-            ...previous.take(9),
-            current,
-          ]),
+          .scan<List<Data>>(
+            (previous, current) => [
+              ...previous.take(9),
+              current,
+            ],
+            <Data>[],  // seed (초기값)
+          ),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const CircularProgressIndicator();
@@ -1498,6 +1514,156 @@ class CatalogPage extends StatelessWidget {
 
 ---
 
+## 13. Shader Compilation Jank 해결
+
+### 13.1 Shader Jank란?
+
+첫 렌더링 시 GPU 셰이더 컴파일로 인해 프레임 드롭이 발생합니다.
+사용자에게 "앱이 버벅인다"는 인상을 줍니다.
+
+### 13.2 SkSL Warm-up (Impeller 이전 방식)
+
+```bash
+# 1. 셰이더 캡처 모드로 앱 실행
+flutter run --profile --cache-sksl
+
+# 2. 앱의 모든 화면/애니메이션 탐색
+# 3. 'M' 키로 flutter_01.sksl.json 저장
+
+# 4. 프로덕션 빌드에 번들링
+flutter build apk --bundle-sksl-path flutter_01.sksl.json
+```
+
+### 13.3 Impeller (Flutter 3.16+)
+
+```dart
+// Impeller는 셰이더를 미리 컴파일하여 jank 제거
+// iOS: 기본 활성화 (Flutter 3.16+)
+// Android: 기본 활성화 (Flutter 3.27+)
+
+// AndroidManifest.xml에서 명시적 활성화
+<meta-data
+    android:name="io.flutter.embedding.android.EnableImpeller"
+    android:value="true" />
+```
+
+### 13.4 첫 프레임 최적화
+
+```dart
+void main() async {
+  // 바인딩 초기화
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 필수 초기화만 동기적으로
+  await _initializeCritical();
+
+  // 첫 프레임 렌더링
+  runApp(const MyApp());
+
+  // 나머지 초기화는 첫 프레임 이후
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    _initializeNonCritical();
+  });
+}
+
+Future<void> _initializeCritical() async {
+  // 로그인 상태, 테마 등 UI 렌더링에 필수적인 것만
+  HydratedBloc.storage = await HydratedStorage.build();
+}
+
+void _initializeNonCritical() {
+  // Analytics, Remote Config, 푸시 알림 등
+  FirebaseAnalytics.instance.logAppOpen();
+  RemoteConfigService.instance.fetch();
+}
+```
+
+---
+
+## 14. 앱 시작 시간 최적화
+
+### 14.1 측정 방법
+
+```dart
+void main() {
+  final stopwatch = Stopwatch()..start();
+
+  WidgetsFlutterBinding.ensureInitialized();
+  debugPrint('Binding: ${stopwatch.elapsedMilliseconds}ms');
+
+  runApp(MyApp(onFirstFrame: () {
+    debugPrint('First Frame: ${stopwatch.elapsedMilliseconds}ms');
+  }));
+}
+
+class MyApp extends StatefulWidget {
+  final VoidCallback? onFirstFrame;
+
+  const MyApp({super.key, this.onFirstFrame});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onFirstFrame?.call();
+    });
+  }
+}
+```
+
+### 14.2 Lazy Initialization
+
+```dart
+// ❌ 잘못된 예: 앱 시작 시 모든 의존성 초기화
+void main() async {
+  await Firebase.initializeApp();
+  await Hive.initFlutter();
+  await setupServiceLocator();
+  await loadTranslations();
+  await fetchRemoteConfig();
+  runApp(MyApp()); // 3초+ 지연
+}
+
+// ✅ 올바른 예: 필요할 때 초기화
+@lazySingleton
+class RemoteConfigService {
+  Completer<RemoteConfig>? _completer;
+
+  Future<RemoteConfig> get config async {
+    _completer ??= Completer()..complete(_initialize());
+    return _completer!.future;
+  }
+}
+```
+
+### 14.3 앱 크기 최적화
+
+```bash
+# 앱 크기 분석
+flutter build apk --analyze-size
+
+# split-debug-info로 디버그 심볼 분리
+flutter build apk --split-debug-info=debug-info/
+
+# 미사용 리소스 제거
+flutter pub run build_runner build --delete-conflicting-outputs
+```
+
+### 14.4 시작 시간 목표
+
+| 등급 | Cold Start | Warm Start |
+|-----|-----------|------------|
+| 우수 | < 2초 | < 1초 |
+| 보통 | 2-4초 | 1-2초 |
+| 개선필요 | > 4초 | > 2초 |
+
+---
+
 ## 체크리스트
 
 - [ ] const 생성자 사용 확인
@@ -1517,3 +1683,7 @@ class CatalogPage extends StatelessWidget {
 - [ ] buildWhen으로 선택적 rebuild 구현
 - [ ] 상태 정규화로 메모리 효율성 증대
 - [ ] Equatable 올바르게 구현
+- [ ] Impeller 활성화 확인 (Flutter 3.16+)
+- [ ] 첫 프레임 이후 비필수 초기화 지연
+- [ ] 앱 시작 시간 측정 및 최적화
+- [ ] Lazy initialization 패턴 적용

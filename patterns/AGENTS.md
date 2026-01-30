@@ -15,6 +15,9 @@
 | `ImageHandling.md` | 이미지 캐싱, 갤러리/카메라 선택, 크롭, 압축, 서버 업로드 |
 | `Pagination.md` | 무한 스크롤, 커서 기반 페이지네이션, PaginationState 설계 |
 | `FormValidation.md` | 폼 유효성 검사 패턴, ValidatorBuilder, Form Bloc 통합, 실시간 검증 |
+| `OfflineSupport.md` | 오프라인 우선 아키텍처, Drift ORM, sync queue, conflict resolution |
+| `InAppPurchase.md` | 인앱 결제, native in_app_purchase, RevenueCat, 서버 검증 |
+| `Animation.md` | 암시적/명시적 애니메이션, Lottie, Hero, 접근성 고려 |
 
 ## For AI Agents
 
@@ -30,6 +33,9 @@
 2. `Pagination.md` → 리스트 처리
 3. `ImageHandling.md` → 미디어 처리
 4. `Analytics.md` → 분석/추적
+5. `Animation.md` → 애니메이션 패턴
+6. `OfflineSupport.md` → 오프라인 아키텍처
+7. `InAppPurchase.md` → 인앱 결제
 
 ### Common Patterns
 

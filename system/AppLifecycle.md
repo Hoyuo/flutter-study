@@ -156,7 +156,7 @@ class LifecycleListenerWidget extends StatefulWidget {
   final VoidCallback? onInactive;
   final VoidCallback? onHide;
   final VoidCallback? onShow;
-  final AppExitResponse Function()? onExitRequested;
+  final Future<AppExitResponse> Function()? onExitRequested;
 
   const LifecycleListenerWidget({
     super.key,
@@ -217,8 +217,10 @@ class MyApp extends StatelessWidget {
         print('App paused');
         // 상태 저장
       },
-      onExitRequested: () {
+      onExitRequested: () async {
         // 앱 종료 요청 처리 (저장되지 않은 데이터 등)
+        // 정리 작업 수행
+        await _cleanup();
         return AppExitResponse.exit;  // 또는 AppExitResponse.cancel
       },
       child: MaterialApp(...),
@@ -242,9 +244,11 @@ import 'package:injectable/injectable.dart';
 class AppLifecycleService with WidgetsBindingObserver {
   final _stateController = StreamController<AppLifecycleState>.broadcast();
   AppLifecycleState _currentState = AppLifecycleState.resumed;
+  DateTime? _lastPausedAt;
 
   Stream<AppLifecycleState> get stateStream => _stateController.stream;
   AppLifecycleState get currentState => _currentState;
+  DateTime? get lastPausedAt => _lastPausedAt;
 
   bool get isInForeground =>
       _currentState == AppLifecycleState.resumed ||
@@ -266,6 +270,9 @@ class AppLifecycleService with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _currentState = state;
+    if (state == AppLifecycleState.paused) {
+      _lastPausedAt = DateTime.now();
+    }
     _stateController.add(state);
   }
 
@@ -503,6 +510,8 @@ class DataSyncManager {
 ### 2. WebSocket 연결 관리
 
 ```dart
+// import 'package:web_socket_channel/web_socket_channel.dart';
+
 class WebSocketManager {
   final AppLifecycleService _lifecycleService;
   WebSocketChannel? _channel;
@@ -568,7 +577,7 @@ class SessionManager {
 
   void _checkSessionTimeout() {
     final lastPaused = _lifecycleService.currentState;
-    final pausedAt = // 저장된 마지막 paused 시간
+    final pausedAt = _lifecycleService.lastPausedAt; // 저장된 마지막 paused 시간
 
     if (pausedAt != null) {
       final duration = DateTime.now().difference(pausedAt);
@@ -584,6 +593,8 @@ class SessionManager {
 ### 4. 위치 추적 관리
 
 ```dart
+// import 'package:geolocator/geolocator.dart';
+
 class LocationTracker {
   final AppLifecycleService _lifecycleService;
   StreamSubscription<Position>? _positionSubscription;
@@ -621,6 +632,8 @@ class LocationTracker {
 ### 5. 미디어 재생 관리
 
 ```dart
+// import 'package:just_audio/just_audio.dart';
+
 class MediaPlayerManager {
   final AppLifecycleService _lifecycleService;
   final AudioPlayer _audioPlayer;
@@ -694,16 +707,58 @@ class SystemSettingsObserver extends WidgetsBindingObserver {
   @override
   void didChangeMetrics() {
     // 텍스트 크기, 화면 크기 등 메트릭 변경
-    // Flutter 3.16+: didChangeTextScaleFactor 대신 didChangeMetrics 사용
-    final textScaleFactor = WidgetsBinding.instance.platformDispatcher.textScaleFactor;
-    print('Metrics changed - text scale factor: $textScaleFactor');
-    // 위젯에서 context가 있는 경우: MediaQuery.textScalerOf(context) 사용 권장
+    // Flutter 3.16+: didChangeTextScaleFactor는 deprecated
+    // platformDispatcher.textScaleFactor도 deprecated (Flutter 3.16+)
+    // TextScaler 사용 권장
+    print('Metrics changed');
+
+    // 텍스트 스케일 정보가 필요한 경우:
+    // 1. Widget context가 있다면: MediaQuery.textScalerOf(context) 사용
+    // 2. PlatformDispatcher에서: View.of(context).devicePixelRatio 등 활용
   }
 
   @override
   void didChangeAccessibilityFeatures() {
     // 접근성 설정 변경
     print('Accessibility features changed');
+  }
+}
+```
+
+### 텍스트 스케일 변경 감지 (Flutter 3.38+)
+
+```dart
+// Widget에서 텍스트 스케일 팩터 사용 (권장)
+class ResponsiveTextWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // Flutter 3.38+: MediaQuery.textScalerOf(context) 사용
+    final textScaler = MediaQuery.textScalerOf(context);
+    final scaleFactor = textScaler.scale(1.0);
+
+    return Text(
+      'Scaled Text',
+      style: TextStyle(
+        fontSize: 16 * scaleFactor,  // 텍스트 스케일 적용
+      ),
+    );
+  }
+}
+
+// 또는 TextScaler를 직접 활용
+class AdaptiveWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final textScaler = MediaQuery.textScalerOf(context);
+
+    // TextScaler는 자동으로 접근성 설정을 반영
+    return Container(
+      padding: EdgeInsets.all(textScaler.scale(16.0)),
+      child: Text(
+        'Adaptive Text',
+        style: Theme.of(context).textTheme.bodyLarge,
+      ),
+    );
   }
 }
 ```
@@ -869,3 +924,180 @@ void main() {
 - [ ] Feature Bloc에서 Lifecycle 구독
 - [ ] 상태 저장/복원 로직
 - [ ] Lifecycle 테스트
+
+## 10. Background Tasks
+
+### 10.1 Android WorkManager
+
+```yaml
+# pubspec.yaml
+dependencies:
+  workmanager: ^0.6.0
+```
+
+```dart
+// lib/core/background/background_service.dart
+import 'package:flutter/foundation.dart';
+import 'package:workmanager/workmanager.dart';
+
+class BackgroundService {
+  static const syncTaskName = 'sync_data';
+  static const uploadTaskName = 'upload_pending';
+
+  static Future<void> initialize() async {
+    await Workmanager().initialize(
+      callbackDispatcher,
+      isInDebugMode: kDebugMode,
+    );
+  }
+
+  /// 주기적 동기화 등록 (최소 15분)
+  static Future<void> registerPeriodicSync() async {
+    await Workmanager().registerPeriodicTask(
+      'sync-task',
+      syncTaskName,
+      frequency: const Duration(hours: 1),
+      constraints: Constraints(
+        networkType: NetworkType.connected,
+        requiresBatteryNotLow: true,
+      ),
+      backoffPolicy: BackoffPolicy.exponential,
+      existingWorkPolicy: ExistingWorkPolicy.keep,
+    );
+  }
+
+  /// 일회성 작업 등록
+  static Future<void> scheduleUpload(String filePath) async {
+    await Workmanager().registerOneOffTask(
+      'upload-${DateTime.now().millisecondsSinceEpoch}',
+      uploadTaskName,
+      inputData: {'filePath': filePath},
+      constraints: Constraints(
+        networkType: NetworkType.unmetered, // WiFi만
+      ),
+    );
+  }
+}
+
+// Top-level 콜백 함수 (반드시 top-level)
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((taskName, inputData) async {
+    try {
+      switch (taskName) {
+        case BackgroundService.syncTaskName:
+          await _performSync();
+          break;
+        case BackgroundService.uploadTaskName:
+          await _performUpload(inputData!['filePath']!);
+          break;
+      }
+      return true;
+    } catch (e) {
+      return false; // 재시도 트리거
+    }
+  });
+}
+```
+
+### 10.2 iOS Background Fetch
+
+```dart
+// iOS에서는 workmanager가 BGTaskScheduler 사용
+// Info.plist 설정 필요
+
+// ios/Runner/Info.plist
+/*
+<key>BGTaskSchedulerPermittedIdentifiers</key>
+<array>
+  <string>com.example.app.sync</string>
+  <string>com.example.app.upload</string>
+</array>
+<key>UIBackgroundModes</key>
+<array>
+  <string>fetch</string>
+  <string>processing</string>
+</array>
+*/
+```
+
+### 10.3 Foreground Service (장시간 작업)
+
+```dart
+// 음악 재생, GPS 추적 등 사용자에게 보이는 장시간 작업
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+
+class ForegroundService {
+  static Future<void> startLocationTracking() async {
+    await FlutterForegroundTask.init(
+      androidNotificationOptions: AndroidNotificationOptions(
+        channelId: 'location_tracking',
+        channelName: '위치 추적',
+        channelDescription: '백그라운드 위치 추적 중',
+        channelImportance: NotificationChannelImportance.LOW,
+        priority: NotificationPriority.LOW,
+        iconData: const NotificationIconData(
+          resType: ResourceType.mipmap,
+          resPrefix: ResourcePrefix.ic,
+          name: 'launcher',
+        ),
+      ),
+      iosNotificationOptions: const IOSNotificationOptions(
+        showNotification: true,
+        playSound: false,
+      ),
+      foregroundTaskOptions: const ForegroundTaskOptions(
+        interval: 5000,
+        isOnceEvent: false,
+        autoRunOnBoot: true,
+      ),
+    );
+
+    await FlutterForegroundTask.startService(
+      notificationTitle: '위치 추적 중',
+      notificationText: '앱이 백그라운드에서 위치를 추적하고 있습니다',
+      callback: _locationCallback,
+    );
+  }
+}
+
+@pragma('vm:entry-point')
+void _locationCallback() {
+  FlutterForegroundTask.setTaskHandler(LocationTaskHandler());
+}
+
+class LocationTaskHandler extends TaskHandler {
+  @override
+  Future<void> onRepeatEvent(DateTime timestamp) async {
+    // 주기적으로 위치 업데이트
+    final position = await Geolocator.getCurrentPosition();
+    await LocationService.savePosition(position);
+  }
+}
+```
+
+### 10.4 배터리 최적화 대응
+
+```dart
+// Android 배터리 최적화 해제 요청
+import 'package:disable_battery_optimization/disable_battery_optimization.dart';
+
+Future<void> requestBatteryOptimizationExemption() async {
+  final isDisabled = await DisableBatteryOptimization
+      .isBatteryOptimizationDisabled;
+
+  if (!isDisabled!) {
+    await DisableBatteryOptimization
+        .showDisableBatteryOptimizationSettings();
+  }
+}
+```
+
+### 10.5 주의사항
+
+| 항목 | Android | iOS |
+|-----|---------|-----|
+| 최소 주기 | 15분 | 제한 없음 (시스템 결정) |
+| 실행 보장 | 대략적 보장 | 보장 안됨 |
+| 네트워크 제약 | 설정 가능 | 제한적 |
+| 배터리 최적화 | Doze 모드 영향 | Low Power Mode 영향 |

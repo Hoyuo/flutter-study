@@ -19,6 +19,7 @@
 | `Security.md` | 데이터 암호화, Certificate Pinning, 코드 난독화, 인증 보안, 플랫폼별 설정 |
 | `Accessibility.md` | Semantics 설정, 스크린 리더 지원, 색상 대비, 모터 접근성, 테스트 |
 | `Logging.md` | 구조화된 로깅, BlocObserver, 네트워크 로깅, Crashlytics/Sentry 연동 |
+| `Monitoring.md` | 앱 모니터링, Crashlytics, Sentry, Firebase Performance, 인시던트 대응 |
 
 ## For AI Agents
 

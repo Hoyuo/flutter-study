@@ -17,13 +17,13 @@ Flutter 개발팀을 위한 포괄적인 개발 가이드 문서 저장소입니
 | Directory | Purpose | Documents |
 |-----------|---------|-----------|
 | `core/` | 핵심 아키텍처 - Architecture, Bloc, Freezed, Fpdart, BlocUiEffect | 5개 (see `core/AGENTS.md`) |
-| `infrastructure/` | 인프라 - DI, Environment, LocalStorage | 3개 (see `infrastructure/AGENTS.md`) |
+| `infrastructure/` | 인프라 - DI, Environment, LocalStorage, CICD, StoreSubmission | 5개 (see `infrastructure/AGENTS.md`) |
 | `networking/` | 네트워킹 - Dio, Retrofit | 2개 (see `networking/AGENTS.md`) |
 | `features/` | 기능별 - Navigation, Localization, Permission, PushNotification | 4개 (see `features/AGENTS.md`) |
-| `patterns/` | 필수 패턴 - Analytics, ImageHandling, Pagination, FormValidation | 4개 (see `patterns/AGENTS.md`) |
-| `system/` | 시스템 - ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging | 8개 (see `system/AGENTS.md`) |
+| `patterns/` | 필수 패턴 - Analytics, ImageHandling, Pagination, FormValidation, OfflineSupport, InAppPurchase, Animation | 7개 (see `patterns/AGENTS.md`) |
+| `system/` | 시스템 - ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring | 9개 (see `system/AGENTS.md`) |
 
-**총 26개 문서**
+**총 32개 문서**
 
 ## Directory Structure
 
@@ -41,7 +41,9 @@ flutter-study/
 │   ├── AGENTS.md
 │   ├── DI.md
 │   ├── Environment.md
-│   └── LocalStorage.md
+│   ├── LocalStorage.md
+│   ├── CICD.md
+│   └── StoreSubmission.md
 ├── networking/               ← 네트워킹
 │   ├── AGENTS.md
 │   ├── Networking_Dio.md
@@ -57,7 +59,10 @@ flutter-study/
 │   ├── Analytics.md
 │   ├── ImageHandling.md
 │   ├── Pagination.md
-│   └── FormValidation.md
+│   ├── FormValidation.md
+│   ├── OfflineSupport.md
+│   ├── InAppPurchase.md
+│   └── Animation.md
 └── system/                   ← 시스템
     ├── AGENTS.md
     ├── ErrorHandling.md
@@ -67,7 +72,8 @@ flutter-study/
     ├── Performance.md
     ├── Security.md
     ├── Accessibility.md
-    └── Logging.md
+    ├── Logging.md
+    └── Monitoring.md
 ```
 
 ## For AI Agents
@@ -173,5 +179,14 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 23. `system/Security.md` - 보안
 24. `system/Accessibility.md` - 접근성
 25. `system/Logging.md` - 로깅
+
+### Production 운영 (Production)
+
+26. `system/Monitoring.md` - 모니터링 (Crashlytics, Sentry, Performance)
+27. `infrastructure/CICD.md` - CI/CD 파이프라인 (GitHub Actions, Fastlane)
+28. `infrastructure/StoreSubmission.md` - 앱스토어 제출
+29. `patterns/OfflineSupport.md` - 오프라인 지원
+30. `patterns/InAppPurchase.md` - 인앱 결제
+31. `patterns/Animation.md` - 애니메이션
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->

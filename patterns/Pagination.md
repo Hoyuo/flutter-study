@@ -9,7 +9,18 @@
 ```yaml
 # pubspec.yaml
 dependencies:
-  rxdart: ^0.28.0  # 디바운싱에 필요 (FormValidation.md와 버전 일치)
+  rxdart: ^0.28.0
+  flutter_bloc: ^9.0.0
+  freezed_annotation: ^2.4.0
+  fpdart: ^1.1.0
+  injectable: ^2.5.0
+  shimmer: ^3.0.0  # Skeleton Loader 섹션
+
+dev_dependencies:
+  bloc_test: ^9.1.0
+  mocktail: ^1.0.0
+  freezed: ^2.5.0
+  build_runner: ^2.4.0
 ```
 
 ## 기본 구조
@@ -418,9 +429,13 @@ class _ProductListPageState extends State<ProductListPage> {
                     const ProductListEvent.refreshed(),
                   );
               // RefreshIndicator가 완료를 알 수 있도록 대기
-              await context.read<ProductListBloc>().stream.firstWhere(
-                    (s) => !s.isRefreshing,
-                  );
+              try {
+                await context.read<ProductListBloc>().stream.firstWhere(
+                      (s) => !s.isRefreshing,
+                    ).timeout(const Duration(seconds: 10));
+              } catch (e) {
+                // Timeout 또는 에러 발생 시 무시
+              }
             },
             child: ListView.builder(
               controller: _scrollController,
@@ -561,6 +576,7 @@ class PaginatedListView<T> extends StatefulWidget {
 
 class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
   final _scrollController = ScrollController();
+  DateTime? _lastLoadMoreTime;
 
   @override
   void initState() {
@@ -576,6 +592,13 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
 
   void _onScroll() {
     if (_shouldLoadMore) {
+      // 중복 호출 방지: 마지막 호출로부터 300ms 이내면 무시
+      final now = DateTime.now();
+      if (_lastLoadMoreTime != null &&
+          now.difference(_lastLoadMoreTime!).inMilliseconds < 300) {
+        return;
+      }
+      _lastLoadMoreTime = now;
       widget.onLoadMore();
     }
   }
@@ -915,8 +938,32 @@ class CursorPaginationState<T> with _$CursorPaginationState<T> {
 ### Cursor 기반 Bloc
 
 ```dart
-class CursorPaginationBloc extends Bloc<PaginationEvent, CursorPaginationState<Item>> {
-  Future<void> _onLoadedMore(Emitter<CursorPaginationState<Item>> emit) async {
+// 이벤트 정의
+sealed class CursorPaginationEvent {
+  const CursorPaginationEvent();
+}
+
+final class LoadNextPage extends CursorPaginationEvent {
+  const LoadNextPage();
+}
+
+final class RefreshItems extends CursorPaginationEvent {
+  const RefreshItems();
+}
+
+// Bloc 구현
+class CursorPaginationBloc extends Bloc<CursorPaginationEvent, CursorPaginationState<Item>> {
+  final ItemRepository _repository;
+
+  CursorPaginationBloc(this._repository) : super(CursorPaginationState.initial()) {
+    on<LoadNextPage>(_onLoadedMore);
+    on<RefreshItems>(_onRefreshed);
+  }
+
+  Future<void> _onLoadedMore(
+    LoadNextPage event,
+    Emitter<CursorPaginationState<Item>> emit,
+  ) async {
     if (!state.hasNextPage || state.isLoadingMore) return;
 
     emit(state.copyWith(isLoadingMore: true));
@@ -932,6 +979,28 @@ class CursorPaginationBloc extends Bloc<PaginationEvent, CursorPaginationState<I
         isLoadingMore: false,
         items: [...state.items, ...response.items],
         nextCursor: response.nextCursor,  // 다음 커서 저장
+        hasNextPage: response.nextCursor != null,
+      )),
+    );
+  }
+
+  Future<void> _onRefreshed(
+    RefreshItems event,
+    Emitter<CursorPaginationState<Item>> emit,
+  ) async {
+    emit(state.copyWith(isRefreshing: true));
+
+    final result = await _repository.getItems(
+      cursor: null,  // 처음부터 다시
+      limit: 20,
+    );
+
+    result.fold(
+      (failure) => emit(state.copyWith(isRefreshing: false)),
+      (response) => emit(state.copyWith(
+        isRefreshing: false,
+        items: response.items,
+        nextCursor: response.nextCursor,
         hasNextPage: response.nextCursor != null,
       )),
     );
@@ -958,7 +1027,7 @@ class ProductListState with _$ProductListState {
     String? searchQuery,
     String? selectedCategory,
     PriceRange? priceRange,
-    SortOption sortOption,
+    @Default(SortOption.newest) SortOption sortOption,
     String? error,
   }) = _ProductListState;
 }
@@ -982,6 +1051,8 @@ class PriceRange with _$PriceRange {
 ### 검색 디바운싱
 
 ```dart
+import 'package:rxdart/rxdart.dart';
+
 class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
   ProductListBloc(...) : super(ProductListState.initial()) {
     // 검색어 변경 이벤트에 디바운스 적용
@@ -1032,7 +1103,12 @@ void main() {
   blocTest<ProductListBloc, ProductListState>(
     'should load first page',
     build: () {
-      when(() => mockUseCase(page: 1, pageSize: 20))
+      when(() => mockUseCase(
+        page: 1,
+        pageSize: 20,
+        category: any(named: 'category'),
+        sortBy: any(named: 'sortBy'),
+      ))
           .thenAnswer((_) async => Right(PaginatedResponse(
                 items: [mockProduct],
                 currentPage: 1,
@@ -1085,6 +1161,227 @@ void main() {
 }
 ```
 
+## 10. 스크롤 위치 복원
+
+### 10.1 PageStorageKey 활용
+
+```dart
+class ProductListPage extends StatelessWidget {
+  const ProductListPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ProductListBloc, ProductListState>(
+      builder: (context, state) {
+        return ListView.builder(
+          // 페이지 이동 후 돌아와도 스크롤 위치 유지
+          key: const PageStorageKey('product_list'),
+          itemCount: state.products.length,
+          itemBuilder: (context, index) => ProductCard(state.products[index]),
+        );
+      },
+    );
+  }
+}
+```
+
+### 10.2 ScrollController 기반 복원
+
+```dart
+class PaginatedListWithRestore extends StatefulWidget {
+  @override
+  State<PaginatedListWithRestore> createState() => _State();
+}
+
+class _State extends State<PaginatedListWithRestore> {
+  late final ScrollController _scrollController;
+  static double? _savedPosition;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController(
+      initialScrollOffset: _savedPosition ?? 0,
+    );
+  }
+
+  @override
+  void dispose() {
+    // 화면 떠날 때 위치 저장
+    _savedPosition = _scrollController.offset;
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      controller: _scrollController,
+      itemCount: items.length,
+      itemBuilder: (context, index) => ItemCard(items[index]),
+    );
+  }
+}
+```
+
+### 10.3 Bloc과 함께 스크롤 상태 저장
+
+```dart
+@freezed
+class ProductListState with _$ProductListState {
+  const factory ProductListState({
+    @Default([]) List<Product> products,
+    @Default(0.0) double scrollOffset,
+    @Default(false) bool isLoading,
+  }) = _ProductListState;
+}
+
+class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
+  ProductListBloc() : super(const ProductListState()) {
+    on<SaveScrollPosition>((event, emit) {
+      emit(state.copyWith(scrollOffset: event.offset));
+    });
+  }
+}
+
+// UI에서 사용
+class _ProductListPageState extends State<ProductListPage> {
+  late ScrollController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialOffset = context.read<ProductListBloc>().state.scrollOffset;
+    _controller = ScrollController(initialScrollOffset: initialOffset);
+
+    _controller.addListener(() {
+      context.read<ProductListBloc>().add(
+        SaveScrollPosition(_controller.offset),
+      );
+    });
+  }
+}
+```
+
+## 11. 오프라인 캐시
+
+### 11.1 캐시 우선 전략
+
+```dart
+class CachedPaginationRepository {
+  final ApiClient _api;
+  final LocalCache _cache;
+
+  Future<Either<Failure, List<Product>>> getProducts({
+    required int page,
+    bool forceRefresh = false,
+  }) async {
+    final cacheKey = 'products_page_$page';
+
+    // 1. 캐시 먼저 확인 (네트워크 없거나 forceRefresh 아닐 때)
+    if (!forceRefresh) {
+      final cached = await _cache.get<List<Product>>(cacheKey);
+      if (cached != null) {
+        // 백그라운드에서 새로고침
+        _refreshInBackground(page);
+        return Right(cached);
+      }
+    }
+
+    // 2. 네트워크 요청
+    try {
+      final products = await _api.getProducts(page: page);
+      await _cache.set(cacheKey, products, ttl: Duration(hours: 1));
+      return Right(products);
+    } on NetworkException {
+      // 3. 네트워크 실패 시 캐시 반환
+      final cached = await _cache.get<List<Product>>(cacheKey);
+      if (cached != null) {
+        return Right(cached);
+      }
+      return Left(NetworkFailure('오프라인 상태입니다'));
+    }
+  }
+
+  void _refreshInBackground(int page) async {
+    try {
+      final products = await _api.getProducts(page: page);
+      await _cache.set('products_page_$page', products);
+    } catch (_) {
+      // 백그라운드 새로고침 실패 무시
+    }
+  }
+}
+```
+
+### 11.2 Bloc에서 캐시 상태 표시
+
+```dart
+@freezed
+class PaginationState<T> with _$PaginationState<T> {
+  const factory PaginationState({
+    @Default([]) List<T> items,
+    @Default(false) bool isLoading,
+    @Default(false) bool isFromCache, // 캐시 데이터 여부
+    DateTime? lastUpdated,
+  }) = _PaginationState<T>;
+}
+
+// UI에서 캐시 알림 표시
+if (state.isFromCache) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          const Icon(Icons.offline_bolt, color: Colors.white),
+          const SizedBox(width: 8),
+          Text('오프라인 모드 - ${_formatTime(state.lastUpdated)}에 저장됨'),
+        ],
+      ),
+      action: SnackBarAction(
+        label: '새로고침',
+        onPressed: () => bloc.add(const Refresh()),
+      ),
+    ),
+  );
+}
+```
+
+### 11.3 Skeleton Loader
+
+```dart
+class SkeletonProductCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        height: 100,
+        margin: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+  }
+}
+
+// 로딩 중 Skeleton 표시
+ListView.builder(
+  itemCount: state.isLoading && state.items.isEmpty
+      ? 5 // Skeleton 5개 표시
+      : state.items.length,
+  itemBuilder: (context, index) {
+    if (state.isLoading && state.items.isEmpty) {
+      return const SkeletonProductCard();
+    }
+    return ProductCard(state.items[index]);
+  },
+)
+```
+
 ## 체크리스트
 
 - [ ] PaginationState 모델 정의
@@ -1097,4 +1394,7 @@ void main() {
 - [ ] 재사용 가능한 PaginatedListView 위젯
 - [ ] 필터/검색 + 페이지네이션 통합
 - [ ] 검색 디바운싱 처리
+- [ ] 스크롤 위치 복원 구현
+- [ ] 오프라인 캐시 전략 구현
+- [ ] Skeleton Loader 추가
 - [ ] Bloc 테스트 작성

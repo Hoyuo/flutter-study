@@ -1,8 +1,23 @@
 # Flutter 보안 가이드
 
+> **최신 업데이트**: Flutter 3.27 및 flutter_secure_storage 10.0.0 기준으로 작성되었습니다.
+
 ## 개요
 
 모바일 앱의 보안은 사용자 데이터 보호와 앱의 무결성 유지에 필수적입니다. 이 가이드는 Flutter 앱에서 적용할 수 있는 실무 기반의 보안 전략을 다룹니다.
+
+### 주요 변경사항 (2026년 기준)
+
+**Flutter 3.27 요구사항**
+- Java 17 필수 (기존 Java 11)
+- Android NDK r28 권장
+- 향상된 보안 기능 및 성능 개선
+
+**flutter_secure_storage 10.0.0 Breaking Changes**
+- Android 최소 SDK: 19 → 23 (Android 6.0+)
+- 기본 암호화: RSA OAEP with SHA-256 (더 강력한 보안)
+- 자동 마이그레이션: `migrateOnAlgorithmChange` 옵션 지원
+- 표준 API: `FlutterSecureStorage.standard()` 팩토리 생성자 추가
 
 ### 모바일 앱 보안 위협
 
@@ -50,6 +65,23 @@ dependencies:
   pointycastle: ^3.7.0
 ```
 
+**Flutter 3.27 요구사항**
+
+| 항목 | 요구사항 | 비고 |
+|------|---------|------|
+| Flutter | 3.27.0+ | 최신 안정 버전 |
+| Java | 17+ | Flutter 3.27부터 필수 |
+| Android SDK | 23+ (Android 6.0) | flutter_secure_storage 10.0.0 최소 요구사항 |
+| NDK | r28 | 네이티브 코드 컴파일 |
+| iOS | 13.0+ | Keychain 보안 기능 |
+
+**flutter_secure_storage 10.0.0 Breaking Changes**
+
+- **Android SDK 최소 버전**: 19 → 23 (Android 6.0 Marshmallow 이상)
+- **기본 암호화 알고리즘**: `RSA_ECB_OAEPwithSHA_256andMGF1Padding` (기존 RSA/ECB/PKCS1Padding)
+- **새로운 API**: `FlutterSecureStorage.standard()` 팩토리 생성자
+- **마이그레이션 옵션**: 기존 암호화 알고리즘에서 자동 마이그레이션 지원
+
 #### 기본 저장소 구현
 
 ```dart
@@ -58,63 +90,70 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SecureStorageService {
-  static const _instance = FlutterSecureStorage(
+  // flutter_secure_storage 10.0.0+ 표준 설정
+  final FlutterSecureStorage _storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(
-      // Android 9+ 에서만 EncryptedSharedPreferences 사용
+      // Android 6.0+ (API 23) 기본 암호화 알고리즘
+      // RSA_ECB_OAEPwithSHA_256andMGF1Padding (더 안전한 OAEP 패딩)
       keyCipherAlgorithm: KeyCipherAlgorithm.RSA_ECB_OAEPwithSHA_256andMGF1Padding,
       storageCipherAlgorithm: StorageCipherAlgorithm.AES_GCM_NoPadding,
-      resetOnError: true,  // 오류 발생 시 저장소 초기화
+
+      // 오류 발생 시 저장소 초기화 (예: 암호화 키 손상)
+      resetOnError: true,
+
+      // 기존 암호화 알고리즘에서 자동 마이그레이션
+      // 이전 버전(RSA/ECB/PKCS1Padding)에서 업그레이드 시 true 설정
+      migrateOnAlgorithmChange: true,
     ),
     iOptions: IOSOptions(
-      accessibility: KeychainAccessibility.first_this_device_this_device_only,
+      // iOS Keychain 접근성: 첫 잠금 해제 후 + 기기에서만 접근
+      accessibility: KeychainAccessibility.first_unlock_this_device,
     ),
   );
 
-  const SecureStorageService._();
-
   /// 문자열 저장
-  static Future<void> save(String key, String value) async {
+  Future<void> save(String key, String value) async {
     try {
-      await _instance.write(key: key, value: value);
+      await _storage.write(key: key, value: value);
     } catch (e) {
       throw StorageException('Failed to save: $key - $e');
     }
   }
 
   /// 문자열 읽기
-  static Future<String?> read(String key) async {
+  Future<String?> read(String key) async {
     try {
-      return await _instance.read(key: key);
+      return await _storage.read(key: key);
     } catch (e) {
       throw StorageException('Failed to read: $key - $e');
     }
   }
 
   /// 삭제
-  static Future<void> delete(String key) async {
+  Future<void> delete(String key) async {
     try {
-      await _instance.delete(key: key);
+      await _storage.delete(key: key);
     } catch (e) {
       throw StorageException('Failed to delete: $key - $e');
     }
   }
 
   /// 전체 삭제 (로그아웃 시)
-  static Future<void> deleteAll() async {
+  Future<void> deleteAll() async {
     try {
-      await _instance.deleteAll();
+      await _storage.deleteAll();
     } catch (e) {
       throw StorageException('Failed to delete all - $e');
     }
   }
 
   /// 특정 패턴의 모든 키 삭제
-  static Future<void> deleteByPrefix(String prefix) async {
+  Future<void> deleteByPrefix(String prefix) async {
     try {
-      final keys = await _instance.readAll();
+      final keys = await _storage.readAll();
       for (final key in keys.keys) {
         if (key.startsWith(prefix)) {
-          await _instance.delete(key: key);
+          await _storage.delete(key: key);
         }
       }
     } catch (e) {
@@ -132,6 +171,70 @@ class StorageException implements Exception {
 }
 ```
 
+#### flutter_secure_storage 옵션 설명
+
+**AndroidOptions**
+
+| 옵션 | 기본값 | 설명 |
+|------|--------|------|
+| `keyCipherAlgorithm` | `RSA_ECB_OAEPwithSHA_256andMGF1Padding` | RSA 키 암호화 알고리즘 (10.0.0+에서 OAEP 패딩으로 변경) |
+| `storageCipherAlgorithm` | `AES_GCM_NoPadding` | 데이터 암호화 알고리즘 (AES-GCM 인증 암호화) |
+| `resetOnError` | `false` | 암호화 오류 발생 시 저장소 초기화 여부 |
+| `migrateOnAlgorithmChange` | `false` | 암호화 알고리즘 변경 시 자동 마이그레이션 활성화 |
+| `encryptedSharedPreferences` | `false` | EncryptedSharedPreferences 사용 (Android 6.0+) |
+
+**IOSOptions**
+
+| 옵션 | 기본값 | 설명 |
+|------|--------|------|
+| `accessibility` | `unlocked_this_device` | Keychain 접근 조건 |
+| `accountName` | `null` | Keychain 계정 이름 |
+| `synchronizable` | `false` | iCloud Keychain 동기화 |
+| `groupId` | `null` | 앱 그룹 간 Keychain 공유 |
+
+**Keychain Accessibility 옵션 (iOS)**
+
+```dart
+enum KeychainAccessibility {
+  // 기기 잠금 해제 상태에서만 접근 (가장 안전)
+  when_unlocked,
+
+  // 기기가 잠긴 후에도 접근 가능
+  after_first_unlock,
+
+  // 항상 접근 가능 (권장하지 않음)
+  always,
+
+  // 잠금 해제 상태 + 이 기기에서만 (백업 제외)
+  when_unlocked_this_device_only,
+
+  // 첫 잠금 해제 후 + 이 기기에서만 (권장)
+  first_unlock_this_device,
+
+  // 항상 + 이 기기에서만
+  always_this_device_only,
+
+  // 패스코드 설정 시에만 접근 (가장 안전)
+  when_passcode_set_this_device_only,
+}
+```
+
+**간단한 사용 예시 (standard API)**
+
+```dart
+// 기본 설정으로 빠르게 시작
+final storage = FlutterSecureStorage.standard();
+
+// 값 저장
+await storage.write(key: 'token', value: 'my-secret-token');
+
+// 값 읽기
+final token = await storage.read(key: 'token');
+
+// 값 삭제
+await storage.delete(key: 'token');
+```
+
 #### 민감한 데이터 저장 패턴
 
 ```dart
@@ -141,7 +244,19 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SensitiveDataStorage {
-  static const _storage = FlutterSecureStorage();
+  // flutter_secure_storage 10.0.0+ 권장 설정
+  static final _storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      keyCipherAlgorithm: KeyCipherAlgorithm.RSA_ECB_OAEPwithSHA_256andMGF1Padding,
+      storageCipherAlgorithm: StorageCipherAlgorithm.AES_GCM_NoPadding,
+      resetOnError: true,
+      migrateOnAlgorithmChange: true,  // 기존 데이터 자동 마이그레이션
+    ),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+  );
+
   static const _tokenKey = 'app_auth_token';
   static const _refreshTokenKey = 'app_refresh_token';
   static const _userIdKey = 'app_user_id';
@@ -240,7 +355,9 @@ class AESEncryption {
     String password, {
     int iterations = 600000,  // OWASP 2024 권장
   }) {
-    final salt = utf8.encode('flutter_app_salt');  // 실제 환경에서는 안전한 salt 사용
+    // ⚠️ 프로덕션에서는 랜덤 salt를 생성하고 해시와 함께 저장하세요
+    // final salt = generateRandomSalt(); // 권장
+    final salt = utf8.encode('flutter_app_salt');  // 예시용 - 프로덕션 사용 금지!
     final key = PBKDF2.derive(
       password: password,
       salt: Uint8List.fromList(salt),
@@ -366,7 +483,10 @@ import 'package:pointycastle/export.dart';
 class RSAEncryption {
   /// RSA 키 쌍 생성
   static Future<RSAKeyPair> generateKeyPair({int keySize = 2048}) async {
-    final random = SecureRandom('AES/CTR/AUTO-SEED-PRNG');
+    final random = SecureRandom('AES/CTR/AUTO-SEED-PRNG')
+      ..seed(KeyParameter(Uint8List.fromList(
+        List.generate(32, (_) => Random.secure().nextInt(256))
+      )));
     final keyGen = RSAKeyGenerator()
       ..init(
         ParametersWithRandom(
@@ -1162,11 +1282,10 @@ class BiometricAuth {
     try {
       final isDeviceSupported =
           await _localAuth.canCheckBiometrics;
-      final isAuthenticated =
-          await _localAuth.deviceSupportsFaceID() ||
-          await _localAuth.deviceSupportsFingerprint();
+      final availableBiometrics =
+          await _localAuth.getAvailableBiometrics();
 
-      return isDeviceSupported && isAuthenticated;
+      return isDeviceSupported && availableBiometrics.isNotEmpty;
     } catch (_) {
       return false;
     }
@@ -1224,6 +1343,8 @@ class BiometricAuth {
 
 ```dart
 // lib/features/auth/presentation/pages/biometric_auth_page.dart
+import 'package:flutter/material.dart';
+
 class BiometricAuthPage extends StatefulWidget {
   @override
   State<BiometricAuthPage> createState() => _BiometricAuthPageState();
@@ -1403,9 +1524,8 @@ class SessionManager {
 ```yaml
 # analysis_options.yaml
 analyzer:
-  enable-experiment:
-    - records
-    - patterns
+  # Records와 Patterns는 Dart 3.0+에서 기본 활성화
+  # enable-experiment:  # 더 이상 필요 없음
 
   errors:
     missing_required_param: error
@@ -1430,8 +1550,8 @@ linter:
     - control_flow_in_finally
     - empty_statements
     - hash_and_equals
-    - invariant_booleans
-    - leading_newlines_in_multiline_strings
+    # invariant_booleans - Dart 2.x에서 deprecated, 제거
+    # leading_newlines_in_multiline_strings - deprecated, 제거
     - no_adjacent_strings_in_list
     - no_duplicate_case_values
     - prefer_void_to_null
@@ -1591,6 +1711,11 @@ class PenetrationTestChecklist {
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.app">
 
+  <!-- Android 6.0 (API 23) 이상 요구 (flutter_secure_storage 10.0.0) -->
+  <uses-sdk
+      android:minSdkVersion="23"
+      android:targetSdkVersion="34" />
+
   <!-- 필요한 권한만 요청 (최소 권한 원칙) -->
   <uses-permission android:name="android.permission.INTERNET" />
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -1602,13 +1727,9 @@ class PenetrationTestChecklist {
       android:icon="@mipmap/ic_launcher"
       android:label="@string/app_name"
       android:theme="@style/AppTheme"
-      android:usesCleartextTraffic="false">
-
-    <!-- 백업 비활성화 (민감 데이터 보호) -->
-    <application
-        android:allowBackup="false"
-        android:debuggable="false">
-    </application>
+      android:usesCleartextTraffic="false"
+      android:allowBackup="false"
+      android:debuggable="false">
 
     <!-- 스크린캐시 비활성화 -->
     <activity
@@ -1642,15 +1763,25 @@ class PenetrationTestChecklist {
 android {
   compileSdk 34
 
+  // Java 17 필수 (Flutter 3.27+)
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+
+  // NDK 버전 (r28 권장)
+  ndkVersion "28.0.12433566"
+
   defaultConfig {
-    minSdk 21
+    // flutter_secure_storage 10.0.0 최소 요구사항
+    minSdk 23  // Android 6.0 Marshmallow 이상
     targetSdk 34
 
     // 버전 관리
     versionCode 1
     versionName "1.0.0"
 
-    // 네 크릭 보안
+    // 네트워크 보안
     manifestPlaceholders = [
       usesCleartextTraffic: false
     ]
@@ -1792,14 +1923,265 @@ android {
 
 ---
 
+## 14. App Attestation (앱 무결성 검증)
+
+### 14.1 Android - Play Integrity API
+
+```dart
+// pubspec.yaml
+dependencies:
+  play_integrity: ^1.0.0
+
+// lib/services/integrity_service.dart
+import 'package:play_integrity/play_integrity.dart';
+
+class IntegrityService {
+  final PlayIntegrity _playIntegrity = PlayIntegrity();
+
+  /// 앱 무결성 토큰 요청
+  Future<String?> requestIntegrityToken(String nonce) async {
+    try {
+      final token = await _playIntegrity.requestIntegrityToken(
+        IntegrityTokenRequest(nonce: nonce),
+      );
+      return token?.token;
+    } catch (e) {
+      // 에뮬레이터 또는 루팅된 기기에서 실패할 수 있음
+      return null;
+    }
+  }
+
+  /// 서버에서 토큰 검증 (백엔드 필요)
+  Future<IntegrityVerdict> verifyOnServer(String token) async {
+    final response = await dio.post('/api/verify-integrity', data: {
+      'token': token,
+    });
+    return IntegrityVerdict.fromJson(response.data);
+  }
+}
+
+class IntegrityVerdict {
+  final bool deviceRecognized;
+  final bool basicIntegrity;
+  final bool strongIntegrity;
+  final bool appRecognized;
+
+  bool get isSecure =>
+    deviceRecognized && basicIntegrity && appRecognized;
+}
+```
+
+### 14.2 iOS - DeviceCheck / App Attest
+
+```dart
+// pubspec.yaml
+dependencies:
+  device_check: ^1.0.0
+
+// lib/services/device_check_service.dart
+import 'package:device_check/device_check.dart';
+
+class DeviceCheckService {
+  final DeviceCheck _deviceCheck = DeviceCheck();
+
+  /// DeviceCheck 지원 여부 확인
+  Future<bool> isSupported() async {
+    return await _deviceCheck.isSupported();
+  }
+
+  /// 디바이스 토큰 생성 (서버 검증용)
+  Future<String?> generateToken() async {
+    if (!await isSupported()) return null;
+
+    try {
+      return await _deviceCheck.generateToken();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// App Attest 키 생성 (iOS 14+)
+  Future<String?> generateAppAttestKey() async {
+    try {
+      return await _deviceCheck.generateKey();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// App Attest assertion 생성
+  Future<String?> generateAssertion(String keyId, String challenge) async {
+    try {
+      return await _deviceCheck.generateAssertion(
+        keyId: keyId,
+        clientDataHash: challenge,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+}
+```
+
+### 14.3 통합 사용 예시
+
+```dart
+class SecureApiClient {
+  final IntegrityService _integrityService;
+  final DeviceCheckService _deviceCheckService;
+
+  Future<void> secureRequest() async {
+    String? attestationToken;
+
+    if (Platform.isAndroid) {
+      attestationToken = await _integrityService.requestIntegrityToken(
+        _generateNonce(),
+      );
+    } else if (Platform.isIOS) {
+      attestationToken = await _deviceCheckService.generateToken();
+    }
+
+    if (attestationToken == null) {
+      throw SecurityException('기기 무결성을 확인할 수 없습니다');
+    }
+
+    // 서버 요청에 attestation 토큰 포함
+    await dio.post('/api/secure-endpoint',
+      options: Options(headers: {
+        'X-Attestation-Token': attestationToken,
+      }),
+    );
+  }
+}
+```
+
+### 14.4 주의사항
+
+| 항목 | 설명 |
+|-----|------|
+| 에뮬레이터 | Play Integrity는 에뮬레이터에서 실패함 |
+| 개발 중 | 개발 환경에서는 attestation 건너뛰기 필요 |
+| 비용 | Play Integrity API는 일정 호출 이후 과금 |
+| 서버 검증 | 토큰은 반드시 서버에서 검증해야 함 |
+
+---
+
+## 15. 보안 인시던트 대응
+
+### 15.1 보안 사고 분류
+
+| 등급 | 예시 | 대응 시간 |
+|-----|------|---------|
+| Critical | 사용자 데이터 유출, API 키 노출 | 즉시 (15분 내) |
+| High | 인증 우회, 권한 상승 취약점 | 2시간 내 |
+| Medium | XSS, CSRF 취약점 | 24시간 내 |
+| Low | 정보 노출 (버전 정보 등) | 1주일 내 |
+
+### 15.2 대응 절차
+
+```dart
+class SecurityIncidentResponse {
+  /// 1. 격리 (Contain)
+  static Future<void> contain() async {
+    // 손상된 토큰/키 즉시 폐기
+    await revokeCompromisedTokens();
+    // 의심 계정 잠금
+    await lockSuspiciousAccounts();
+    // 영향 받는 API 엔드포인트 차단
+    await blockAffectedEndpoints();
+  }
+
+  /// 2. 조사 (Investigate)
+  static Future<void> investigate() async {
+    // 로그 분석
+    await analyzeSecurityLogs();
+    // 영향 범위 파악
+    await determineScope();
+    // 침입 경로 추적
+    await traceEntryPoint();
+  }
+
+  /// 3. 통보 (Notify)
+  static Future<void> notify() async {
+    // GDPR: 72시간 내 감독기관 통보
+    // 영향 받는 사용자에게 알림
+    await notifyAffectedUsers();
+  }
+
+  /// 4. 복구 (Remediate)
+  static Future<void> remediate() async {
+    // 취약점 패치
+    await applySecurityPatch();
+    // 키/인증서 교체
+    await rotateCredentials();
+    // 모니터링 강화
+    await enhanceMonitoring();
+  }
+}
+```
+
+### 15.3 API 키 유출 시 대응
+
+```bash
+# 1. 즉시 키 폐기
+firebase console → Project Settings → Service accounts → Revoke
+
+# 2. 새 키 생성 및 배포
+firebase apps:sdkconfig
+
+# 3. CI/CD 시크릿 업데이트
+gh secret set FIREBASE_API_KEY --body "new-key"
+
+# 4. 긴급 앱 업데이트 배포
+flutter build apk --release
+fastlane android production
+```
+
+### 15.4 사용자 통보 템플릿
+
+```dart
+const breachNotificationTemplate = '''
+[중요] 보안 알림
+
+귀하의 계정과 관련된 보안 사고가 발생했습니다.
+
+영향 범위: {scope}
+발생 일시: {date}
+조치 사항: {actions}
+
+권장 조치:
+1. 비밀번호 즉시 변경
+2. 다른 서비스 동일 비밀번호 사용 시 변경
+3. 의심스러운 활동 발견 시 연락
+
+문의: security@example.com
+''';
+```
+
+---
+
 ## 보안 체크리스트
 
 ### 개발 단계
 
-- [ ] 모든 민감 데이터는 flutter_secure_storage에 저장
+**환경 설정**
+- [ ] Flutter 3.27.0 이상 사용
+- [ ] Java 17 설치 및 설정
+- [ ] Android NDK r28 설치
+- [ ] Android minSdk 23 이상 설정 (flutter_secure_storage 10.0.0 요구사항)
+
+**데이터 보안**
+- [ ] 모든 민감 데이터는 flutter_secure_storage 10.0.0+ 사용
+- [ ] AndroidOptions에서 migrateOnAlgorithmChange: true 설정 (기존 앱 업그레이드 시)
+- [ ] resetOnError: true 설정으로 암호화 오류 대응
+- [ ] iOS Keychain accessibility 적절히 설정 (first_unlock_this_device 권장)
+
+**네트워크 보안**
 - [ ] 네트워크 통신은 HTTPS 강제
 - [ ] Certificate Pinning 구현
 - [ ] API 키는 환경 변수나 보안 저장소 사용
+
+**코드 보안**
 - [ ] 입력 데이터 검증 (SQL 인젝션, XSS 방지)
 - [ ] 에러 메시지에 민감 정보 노출 금지
 - [ ] 로깅에서 민감 정보 제거

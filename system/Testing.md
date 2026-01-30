@@ -74,6 +74,11 @@ features/{feature_name}/
 
 ## 3. Mockito 사용법
 
+> **💡 중요:** bloc_test의 `MockBloc`과 함께 사용 시 mockito의 `when()`이 작동하지 않습니다.
+> - `MockBloc`은 mocktail 스타일을 따르므로 `whenListen()` 사용 필요
+> - 또는 mockito 대신 **mocktail** 패키지 사용 권장
+> - 자세한 내용은 "6.2 Bloc과 함께 Widget Test" 섹션 참조
+
 ### 3.1 Mock 클래스 정의
 
 ```dart
@@ -95,7 +100,7 @@ void main() {}
 
 ```bash
 # Mock 파일 자동 생성
-flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 이 명령어를 실행하면 `test/mocks/mocks.mocks.dart` 파일이 자동 생성됩니다.
@@ -131,10 +136,18 @@ when(mockRepository.getHomeData())
 when(mockDataSource.fetchData())
     .thenThrow(DioException(requestOptions: RequestOptions()));
 
-// 여러 번 호출 시 다른 결과
-when(mockRepository.getHomeData())
-    .thenAnswer((_) async => Right(homeData1))
-    .thenAnswer((_) async => Right(homeData2));
+// 여러 번 호출 시 다른 결과를 반환하려면 카운터 변수 사용
+// ❌ 잘못된 방법: 체이닝 시 마지막 thenAnswer만 적용됨
+// when(mockRepository.getHomeData())
+//     .thenAnswer((_) async => Right(homeData1))
+//     .thenAnswer((_) async => Right(homeData2));
+
+// ✅ 올바른 방법: 카운터 변수로 순차 반환 구현
+var callCount = 0;
+when(mockRepository.getHomeData()).thenAnswer((_) async {
+  callCount++;
+  return callCount == 1 ? Right(homeData1) : Right(homeData2);
+});
 ```
 
 ## 4. Unit Test
@@ -409,13 +422,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-
-@GenerateMocks([AuthRepository])
-void main() {}
-
-// 실제 테스트 파일
 import 'login_bloc_test.mocks.dart';
 
+@GenerateMocks([AuthRepository])
 void main() {
   late MockAuthRepository mockAuthRepo;
 
@@ -426,6 +435,7 @@ void main() {
   group('LoginBloc Effect', () {
     test('로그인 성공 시 NavigateToHome Effect 발행', () async {
       // Arrange
+      final user = User(id: '1', name: 'Test User', email: 'test@example.com');
       when(mockAuthRepo.login(any, any))
           .thenAnswer((_) async => Right(user));
 
@@ -530,11 +540,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'package:mockito/mockito.dart';
 import 'package:home/presentation/presentation.dart';
 
 import '../../mocks/mocks.mocks.dart';
 import '../../fixtures/home_fixture.dart';
+
+// 💡 권장: bloc_test의 MockBloc과 함께 사용 시 mockito 대신 mocktail 사용
+// - bloc_test의 MockBloc은 mocktail 스타일을 따름
+// - mockito의 when()은 작동하지 않음 → whenListen() 사용 필요
 
 class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
 
@@ -557,7 +570,11 @@ void main() {
   group('HomeScreen', () {
     testWidgets('initial 상태에서 빈 화면 표시', (tester) async {
       // Arrange
-      when(mockBloc.state).thenReturn(const HomeState.initial());
+      whenListen(
+        mockBloc,
+        Stream<HomeState>.empty(),
+        initialState: const HomeState.initial(),
+      );
 
       // Act
       await tester.pumpWidget(buildWidget());
@@ -568,7 +585,11 @@ void main() {
 
     testWidgets('loading 상태에서 로딩 인디케이터 표시', (tester) async {
       // Arrange
-      when(mockBloc.state).thenReturn(const HomeState.loading());
+      whenListen(
+        mockBloc,
+        Stream<HomeState>.empty(),
+        initialState: const HomeState.loading(),
+      );
 
       // Act
       await tester.pumpWidget(buildWidget());
@@ -579,8 +600,11 @@ void main() {
 
     testWidgets('loaded 상태에서 데이터 표시', (tester) async {
       // Arrange
-      when(mockBloc.state)
-          .thenReturn(HomeState.loaded(HomeFixture.homeData));
+      whenListen(
+        mockBloc,
+        Stream<HomeState>.empty(),
+        initialState: HomeState.loaded(HomeFixture.homeData),
+      );
 
       // Act
       await tester.pumpWidget(buildWidget());
@@ -592,8 +616,11 @@ void main() {
     testWidgets('error 상태에서 에러 메시지 표시', (tester) async {
       // Arrange
       const errorMessage = '에러가 발생했습니다.';
-      when(mockBloc.state)
-          .thenReturn(const HomeState.error(errorMessage));
+      whenListen(
+        mockBloc,
+        Stream<HomeState>.empty(),
+        initialState: const HomeState.error(errorMessage),
+      );
 
       // Act
       await tester.pumpWidget(buildWidget());
@@ -604,8 +631,11 @@ void main() {
 
     testWidgets('새로고침 버튼 탭 시 refresh 이벤트 발행', (tester) async {
       // Arrange
-      when(mockBloc.state)
-          .thenReturn(HomeState.loaded(HomeFixture.homeData));
+      whenListen(
+        mockBloc,
+        Stream<HomeState>.empty(),
+        initialState: HomeState.loaded(HomeFixture.homeData),
+      );
 
       // Act
       await tester.pumpWidget(buildWidget());
@@ -883,3 +913,492 @@ blocTest<HomeBloc, HomeState>(
 
 // ✅ verify는 항상 act 이후에 실행됨 (bloc_test에서 자동 처리)
 ```
+
+## 12. Integration Test
+
+### 12.1 integration_test 패키지
+
+Integration Test는 실제 디바이스나 에뮬레이터에서 전체 앱을 테스트합니다.
+
+**의존성 추가:**
+
+```yaml
+# pubspec.yaml
+dev_dependencies:
+  integration_test:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
+```
+
+### 12.2 기본 Integration Test
+
+```dart
+// integration_test/app_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:my_app/main.dart' as app;
+
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  group('end-to-end test', () {
+    testWidgets('full app flow test', (tester) async {
+      app.main();
+      await tester.pumpAndSettle();
+
+      // 로그인 화면 확인
+      expect(find.text('로그인'), findsOneWidget);
+
+      // 이메일 입력
+      await tester.enterText(
+        find.byKey(const Key('email_field')),
+        'test@example.com',
+      );
+
+      // 비밀번호 입력
+      await tester.enterText(
+        find.byKey(const Key('password_field')),
+        'password123',
+      );
+
+      // 로그인 버튼 탭
+      await tester.tap(find.byKey(const Key('login_button')));
+      await tester.pumpAndSettle();
+
+      // 홈 화면으로 이동 확인
+      expect(find.text('홈'), findsOneWidget);
+    });
+  });
+}
+```
+
+### 12.3 스크롤 및 인터랙션 테스트
+
+```dart
+testWidgets('리스트 스크롤 및 아이템 탭 테스트', (tester) async {
+  app.main();
+  await tester.pumpAndSettle();
+
+  // 리스트가 로드될 때까지 대기
+  await tester.pumpAndSettle(const Duration(seconds: 2));
+
+  // 특정 아이템 찾기 (보이지 않을 수 있음)
+  final itemFinder = find.text('마지막 아이템');
+
+  // 아이템이 보일 때까지 스크롤
+  await tester.scrollUntilVisible(
+    itemFinder,
+    500.0, // 스크롤 거리
+    scrollable: find.byType(Scrollable),
+  );
+
+  // 아이템 탭
+  await tester.tap(itemFinder);
+  await tester.pumpAndSettle();
+
+  // 상세 화면 확인
+  expect(find.text('상세 정보'), findsOneWidget);
+});
+```
+
+### 12.4 네트워크 응답 대기
+
+```dart
+testWidgets('API 데이터 로드 테스트', (tester) async {
+  app.main();
+  await tester.pumpAndSettle();
+
+  // 로딩 인디케이터 확인
+  expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+  // 네트워크 응답 대기 (최대 10초)
+  await tester.pumpAndSettle(const Duration(seconds: 10));
+
+  // 데이터가 로드되었는지 확인
+  expect(find.byType(CircularProgressIndicator), findsNothing);
+  expect(find.byType(ListView), findsOneWidget);
+});
+```
+
+### 12.5 실행 방법
+
+```bash
+# 에뮬레이터/시뮬레이터에서 실행
+flutter test integration_test/app_test.dart
+
+# 특정 디바이스에서 실행
+flutter test integration_test/app_test.dart -d <device_id>
+
+# 모든 Integration Test 실행
+flutter test integration_test/
+```
+
+## 13. Golden Test (Visual Regression Testing)
+
+### 13.1 Golden Test란?
+
+Golden Test는 위젯의 시각적 출력을 이미지로 저장하고 비교하여 UI 변경을 감지합니다.
+
+### 13.2 기본 Golden Test
+
+```dart
+// test/golden/login_page_golden_test.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_app/features/auth/presentation/pages/login_page.dart';
+
+void main() {
+  testWidgets('LoginPage golden test', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: LoginPage()),
+    );
+
+    await expectLater(
+      find.byType(LoginPage),
+      matchesGoldenFile('goldens/login_page.png'),
+    );
+  });
+}
+```
+
+### 13.3 다양한 상태의 Golden Test
+
+```dart
+// test/golden/home_card_golden_test.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_app/widgets/home_card.dart';
+
+void main() {
+  group('HomeCard Golden Tests', () {
+    testWidgets('기본 상태', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HomeCard(
+              title: '제목',
+              description: '설명',
+            ),
+          ),
+        ),
+      );
+
+      await expectLater(
+        find.byType(HomeCard),
+        matchesGoldenFile('goldens/home_card_default.png'),
+      );
+    });
+
+    testWidgets('로딩 상태', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HomeCard(
+              title: '제목',
+              description: '설명',
+              isLoading: true,
+            ),
+          ),
+        ),
+      );
+
+      await expectLater(
+        find.byType(HomeCard),
+        matchesGoldenFile('goldens/home_card_loading.png'),
+      );
+    });
+
+    testWidgets('에러 상태', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HomeCard(
+              title: '제목',
+              description: '설명',
+              hasError: true,
+            ),
+          ),
+        ),
+      );
+
+      await expectLater(
+        find.byType(HomeCard),
+        matchesGoldenFile('goldens/home_card_error.png'),
+      );
+    });
+  });
+}
+```
+
+### 13.4 다양한 디바이스 크기 테스트
+
+```dart
+// test/golden/responsive_golden_test.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets('다양한 화면 크기에서 Golden Test', (tester) async {
+    final sizes = {
+      'phone': const Size(375, 667),      // iPhone SE
+      'tablet': const Size(768, 1024),    // iPad
+      'desktop': const Size(1920, 1080),  // Desktop
+    };
+
+    for (final entry in sizes.entries) {
+      await tester.binding.setSurfaceSize(entry.value);
+
+      await tester.pumpWidget(
+        const MaterialApp(home: MyResponsivePage()),
+      );
+
+      await expectLater(
+        find.byType(MyResponsivePage),
+        matchesGoldenFile('goldens/responsive_${entry.key}.png'),
+      );
+    }
+  });
+}
+```
+
+### 13.5 테마 변경 테스트 (다크 모드)
+
+```dart
+testWidgets('다크 모드 Golden Test', (tester) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      theme: ThemeData.dark(),
+      home: const LoginPage(),
+    ),
+  );
+
+  await expectLater(
+    find.byType(LoginPage),
+    matchesGoldenFile('goldens/login_page_dark.png'),
+  );
+});
+```
+
+### 13.6 골든 파일 관리
+
+```bash
+# 골든 파일 생성/업데이트
+flutter test --update-goldens
+
+# 특정 테스트만 업데이트
+flutter test test/golden/login_page_golden_test.dart --update-goldens
+
+# CI에서 골든 테스트 실행 (업데이트 없이)
+flutter test test/golden/
+```
+
+### 13.7 Best Practices
+
+| 항목 | 설명 |
+|------|------|
+| 폴더 구조 | `test/golden/` 폴더에 테스트, `test/goldens/` 폴더에 이미지 저장 |
+| 파일명 | 명확한 이름 사용 (예: `login_page_dark.png`) |
+| 상태별 테스트 | 각 UI 상태마다 별도 Golden 파일 생성 |
+| CI 통합 | Git에 골든 파일 커밋하고 CI에서 검증 |
+| 주기적 업데이트 | 의도적인 UI 변경 시 `--update-goldens` 실행 |
+
+## 14. E2E Test with Patrol
+
+### 14.1 Patrol이란?
+
+Patrol은 Flutter의 Integration Test를 강화한 프레임워크로, 네이티브 권한 처리 등을 지원합니다.
+
+**의존성 추가:**
+
+```yaml
+# pubspec.yaml
+dev_dependencies:
+  patrol: ^3.0.0
+```
+
+### 14.2 기본 Patrol Test
+
+```dart
+// integration_test/patrol_test.dart
+import 'package:patrol/patrol.dart';
+import 'package:my_app/main.dart';
+
+void main() {
+  patrolTest('앱 기본 플로우 테스트', ($) async {
+    await $.pumpWidgetAndSettle(const MyApp());
+
+    // 로그인 화면 확인
+    expect($('로그인'), findsOneWidget);
+
+    // 이메일 입력
+    await $('이메일').enterText('test@example.com');
+
+    // 비밀번호 입력
+    await $('비밀번호').enterText('password123');
+
+    // 로그인 버튼 탭
+    await $('로그인 버튼').tap();
+
+    // 홈 화면 확인
+    expect($('홈'), findsOneWidget);
+  });
+}
+```
+
+### 14.3 네이티브 권한 처리
+
+```dart
+// integration_test/permission_test.dart
+import 'package:patrol/patrol.dart';
+
+void main() {
+  patrolTest('카메라 권한 처리 테스트', ($) async {
+    await $.pumpWidgetAndSettle(const MyApp());
+
+    // 카메라 버튼 탭
+    await $('카메라').tap();
+
+    // 네이티브 권한 다이얼로그 자동 허용
+    await $.native.grantPermissionWhenInUse();
+
+    // 카메라 화면 확인
+    expect($('Camera Preview'), findsOneWidget);
+  });
+
+  patrolTest('위치 권한 처리 테스트', ($) async {
+    await $.pumpWidgetAndSettle(const MyApp());
+
+    // 위치 버튼 탭
+    await $('내 위치').tap();
+
+    // 위치 권한 항상 허용
+    await $.native.grantPermissionOnlyThisTime();
+
+    // 지도 화면 확인
+    expect($('지도'), findsOneWidget);
+  });
+}
+```
+
+### 14.4 네이티브 다이얼로그 처리
+
+```dart
+patrolTest('네이티브 알림 다이얼로그 처리', ($) async {
+  await $.pumpWidgetAndSettle(const MyApp());
+
+  // 알림 설정 버튼 탭
+  await $('알림 설정').tap();
+
+  // 네이티브 다이얼로그의 "허용" 버튼 탭
+  await $.native.tap(Selector(text: '허용'));
+
+  // 설정 완료 확인
+  expect($('알림이 활성화되었습니다'), findsOneWidget);
+});
+```
+
+### 14.5 스크린샷 캡처
+
+```dart
+patrolTest('스크린샷 캡처 테스트', ($) async {
+  await $.pumpWidgetAndSettle(const MyApp());
+
+  // 로그인 화면 스크린샷
+  await $.native.takeScreenshot('login_screen');
+
+  // 로그인
+  await $('이메일').enterText('test@example.com');
+  await $('비밀번호').enterText('password123');
+  await $('로그인 버튼').tap();
+
+  // 홈 화면 스크린샷
+  await $.native.takeScreenshot('home_screen');
+});
+```
+
+### 14.6 Patrol Custom Config
+
+```dart
+// integration_test/patrol_config.dart
+import 'package:patrol/patrol.dart';
+
+void main() {
+  patrolTest(
+    '커스텀 설정 테스트',
+    config: const PatrolTestConfig(
+      // 각 액션 후 대기 시간
+      settleDuration: Duration(milliseconds: 500),
+      // 네이티브 자동화 활성화
+      nativeAutomation: true,
+    ),
+    ($) async {
+      await $.pumpWidgetAndSettle(const MyApp());
+
+      // 테스트 로직
+    },
+  );
+}
+```
+
+### 14.7 실행 방법
+
+```bash
+# Android에서 실행
+patrol test -t integration_test/patrol_test.dart
+
+# iOS에서 실행
+patrol test -t integration_test/patrol_test.dart --device iphone
+
+# 특정 디바이스 지정
+patrol test -d <device_id>
+
+# 모든 Patrol 테스트 실행
+patrol test
+```
+
+### 14.8 CI/CD 통합
+
+```yaml
+# .github/workflows/patrol_test.yml
+name: Patrol Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  patrol_test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+
+      - name: Install Patrol CLI
+        run: dart pub global activate patrol_cli
+
+      - name: Run Patrol Tests
+        run: patrol test --verbose
+```
+
+### 14.9 Patrol vs Integration Test 비교
+
+| 기능 | Integration Test | Patrol |
+|------|------------------|--------|
+| **기본 위젯 테스트** | ✅ | ✅ |
+| **네이티브 권한 처리** | ❌ | ✅ |
+| **네이티브 다이얼로그** | ❌ | ✅ |
+| **스크린샷 캡처** | 제한적 | ✅ |
+| **Selector API** | 기본 Finder | 강력한 $ API |
+| **설정 복잡도** | 낮음 | 중간 |
+| **학습 곡선** | 낮음 | 중간 |
+
+**언제 Patrol을 사용할까?**
+- 네이티브 권한 처리가 필요한 경우 (카메라, 위치, 알림 등)
+- 네이티브 다이얼로그와 상호작용해야 하는 경우
+- E2E 테스트에서 스크린샷이 필요한 경우
+- 더 강력한 선택자 API가 필요한 경우

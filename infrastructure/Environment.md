@@ -295,7 +295,9 @@ import 'src/config/app_config.dart';
 import 'src/config/country_config.dart';
 import 'src/app.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   final countryConfig = CountryConfig.kr(Environment.dev);
 
   final config = AppConfig(
@@ -319,7 +321,9 @@ import 'src/config/app_config.dart';
 import 'src/config/country_config.dart';
 import 'src/app.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   final countryConfig = CountryConfig.jp(Environment.prod);
 
   final config = AppConfig(
@@ -387,9 +391,11 @@ void main() {
 // app/lib/src/injection/injection.dart
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
+import 'injection.config.dart';
 
 final getIt = GetIt.instance;
 
+@InjectableInit()
 Future<void> configureDependencies(
   AppConfig config,
   CountryConfig countryConfig,
@@ -519,7 +525,10 @@ class App extends StatelessWidget {
           .toList(),
 
       // 기본 Locale
-      locale: Locale(config.defaultLanguage),
+      locale: Locale(
+        config.defaultLanguage.split('-').first,
+        config.defaultLanguage.contains('-') ? config.defaultLanguage.split('-').last : null,
+      ),
 
       // Localization Delegates
       localizationsDelegates: const [
@@ -717,13 +726,53 @@ scripts:
 
 ## 9. 환경 변수 (.env)
 
-### 9.1 flutter_dotenv 사용
+> **🔒 보안 경고**: .env 파일은 민감한 정보를 포함할 수 있습니다.
+> - ✅ `.gitignore`에 `.env*` 추가 필수
+> - ✅ API 키, 토큰 등 민감 정보는 .env에 저장 금지
+> - ✅ 프로덕션 환경에서는 **envied** 패키지 사용 권장 (컴파일 타임 난독화)
+> - ❌ .env 파일을 Git에 커밋하지 마세요
+
+### 9.1 flutter_dotenv 사용 (개발 환경)
 
 ```yaml
 # pubspec.yaml
 dependencies:
-  flutter_dotenv: ^5.1.0
+  flutter_dotenv: ^5.2.0  # 런타임 로드 (보안 취약)
+
+  # 권장 대안 (프로덕션):
+  # envied: ^0.5.4+1  # 컴파일 타임 난독화, 타입 안전
+
+# dev_dependencies:
+#   envied_generator: ^0.5.4+1
+#   build_runner: ^2.10.5
 ```
+
+**envied 패키지 (프로덕션 권장)**
+
+```dart
+// lib/env/env.dart
+import 'package:envied/envied.dart';
+
+part 'env.g.dart';
+
+@Envied(path: '.env.prod.kr')
+abstract class Env {
+  @EnviedField(varName: 'API_BASE_URL')
+  static const String apiBaseUrl = _Env.apiBaseUrl;
+
+  @EnviedField(varName: 'API_KEY', obfuscate: true)  // 난독화
+  static final String apiKey = _Env.apiKey;
+}
+
+// 사용: Env.apiBaseUrl, Env.apiKey
+// 장점: 컴파일 타임에 .env 검증, 난독화로 보안 강화
+```
+
+**보안 체크리스트:**
+- [ ] `.gitignore`에 `.env*` 추가됨
+- [ ] 민감 정보는 환경변수 또는 비밀 관리 시스템 사용
+- [ ] 프로덕션 빌드는 envied로 난독화
+- [ ] .env.example 파일만 Git에 커밋 (실제 값 제외)
 
 ```dart
 // .env.prod.kr
@@ -861,25 +910,41 @@ class FeatureFlagService {
 
 ```dart
 // test/mocks/mock_config.dart
-class MockAppConfig extends AppConfig {
+class MockAppConfig {
+  final AppConfig _config;
+
   MockAppConfig({
-    super.environment = Environment.dev,
-    super.country = Country.kr,
-    super.apiBaseUrl = 'https://api-test.example.com',
-    super.appName = 'Test App',
-    super.enableLogging = false,
-    super.enableCrashlytics = false,
-    super.featureFlags = const FeatureFlags(),
-  });
+    Environment environment = Environment.dev,
+    Country country = Country.kr,
+    String apiBaseUrl = 'https://api-test.example.com',
+    String appName = 'Test App',
+    bool enableLogging = false,
+    bool enableCrashlytics = false,
+    FeatureFlags featureFlags = const FeatureFlags(),
+  }) : _config = AppConfig(
+    environment: environment,
+    country: country,
+    apiBaseUrl: apiBaseUrl,
+    appName: appName,
+    enableLogging: enableLogging,
+    enableCrashlytics: enableCrashlytics,
+    featureFlags: featureFlags,
+  );
+
+  AppConfig get config => _config;
 }
 
 // 테스트에서 사용
 void main() {
   setUp(() {
-    GetIt.I.registerSingleton<AppConfig>(MockAppConfig());
+    GetIt.I.registerSingleton<AppConfig>(MockAppConfig().config);
     GetIt.I.registerSingleton<CountryConfig>(
       CountryConfig.kr(Environment.dev),
     );
+  });
+
+  tearDown(() {
+    GetIt.I.reset();
   });
 }
 ```
@@ -894,6 +959,10 @@ void main() {
       GetIt.I.registerSingleton<CountryConfig>(
         CountryConfig.kr(Environment.dev),
       );
+    });
+
+    tearDown(() {
+      GetIt.I.reset();
     });
 
     test('한국 결제 수단 표시', () {
@@ -912,6 +981,10 @@ void main() {
       );
     });
 
+    tearDown(() {
+      GetIt.I.reset();
+    });
+
     test('일본 결제 수단 표시', () {
       final config = GetIt.I<CountryConfig>();
       expect(
@@ -923,9 +996,199 @@ void main() {
 }
 ```
 
-## 12. Best Practices
+## 12. CI/CD 환경 통합
 
-### 12.1 코드 패리티 체크리스트
+### 12.1 GitHub Actions 기본 설정
+
+```yaml
+# .github/workflows/flutter.yml
+name: Flutter CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  FLUTTER_VERSION: '3.27.0'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test --coverage
+
+      - name: Build APK (dev)
+        run: flutter build apk --flavor dev --dart-define=ENV=dev
+
+      - name: Build APK (prod)
+        run: flutter build apk --flavor prod --dart-define=ENV=prod
+```
+
+### 12.2 환경별 시크릿 관리
+
+```yaml
+# .github/workflows/flutter.yml (계속)
+jobs:
+  build-prod:
+    runs-on: ubuntu-latest
+    environment: production  # GitHub Environment 사용
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" >> .env
+          echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+
+      - name: Build release APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: flutter build apk --release --flavor prod
+```
+
+### 12.3 Codemagic 설정
+
+```yaml
+# codemagic.yaml
+workflows:
+  android-workflow:
+    name: Android Build
+    environment:
+      flutter: stable
+      vars:
+        ENV: dev
+      groups:
+        - android_credentials
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: develop
+          include: true
+
+    scripts:
+      - name: Get dependencies
+        script: flutter pub get
+
+      - name: Build APK
+        script: |
+          flutter build apk --flavor $ENV --dart-define=ENV=$ENV
+
+    artifacts:
+      - build/**/outputs/apk/**/*.apk
+
+  ios-workflow:
+    name: iOS Build
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      vars:
+        ENV: dev
+
+    scripts:
+      - name: Install pods
+        script: |
+          cd ios && pod install
+
+      - name: Build IPA
+        script: |
+          flutter build ipa --flavor $ENV --dart-define=ENV=$ENV
+```
+
+### 12.4 환경 변수 주입 패턴
+
+```dart
+// lib/core/config/ci_config.dart
+class CIConfig {
+  // CI 환경에서 주입되는 빌드 정보
+  static const String buildNumber = String.fromEnvironment(
+    'BUILD_NUMBER',
+    defaultValue: 'local',
+  );
+
+  static const String commitSha = String.fromEnvironment(
+    'COMMIT_SHA',
+    defaultValue: 'unknown',
+  );
+
+  static const String branch = String.fromEnvironment(
+    'BRANCH',
+    defaultValue: 'local',
+  );
+
+  static Map<String, String> get buildInfo => {
+    'buildNumber': buildNumber,
+    'commitSha': commitSha,
+    'branch': branch,
+    'buildTime': DateTime.now().toIso8601String(),
+  };
+}
+
+// 빌드 명령어
+// flutter build apk \
+//   --dart-define=BUILD_NUMBER=$GITHUB_RUN_NUMBER \
+//   --dart-define=COMMIT_SHA=$GITHUB_SHA \
+//   --dart-define=BRANCH=$GITHUB_REF_NAME
+```
+
+### 12.5 환경별 Firebase 설정
+
+```yaml
+# .github/workflows/flutter.yml
+- name: Setup Firebase (dev)
+  if: github.ref == 'refs/heads/develop'
+  run: |
+    cp firebase/dev/google-services.json android/app/src/dev/google-services.json
+    cp firebase/dev/GoogleService-Info.plist ios/Runner/GoogleService-Info.plist
+
+- name: Setup Firebase (prod)
+  if: github.ref == 'refs/heads/main'
+  run: |
+    cp firebase/prod/google-services.json android/app/src/prod/google-services.json
+    cp firebase/prod/GoogleService-Info.plist ios/Runner/GoogleService-Info.plist
+```
+
+### 12.6 CI/CD 체크리스트
+
+| 항목 | Dev | Staging | Prod |
+|-----|-----|---------|------|
+| 자동 빌드 | ✓ | ✓ | ✓ |
+| 자동 테스트 | ✓ | ✓ | ✓ |
+| 코드 분석 | ✓ | ✓ | ✓ |
+| 환경별 시크릿 | ✓ | ✓ | ✓ |
+| Firebase 프로젝트 | dev | staging | prod |
+| 스토어 배포 | ✗ | Internal | Production |
+
+## 13. Best Practices
+
+### 13.1 코드 패리티 체크리스트
 
 | 항목 | 확인 |
 |------|------|
@@ -935,7 +1198,7 @@ void main() {
 | Feature Flag로 기능 제어 | ☐ |
 | 하드코딩된 국가 로직 없음 | ☐ |
 
-### 12.2 DO (이렇게 하세요)
+### 13.2 DO (이렇게 하세요)
 
 ```dart
 // ✅ Config로 분기
@@ -953,7 +1216,7 @@ if (remoteConfig.getBool('enable_promotion')) {
 }
 ```
 
-### 12.3 DON'T (하지 마세요)
+### 13.3 DON'T (하지 마세요)
 
 ```dart
 // ❌ 하드코딩된 국가 분기
@@ -974,7 +1237,7 @@ class JpPaymentService { }
 class TwPaymentService { }
 ```
 
-## 13. 참고
+## 14. 참고
 
 - [Flutter Flavors](https://docs.flutter.dev/deployment/flavors)
 - [flutter_dotenv](https://pub.dev/packages/flutter_dotenv)

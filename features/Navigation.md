@@ -18,7 +18,16 @@ dependencies:
 
 **Breaking Changes:**
 - ShellRoute의 네비게이션 변경이 기본적으로 GoRouter의 observers에 알림을 보냅니다.
-- 최소 지원 버전: Flutter 3.32, Dart 3.8
+- 최소 지원 버전: Flutter 3.32, Dart 3.8 (go_router v17)
+
+> **버전 호환성 참고:**
+> | go_router 버전 | Flutter 최소 버전 | Dart 최소 버전 |
+> |---------------|------------------|---------------|
+> | v17.x | Flutter 3.32+ | Dart 3.8+ |
+> | v14.x - v16.x | Flutter 3.19+ | Dart 3.3+ |
+> | v13.x | Flutter 3.16+ | Dart 3.2+ |
+>
+> Flutter 3.27 사용 시 `go_router: ^14.0.0` ~ `^16.x.x`를 사용하세요.
 
 **New Features:**
 - `notifyRootObserver` 파라미터 추가 (ShellRouteBase, ShellRoute, StatefulShellRoute)
@@ -551,6 +560,7 @@ GoRouter createRouter(AuthBloc authBloc) {
 /// - GoRouter가 dispose될 때 refreshListenable의 dispose가 자동 호출됨
 /// - 앱 전체 생명주기 동안 유지되므로 일반적으로 문제없음
 /// - 만약 GoRouter를 동적으로 생성/삭제한다면 수동 dispose 필요
+// import 'dart:async';
 class GoRouterRefreshStream extends ChangeNotifier {
   late final StreamSubscription<dynamic> _subscription;
 
@@ -764,9 +774,11 @@ errorPageBuilder: (context, state) {
 
 ### Navigation Effect 처리
 
+> **Note**: `sealed class`는 Dart 3.0+ 이상에서 사용 가능합니다. Dart 2.x를 사용하는 경우 `abstract class`를 사용하세요.
+
 ```dart
 // lib/features/auth/presentation/bloc/auth_bloc.dart
-sealed class AuthEffect {
+sealed class AuthEffect {  // Dart 3.0+ required
   const AuthEffect();
 }
 
@@ -830,6 +842,171 @@ BlocListener<AuthBloc, AuthState>(
 // 대안 2-2: BaseBloc의 effectStream 사용
 // BlocUiEffect.md의 BaseBloc 패턴 참조
 // effectStream을 직접 구독하여 일회성 이벤트 처리
+```
+
+## 12. 화면 분석 (Screen Analytics) 통합
+
+### 12.1 NavigatorObserver 활용
+
+```dart
+// lib/core/analytics/screen_analytics_observer.dart
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:flutter/material.dart';
+
+class ScreenAnalyticsObserver extends NavigatorObserver {
+  final FirebaseAnalytics _analytics;
+
+  ScreenAnalyticsObserver(this._analytics);
+
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    super.didPush(route, previousRoute);
+    _logScreenView(route);
+  }
+
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    super.didPop(route, previousRoute);
+    if (previousRoute != null) {
+      _logScreenView(previousRoute);
+    }
+  }
+
+  @override
+  void didReplace({Route? newRoute, Route? oldRoute}) {
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+    if (newRoute != null) {
+      _logScreenView(newRoute);
+    }
+  }
+
+  void _logScreenView(Route route) {
+    final screenName = _extractScreenName(route);
+    if (screenName != null) {
+      _analytics.logScreenView(
+        screenName: screenName,
+        screenClass: route.settings.name,
+      );
+    }
+  }
+
+  String? _extractScreenName(Route route) {
+    // GoRouter의 경우 route.settings.name이 경로를 포함
+    final name = route.settings.name;
+    if (name == null || name.isEmpty) return null;
+
+    // 경로에서 화면 이름 추출 (예: /home -> Home, /diary/123 -> DiaryDetail)
+    final segments = name.split('/').where((s) => s.isNotEmpty).toList();
+    if (segments.isEmpty) return 'Home';
+
+    // 숫자 ID 제거 (예: /diary/123 -> diary)
+    final screenPart = segments.firstWhere(
+      (s) => !RegExp(r'^\d+$').hasMatch(s),
+      orElse: () => segments.first,
+    );
+
+    return _formatScreenName(screenPart);
+  }
+
+  String _formatScreenName(String path) {
+    // snake_case나 kebab-case를 PascalCase로 변환
+    return path
+        .split(RegExp(r'[-_]'))
+        .map((word) => word[0].toUpperCase() + word.substring(1))
+        .join('');
+  }
+}
+```
+
+### 12.2 GoRouter에 적용
+
+```dart
+// lib/core/router/app_router.dart
+final appRouter = GoRouter(
+  observers: [
+    ScreenAnalyticsObserver(FirebaseAnalytics.instance),
+  ],
+  routes: [...],
+);
+```
+
+### 12.3 화면별 커스텀 이벤트
+
+```dart
+// 상세 페이지에서 아이템 조회 이벤트
+class DiaryDetailPage extends StatefulWidget {
+  final String diaryId;
+
+  @override
+  State<DiaryDetailPage> createState() => _DiaryDetailPageState();
+}
+
+class _DiaryDetailPageState extends State<DiaryDetailPage> with RouteAware {
+  late final RouteObserver<ModalRoute> _routeObserver;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _routeObserver = context.read<RouteObserver<ModalRoute>>();
+    _routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    _routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPush() {
+    // 화면 진입 시 이벤트
+    AnalyticsService.logEvent('view_diary', {
+      'diary_id': widget.diaryId,
+      'source': 'push',
+    });
+  }
+
+  @override
+  void didPopNext() {
+    // 다른 화면에서 돌아왔을 때
+    AnalyticsService.logEvent('view_diary', {
+      'diary_id': widget.diaryId,
+      'source': 'pop_back',
+    });
+  }
+}
+```
+
+### 12.4 스크롤 깊이 추적
+
+```dart
+class AnalyticsScrollListener extends StatelessWidget {
+  final Widget child;
+  final String screenName;
+
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollEndNotification) {
+          final progress = notification.metrics.pixels /
+              notification.metrics.maxScrollExtent;
+
+          // 25%, 50%, 75%, 100% 지점 추적
+          final milestone = (progress * 4).floor() * 25;
+          if (milestone > 0) {
+            AnalyticsService.logEvent('scroll_depth', {
+              'screen': screenName,
+              'depth': milestone,
+            });
+          }
+        }
+        return false;
+      },
+      child: child,
+    );
+  }
+}
 ```
 
 ## 전체 Router 예시
@@ -1122,10 +1299,10 @@ class UserPostsRoute extends GoRouteData {
 
 ```bash
 # 라우트 코드 생성
-flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner build --delete-conflicting-outputs
 
 # Watch 모드 (자동 재생성)
-flutter pub run build_runner watch --delete-conflicting-outputs
+dart run build_runner watch --delete-conflicting-outputs
 ```
 
 ### 사용 예시

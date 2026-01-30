@@ -212,6 +212,8 @@ class ImageWithCaption extends StatelessWidget {
 사용자 정의 작업을 시맨틱으로 표현할 수 있습니다.
 
 ```dart
+import 'package:flutter/services.dart';
+
 /// 커스텀 액션이 있는 슬라이더
 class AccessibleSlider extends StatefulWidget {
   final double value;
@@ -268,14 +270,17 @@ class _AccessibleSliderState extends State<AccessibleSlider> {
       child: Focus(
         focusNode: _focusNode,
         onKeyEvent: (node, event) {
-          if (event.isKeyPressed(LogicalKeyboardKey.arrowRight) ||
-              event.isKeyPressed(LogicalKeyboardKey.arrowUp)) {
-            _increase();
-            return KeyEventResult.handled;
-          } else if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft) ||
-              event.isKeyPressed(LogicalKeyboardKey.arrowDown)) {
-            _decrease();
-            return KeyEventResult.handled;
+          if (event is KeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.arrowRight ||
+                event.logicalKey == LogicalKeyboardKey.arrowUp) {
+              _increase();
+              return KeyEventResult.handled;
+            }
+            if (event.logicalKey == LogicalKeyboardKey.arrowLeft ||
+                event.logicalKey == LogicalKeyboardKey.arrowDown) {
+              _decrease();
+              return KeyEventResult.handled;
+            }
           }
           return KeyEventResult.ignored;
         },
@@ -382,6 +387,8 @@ Semantics.sortKey를 사용하여 스크린 리더가 읽는 순서를 제어합
 ```dart
 /// 읽기 순서가 정의된 폼
 class AccessibleForm extends StatelessWidget {
+  const AccessibleForm({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -575,12 +582,12 @@ class AccessibleText extends StatelessWidget {
 }
 ```
 
-### 폰트 크기 조절 (MediaQuery.textScaleFactor)
+### 폰트 크기 조절 (TextScaler API)
 
-사용자가 기기에서 설정한 텍스트 크기를 존중해야 합니다.
+사용자가 기기에서 설정한 텍스트 크기를 존중해야 합니다. Flutter 3.16부터 `textScaleFactor`가 deprecated되고 `TextScaler` API를 사용합니다.
 
 ```dart
-/// 사용자의 텍스트 크기 설정을 존중하는 텍스트
+/// 사용자의 텍스트 크기 설정을 존중하는 텍스트 (Flutter 3.16+)
 class ResponsiveText extends StatelessWidget {
   final String text;
   final TextStyle? baseStyle;
@@ -595,30 +602,40 @@ class ResponsiveText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Flutter 3.16+: textScaleFactor deprecated → textScalerOf 사용
+    // Flutter 3.16+: MediaQuery.textScalerOf() 사용
     final textScaler = MediaQuery.textScalerOf(context);
-    final textScaleFactor = textScaler.textScaleFactor;
-    final scale = maxScale != null ? min(textScaleFactor, maxScale!) : textScaleFactor;
+
+    // TextScaler를 직접 사용하여 폰트 크기 조정
+    final baseFontSize = baseStyle?.fontSize ?? 14.0;
+
+    // maxScale 제한이 있으면 clamp된 TextScaler 생성
+    final effectiveScaler = maxScale != null
+        ? textScaler.clamp(maxScaleFactor: maxScale!)
+        : textScaler;
 
     return Text(
       text,
       style: (baseStyle ?? const TextStyle()).copyWith(
-        fontSize: (baseStyle?.fontSize ?? 14) * scale,
+        fontSize: baseFontSize,
       ),
+      // Text 위젯이 자동으로 textScaler를 적용
+      textScaler: effectiveScaler,
     );
   }
 }
 
 /// 텍스트 크기 조절을 고려한 레이아웃
 class ResponsiveLayout extends StatelessWidget {
+  const ResponsiveLayout({super.key});
+
   @override
   Widget build(BuildContext context) {
-    // Flutter 3.16+: textScaleFactor deprecated → textScalerOf 사용
+    // Flutter 3.16+: MediaQuery.textScalerOf() 사용
     final textScaler = MediaQuery.textScalerOf(context);
-    final textScaleFactor = textScaler.textScaleFactor;
 
-    // 텍스트 크기가 크면 vertical 레이아웃으로 변경
-    final isLargeText = textScaleFactor > 1.3;
+    // scale 함수로 배율 확인 (14pt 기준)
+    final scaledSize = textScaler.scale(14.0);
+    final isLargeText = scaledSize > 18.0;  // 1.3배 이상
 
     return isLargeText
         ? Column(
@@ -653,6 +670,34 @@ class ResponsiveLayout extends StatelessWidget {
               ),
             ],
           );
+  }
+}
+
+/// MediaQueryData를 사용하여 텍스트 크기 제한하기
+class ClampedTextScaleExample extends StatelessWidget {
+  const ClampedTextScaleExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MediaQuery(
+      // 텍스트 크기를 최대 1.5배로 제한
+      data: MediaQuery.of(context).copyWith(
+        textScaler: MediaQuery.textScalerOf(context).clamp(
+          maxScaleFactor: 1.5,
+        ),
+      ),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('텍스트 크기 제한'),
+        ),
+        body: const Center(
+          child: Text(
+            '이 텍스트는 최대 1.5배까지만 커집니다',
+            style: TextStyle(fontSize: 16),
+          ),
+        ),
+      ),
+    );
   }
 }
 ```
@@ -711,6 +756,172 @@ class AccessibleIcon extends StatelessWidget {
         size: size,
         color: highContrast ? Colors.black : null,
       ),
+    );
+  }
+}
+```
+
+### Flutter 3.16+ TextScaler 마이그레이션 가이드
+
+Flutter 3.16부터 `textScaleFactor`가 deprecated되었습니다. 다음과 같이 마이그레이션하세요.
+
+#### 변경 전 (Deprecated)
+
+```dart
+// ❌ Deprecated: textScaleFactorOf
+final textScaleFactor = MediaQuery.textScaleFactorOf(context);
+final fontSize = 14.0 * textScaleFactor;
+
+// ❌ Deprecated: MediaQueryData.textScaleFactor
+final data = MediaQuery.of(context);
+final scaleFactor = data.textScaleFactor;
+
+// ❌ Deprecated: copyWith에서 textScaleFactor 사용
+MediaQuery(
+  data: MediaQuery.of(context).copyWith(
+    textScaleFactor: 1.5,  // deprecated
+  ),
+  child: child,
+);
+```
+
+#### 변경 후 (Flutter 3.16+)
+
+```dart
+// ✅ 권장: textScalerOf 사용
+final textScaler = MediaQuery.textScalerOf(context);
+final fontSize = textScaler.scale(14.0);
+
+// ✅ 권장: MediaQueryData.textScaler
+final data = MediaQuery.of(context);
+final textScaler = data.textScaler;
+
+// ✅ 권장: copyWith에서 textScaler 사용
+MediaQuery(
+  data: MediaQuery.of(context).copyWith(
+    textScaler: TextScaler.linear(1.5),
+  ),
+  child: child,
+);
+
+// ✅ 권장: Text 위젯에 직접 textScaler 전달
+Text(
+  'Hello',
+  style: TextStyle(fontSize: 14),
+  textScaler: TextScaler.linear(1.5),
+);
+
+// ✅ 권장: 최대/최소 크기 제한
+final clampedScaler = textScaler.clamp(
+  minScaleFactor: 0.8,
+  maxScaleFactor: 2.0,
+);
+```
+
+#### TextScaler API 주요 메서드
+
+```dart
+/// TextScaler 인터페이스
+abstract class TextScaler {
+  // 선형 배율 생성
+  factory TextScaler.linear(double scaleFactor);
+
+  // 배율 없음 (1.0)
+  static const TextScaler noScaling = _LinearTextScaler(1.0);
+
+  // 폰트 크기 조정
+  double scale(double fontSize);
+
+  // 최대/최소 제한
+  TextScaler clamp({
+    double minScaleFactor = 0.0,
+    double maxScaleFactor = double.infinity,
+  });
+}
+
+/// 사용 예시
+void textScalerExamples(BuildContext context) {
+  final scaler = MediaQuery.textScalerOf(context);
+
+  // 1. 배율 적용
+  final scaled14 = scaler.scale(14.0);  // 14 * 사용자 설정 배율
+
+  // 2. 제한된 배율
+  final clamped = scaler.clamp(maxScaleFactor: 1.5);
+  final limited = clamped.scale(20.0);  // 최대 30.0 (20 * 1.5)
+
+  // 3. 고정 배율
+  final fixed = TextScaler.linear(2.0);
+  final doubled = fixed.scale(16.0);  // 항상 32.0
+
+  // 4. 배율 비활성화
+  final noScale = TextScaler.noScaling;
+  final unchanged = noScale.scale(18.0);  // 항상 18.0
+}
+```
+
+#### 실전 마이그레이션 패턴
+
+```dart
+// 패턴 1: 조건부 레이아웃 변경
+class AdaptiveLayout extends StatelessWidget {
+  const AdaptiveLayout({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textScaler = MediaQuery.textScalerOf(context);
+
+    // ❌ 이전 방식
+    // final isLarge = textScaler.textScaleFactor > 1.5;
+
+    // ✅ 새 방식: 기준 크기로 판단
+    final baseSize = 16.0;
+    final scaledSize = textScaler.scale(baseSize);
+    final isLarge = scaledSize > baseSize * 1.5;
+
+    return isLarge ? _buildVertical() : _buildHorizontal();
+  }
+
+  Widget _buildVertical() => Column(children: []);
+  Widget _buildHorizontal() => Row(children: []);
+}
+
+// 패턴 2: 커스텀 위젯에서 텍스트 크기 제한
+class LimitedTextScale extends StatelessWidget {
+  final Widget child;
+
+  const LimitedTextScale({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        // ✅ 텍스트 크기를 0.8~2.0 범위로 제한
+        textScaler: MediaQuery.textScalerOf(context).clamp(
+          minScaleFactor: 0.8,
+          maxScaleFactor: 2.0,
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
+// 패턴 3: 동적 간격 조정
+class ScaledSpacing extends StatelessWidget {
+  const ScaledSpacing({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textScaler = MediaQuery.textScalerOf(context);
+
+    // 텍스트 크기에 비례하여 간격 조정
+    final baseSpacing = 8.0;
+    final spacing = textScaler.scale(baseSpacing);
+
+    return Padding(
+      padding: EdgeInsets.all(spacing),
+      child: const Text('확장 가능한 콘텐츠'),
     );
   }
 }
@@ -945,15 +1156,17 @@ class _KeyboardNavigableMenuState extends State<KeyboardNavigableMenu> {
   }
 
   void _handleKeyEvent(KeyEvent event) {
-    if (event.isKeyPressed(LogicalKeyboardKey.arrowRight)) {
-      final nextIndex = (_selectedIndex + 1) % widget.items.length;
-      _selectItem(nextIndex);
-    } else if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft)) {
-      final prevIndex =
-          (_selectedIndex - 1 + widget.items.length) % widget.items.length;
-      _selectItem(prevIndex);
-    } else if (event.isKeyPressed(LogicalKeyboardKey.enter)) {
-      widget.onSelected(_selectedIndex);
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+        final nextIndex = (_selectedIndex + 1) % widget.items.length;
+        _selectItem(nextIndex);
+      } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+        final prevIndex =
+            (_selectedIndex - 1 + widget.items.length) % widget.items.length;
+        _selectItem(prevIndex);
+      } else if (event.logicalKey == LogicalKeyboardKey.enter) {
+        widget.onSelected(_selectedIndex);
+      }
     }
   }
 
@@ -1314,7 +1527,7 @@ class AccessibleListView extends StatelessWidget {
             onTap: () => onItemTap(index),
             label: items[index],
             customSemanticsActions: {
-              CustomSemanticsAction.of('활성화'): () {
+              CustomSemanticsAction(label: '활성화'): () {
                 onItemTap(index);
               },
             },
@@ -1414,7 +1627,7 @@ class AccessibleDialog extends StatelessWidget {
     return AlertDialog(
       title: Semantics(
         customSemanticsActions: {
-          CustomSemanticsAction.of('닫기'): () {
+          CustomSemanticsAction(label: '닫기'): () {
             Navigator.pop(context);
           },
         },
@@ -1535,8 +1748,9 @@ Future<void> showAccessibleBottomSheet(
 ### 시각적 접근성
 - [ ] 색상 대비 4.5:1 이상 (WCAG AA)
 - [ ] 색상만으로 정보 전달하지 않음
-- [ ] 폰트 크기 조절 (MediaQuery.textScaleFactor)
+- [ ] 폰트 크기 조절 (MediaQuery.textScalerOf + TextScaler API)
 - [ ] 고대비 모드 지원
+- [ ] Flutter 3.16+ TextScaler API로 마이그레이션 완료
 
 ### 모터 접근성
 - [ ] 터치 영역 최소 48x48 dp

@@ -218,7 +218,6 @@ class HomeMapper {
   }
 }
 
-@lazySingleton
 class HomeFailureMapper {
   static HomeFailure fromDioException(DioException e) {
     switch (e.type) {
@@ -260,9 +259,17 @@ class HomeScreen extends StatelessWidget {
       create: (_) => HomeBloc(
         GetIt.I<GetHomeDataUseCase>(),      // UseCase는 GetIt에서
         GetIt.I<UpdateHomeDataUseCase>(),   // 주입받음
-      )..add(const HomeEvent.started()),
+      )..add(const HomeEvent.started()),  // ⚠️ 주의: 생성자에서 이벤트 발행 권장
       child: const _HomeView(),
     );
+  }
+}
+
+// ✅ 더 나은 방법: Bloc 생성자 내부에서 이벤트 발행
+class HomeBloc extends Bloc<HomeEvent, HomeState> {
+  HomeBloc(this._getHomeDataUseCase) : super(const HomeState.initial()) {
+    on<HomeStarted>(_onStarted);
+    add(const HomeEvent.started());  // 생성자에서 발행
   }
 }
 ```
@@ -314,30 +321,49 @@ abstract class DioClient {
 @LazySingleton(as: DioClient)
 @Environment(Env.prod)
 class ProdDioClient implements DioClient {
+  late final Dio _dio;
+
+  ProdDioClient() {
+    _dio = Dio(BaseOptions(
+      baseUrl: 'https://api.production.com',
+      connectTimeout: const Duration(seconds: 10),
+    ));
+  }
+
   @override
-  Dio get dio => Dio(BaseOptions(
-    baseUrl: 'https://api.production.com',
-    connectTimeout: const Duration(seconds: 10),
-  ));
+  Dio get dio => _dio;
 }
 
 @LazySingleton(as: DioClient)
 @Environment(Env.dev)
 class DevDioClient implements DioClient {
+  late final Dio _dio;
+
+  DevDioClient() {
+    _dio = Dio(BaseOptions(
+      baseUrl: 'https://api.dev.com',
+      connectTimeout: const Duration(seconds: 30),
+    ));
+    _dio.interceptors.add(LogInterceptor());
+  }
+
   @override
-  Dio get dio => Dio(BaseOptions(
-    baseUrl: 'https://api.dev.com',
-    connectTimeout: const Duration(seconds: 30),
-  ))..interceptors.add(LogInterceptor());
+  Dio get dio => _dio;
 }
 
 @LazySingleton(as: DioClient)
 @Environment(Env.staging)
 class StagingDioClient implements DioClient {
+  late final Dio _dio;
+
+  StagingDioClient() {
+    _dio = Dio(BaseOptions(
+      baseUrl: 'https://api.staging.com',
+    ));
+  }
+
   @override
-  Dio get dio => Dio(BaseOptions(
-    baseUrl: 'https://api.staging.com',
-  ));
+  Dio get dio => _dio;
 }
 ```
 
@@ -530,7 +556,7 @@ void main() {
 ```bash
 # 특정 Feature 모듈에서
 cd features/home
-fvm flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner build --delete-conflicting-outputs
 
 # 전체 프로젝트 (melos 사용)
 melos run build_runner
@@ -542,11 +568,11 @@ melos run build_runner
 # melos.yaml
 scripts:
   build_runner:
-    run: melos exec -- fvm flutter pub run build_runner build --delete-conflicting-outputs
+    run: melos exec -- dart run build_runner build --delete-conflicting-outputs
     description: Run build_runner in all packages
 
   build_runner:watch:
-    run: melos exec -- fvm flutter pub run build_runner watch
+    run: melos exec -- dart run build_runner watch
     description: Watch mode for build_runner
 ```
 
