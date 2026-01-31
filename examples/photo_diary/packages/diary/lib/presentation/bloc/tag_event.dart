@@ -7,7 +7,7 @@ part 'tag_event.freezed.dart';
 ///
 /// Freezed를 사용하여 sealed class로 정의된 이벤트들입니다.
 @freezed
-sealed class TagEvent with _$TagEvent {
+abstract class TagEvent with _$TagEvent {
   /// 태그 목록 로드 이벤트
   const factory TagEvent.loadTags() = LoadTags;
 

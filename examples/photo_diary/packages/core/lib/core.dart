@@ -17,6 +17,7 @@ export 'extensions/extensions.dart'; // 배럴 파일
 export 'utils/app_logger.dart';
 export 'utils/validators.dart';
 export 'utils/accessibility_utils.dart';
+export 'utils/color_utils.dart';
 
 // 위젯
 export 'widgets/widgets.dart';

@@ -7,7 +7,7 @@ part 'weather_state.freezed.dart';
 
 /// Weather 상태
 @freezed
-class WeatherState with _$WeatherState {
+abstract class WeatherState with _$WeatherState {
   const factory WeatherState({
     /// 현재 날씨 정보
     Weather? weather,

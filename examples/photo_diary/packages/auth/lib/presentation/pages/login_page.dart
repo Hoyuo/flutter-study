@@ -50,34 +50,32 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return BlocUiEffectListener<AuthBloc, AuthState, AuthUiEffect>(
       listener: (context, effect) {
-        effect.when(
+        switch (effect) {
           // 에러 메시지 스낵바로 표시
-          showError: (message) {
+          case AuthShowError(:final message):
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(message)),
             );
-          },
           // 로그인 성공 시 홈으로 이동
-          navigateToHome: () {
+          case AuthNavigateToHome():
             context.go('/');
-          },
           // 로그인 화면으로 이동
-          navigateToLogin: () {
+          case AuthNavigateToLogin():
             // 이미 로그인 화면이므로 무시
-          },
+            break;
           // 성공 스낵바 표시
-          showSuccessSnackBar: (message) {
+          case AuthShowSuccessSnackBar(:final message):
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(message)),
             );
-          },
-        );
+        }
       },
       child: Scaffold(
         appBar: AppBar(
           title: Text('auth.login'.tr()),
         ),
         body: BlocBuilder<AuthBloc, AuthState>(
+          buildWhen: (prev, curr) => prev.isSubmitting != curr.isSubmitting,
           builder: (context, state) {
             final isSubmitting = state.isSubmitting;
 

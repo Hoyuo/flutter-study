@@ -9,7 +9,7 @@ part 'auth_ui_effect.freezed.dart';
 ///
 /// 이러한 효과들은 상태에 저장되지 않고 한 번만 발생해야 합니다.
 @freezed
-sealed class AuthUiEffect with _$AuthUiEffect {
+abstract class AuthUiEffect with _$AuthUiEffect {
   /// 에러 메시지 표시 효과
   ///
   /// [message]: 사용자에게 표시할 에러 메시지

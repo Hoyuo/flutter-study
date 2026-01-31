@@ -56,34 +56,31 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return BlocUiEffectListener<AuthBloc, AuthState, AuthUiEffect>(
       listener: (context, effect) {
-        effect.when(
+        switch (effect) {
           // 에러 메시지 스낵바로 표시
-          showError: (message) {
+          case AuthShowError(:final message):
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(message)),
             );
-          },
           // 회원가입 성공 시 홈으로 이동
-          navigateToHome: () {
+          case AuthNavigateToHome():
             context.go('/');
-          },
           // 로그인 화면으로 이동
-          navigateToLogin: () {
+          case AuthNavigateToLogin():
             context.pop();
-          },
           // 성공 스낵바 표시
-          showSuccessSnackBar: (message) {
+          case AuthShowSuccessSnackBar(:final message):
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(message)),
             );
-          },
-        );
+        }
       },
       child: Scaffold(
         appBar: AppBar(
           title: Text('auth.register'.tr()),
         ),
         body: BlocBuilder<AuthBloc, AuthState>(
+          buildWhen: (prev, curr) => prev.isSubmitting != curr.isSubmitting,
           builder: (context, state) {
             final isSubmitting = state.isSubmitting;
 
@@ -217,7 +214,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             textInputAction: TextInputAction.done,
                             enabled: !isSubmitting,
                             validator: Validators.confirmPassword(
-                              _passwordController.text,
+                              () => _passwordController.text,
                             ),
                             onFieldSubmitted: (_) => _handleRegister(),
                           ),

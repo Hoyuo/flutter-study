@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:core/core.dart';
 import '../../domain/entities/diary_entry.dart';
 import 'weather_info_card.dart';
 
@@ -146,7 +147,7 @@ class DiaryCard extends StatelessWidget {
                                   tag.name,
                                   style: theme.textTheme.bodySmall,
                                 ),
-                                backgroundColor: _parseColor(tag.colorHex),
+                                backgroundColor: ColorUtils.parseHex(tag.colorHex),
                                 visualDensity: VisualDensity.compact,
                               ),
                             )
@@ -177,12 +178,6 @@ class DiaryCard extends StatelessWidget {
     } else {
       return '${date.year}년 ${date.month}월 ${date.day}일';
     }
-  }
-
-  /// Hex 컬러 문자열을 Color로 파싱
-  Color _parseColor(String hexColor) {
-    final hexCode = hexColor.replaceAll('#', '');
-    return Color(int.parse('FF$hexCode', radix: 16));
   }
 
   /// 날씨 정보를 접근성용 텍스트로 변환

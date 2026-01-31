@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 /// WCAG(Web Content Accessibility Guidelines) 기준에 따라
 /// 색상 대비, 터치 타겟 크기 등을 검증하는 유틸리티를 제공합니다.
 class AccessibilityUtils {
+  // coverage:ignore-start
   AccessibilityUtils._();
+  // coverage:ignore-end
 
   /// WCAG AA 기준 색상 대비 확인 (최소 4.5:1)
   ///

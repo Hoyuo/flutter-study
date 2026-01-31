@@ -5,7 +5,7 @@ part 'settings_event.freezed.dart';
 
 /// 설정 이벤트
 @freezed
-sealed class SettingsEvent with _$SettingsEvent {
+abstract class SettingsEvent with _$SettingsEvent {
   /// 설정 로드
   const factory SettingsEvent.loadSettings() = LoadSettings;
 

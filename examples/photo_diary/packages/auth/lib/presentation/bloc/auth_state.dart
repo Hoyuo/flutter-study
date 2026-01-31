@@ -25,7 +25,7 @@ enum AuthStatus {
 /// Freezed를 사용하여 불변 상태 클래스를 생성합니다.
 /// UI는 이 상태를 구독하여 화면을 업데이트합니다.
 @freezed
-class AuthState with _$AuthState {
+abstract class AuthState with _$AuthState {
   /// 기본 생성자
   ///
   /// [status]: 현재 인증 상태 (기본값: unknown)

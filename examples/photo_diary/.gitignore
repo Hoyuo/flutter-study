@@ -43,11 +43,12 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Environment files (keep .example)
+# Environment files (keep .example and .emulator)
 .env
 .env.dev
 .env.prod
 !.env.example
+!.env.emulator
 
 # Firebase
 firebase_options.dart
@@ -62,3 +63,7 @@ GoogleService-Info.plist
 *.gr.dart
 *.config.dart
 **/generated/
+
+# FVM Version Cache
+.fvm/coverage/
+coverage/

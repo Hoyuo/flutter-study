@@ -132,6 +132,77 @@ void main() {
                   'API 키가 유효하지 않습니다'),
         ],
       );
+
+      blocTest<WeatherBloc, WeatherState>(
+        '날씨 조회 실패 - 인증 오류',
+        build: () {
+          when(() => mockGetCurrentWeather(any())).thenAnswer(
+            (_) async => const Left(Failure.auth(message: '인증이 필요합니다')),
+          );
+          return bloc;
+        },
+        act: (bloc) => bloc.add(const WeatherEvent.fetchCurrentWeather(
+          latitude: 37.5665,
+          longitude: 126.9780,
+        )),
+        expect: () => [
+          // 로딩 시작
+          isA<WeatherState>().having((s) => s.isLoading, 'isLoading', true),
+          // 조회 실패
+          isA<WeatherState>()
+              .having((s) => s.isLoading, 'isLoading', false)
+              .having((s) => s.failure, 'failure', isNotNull)
+              .having((s) => s.failure?.message, 'failure message', '인증이 필요합니다'),
+        ],
+      );
+
+      blocTest<WeatherBloc, WeatherState>(
+        '날씨 조회 실패 - 캐시 오류',
+        build: () {
+          when(() => mockGetCurrentWeather(any())).thenAnswer(
+            (_) async => const Left(Failure.cache(message: '캐시를 읽을 수 없습니다')),
+          );
+          return bloc;
+        },
+        act: (bloc) => bloc.add(const WeatherEvent.fetchCurrentWeather(
+          latitude: 37.5665,
+          longitude: 126.9780,
+        )),
+        expect: () => [
+          // 로딩 시작
+          isA<WeatherState>().having((s) => s.isLoading, 'isLoading', true),
+          // 조회 실패
+          isA<WeatherState>()
+              .having((s) => s.isLoading, 'isLoading', false)
+              .having((s) => s.failure, 'failure', isNotNull)
+              .having((s) => s.failure?.message, 'failure message',
+                  '캐시를 읽을 수 없습니다'),
+        ],
+      );
+
+      blocTest<WeatherBloc, WeatherState>(
+        '날씨 조회 실패 - 알 수 없는 오류',
+        build: () {
+          when(() => mockGetCurrentWeather(any())).thenAnswer(
+            (_) async => const Left(Failure.unknown(message: '예기치 않은 오류가 발생했습니다')),
+          );
+          return bloc;
+        },
+        act: (bloc) => bloc.add(const WeatherEvent.fetchCurrentWeather(
+          latitude: 37.5665,
+          longitude: 126.9780,
+        )),
+        expect: () => [
+          // 로딩 시작
+          isA<WeatherState>().having((s) => s.isLoading, 'isLoading', true),
+          // 조회 실패
+          isA<WeatherState>()
+              .having((s) => s.isLoading, 'isLoading', false)
+              .having((s) => s.failure, 'failure', isNotNull)
+              .having((s) => s.failure?.message, 'failure message',
+                  '예기치 않은 오류가 발생했습니다'),
+        ],
+      );
     });
 
     group('날씨 정보 새로고침 (RefreshWeather)', () {

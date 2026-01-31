@@ -7,7 +7,7 @@ part 'settings_state.freezed.dart';
 
 /// 설정 상태
 @freezed
-class SettingsState with _$SettingsState {
+abstract class SettingsState with _$SettingsState {
   const factory SettingsState({
     /// 현재 설정
     AppSettings? settings,

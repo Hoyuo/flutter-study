@@ -14,13 +14,14 @@ class GetDiariesParams {
 }
 
 /// Use case for retrieving paginated diary entries
-class GetDiariesUseCase {
+class GetDiariesUseCase implements UseCase<List<DiaryEntry>, GetDiariesParams> {
   final DiaryRepository _repository;
 
   GetDiariesUseCase(this._repository);
 
   /// Execute the use case to get diary entries
   /// Returns [Either] [Failure] or list of [DiaryEntry]
+  @override
   Future<Either<Failure, List<DiaryEntry>>> call(GetDiariesParams params) {
     return _repository.getDiaries(
       limit: params.limit,

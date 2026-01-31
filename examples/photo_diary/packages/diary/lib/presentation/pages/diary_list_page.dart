@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/core.dart' hide State;
@@ -22,30 +24,12 @@ class _DiaryListPageState extends State<DiaryListPage> {
     super.initState();
     // 초기 데이터 로드
     context.read<DiaryBloc>().add(const DiaryEvent.loadEntries());
-
-    // 무한 스크롤 리스너 등록
-    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
-  }
-
-  /// 스크롤 이벤트 처리
-  void _onScroll() {
-    if (_isBottom) {
-      context.read<DiaryBloc>().add(const DiaryEvent.loadMoreEntries());
-    }
-  }
-
-  /// 스크롤이 하단에 도달했는지 확인
-  bool get _isBottom {
-    if (!_scrollController.hasClients) return false;
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    final currentScroll = _scrollController.offset;
-    return currentScroll >= (maxScroll * 0.9);
   }
 
   @override
@@ -81,6 +65,7 @@ class _DiaryListPageState extends State<DiaryListPage> {
   /// Body 빌드
   Widget _buildBody(BuildContext context) {
     return BlocBuilder<DiaryBloc, DiaryState>(
+      buildWhen: (prev, curr) => prev.entries != curr.entries || prev.isLoading != curr.isLoading || prev.isLoadingMore != curr.isLoadingMore || prev.failure != curr.failure,
       builder: (context, state) {
         // 로딩 중 (초기 로드)
         if (state.isLoading && state.entries.isEmpty) {
@@ -136,9 +121,25 @@ class _DiaryListPageState extends State<DiaryListPage> {
         // 일기 목록
         return RefreshIndicator(
           onRefresh: () async {
-            context.read<DiaryBloc>().add(const DiaryEvent.loadEntries());
-            // 로딩이 완료될 때까지 대기
-            await Future.delayed(const Duration(milliseconds: 500));
+            final bloc = context.read<DiaryBloc>();
+            final completer = Completer<void>();
+
+            late StreamSubscription<DiaryState> subscription;
+            subscription = bloc.stream.listen((state) {
+              if (!state.isLoading && !completer.isCompleted) {
+                completer.complete();
+                subscription.cancel();
+              }
+            });
+
+            bloc.add(const DiaryEvent.loadEntries());
+
+            return completer.future.timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                subscription.cancel();
+              },
+            );
           },
           child: NotificationListener<ScrollNotification>(
             onNotification: (notification) {
@@ -200,33 +201,30 @@ class _DiaryListPageState extends State<DiaryListPage> {
 
   /// UI 이펙트 처리
   void _handleUiEffect(BuildContext context, DiaryUiEffect effect) {
-    effect.when(
-      showError: (message) {
+    switch (effect) {
+      case DiaryShowError(:final message):
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
-      },
-      showSuccess: (message) {
+      case DiaryShowSuccess(:final message):
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
             backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
-      },
-      navigateToDetail: (entryId) {
+      case DiaryNavigateToDetail():
         // TODO: 상세 페이지로 이동
         // context.push('/diary/$entryId');
-      },
-      navigateBack: () {
+        break;
+      case DiaryNavigateBack():
         Navigator.of(context).pop();
-      },
-      confirmDelete: (entryId) {
+      case DiaryConfirmDelete():
         // 삭제 확인 다이얼로그는 상세 페이지에서 처리
-      },
-    );
+        break;
+    }
   }
 }

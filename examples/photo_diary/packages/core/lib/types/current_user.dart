@@ -5,12 +5,12 @@ part 'current_user.g.dart';
 
 /// Current authenticated user information
 @freezed
-class CurrentUser with _$CurrentUser {
+abstract class CurrentUser with _$CurrentUser {
   const factory CurrentUser({
     required String id,
     required String email,
-    @Default(null) String? displayName,
-    @Default(null) String? photoUrl,
+    String? displayName,
+    String? photoUrl,
   }) = _CurrentUser;
 
   factory CurrentUser.fromJson(Map<String, dynamic> json) =>

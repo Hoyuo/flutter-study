@@ -1,12 +1,16 @@
+import 'package:core/core.dart';
 import 'package:diary/domain/usecases/usecases.dart';
 import 'package:diary/presentation/bloc/tag_event.dart';
 import 'package:diary/presentation/bloc/tag_state.dart';
+import 'package:diary/presentation/bloc/tag_ui_effect.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Tag 기능을 관리하는 Bloc
 ///
 /// 태그의 CRUD를 처리합니다.
-class TagBloc extends Bloc<TagEvent, TagState> {
+/// BlocUiEffectMixin을 사용하여 일회성 UI 이벤트를 처리합니다.
+class TagBloc extends Bloc<TagEvent, TagState>
+    with BlocUiEffectMixin<TagUiEffect, TagState> {
   TagBloc({
     required GetTagsUseCase getTagsUseCase,
     required CreateTagUseCase createTagUseCase,
@@ -41,6 +45,7 @@ class TagBloc extends Bloc<TagEvent, TagState> {
             isLoading: false,
           ),
         );
+        emitUiEffect(TagUiEffect.showError(_getFailureMessage(failure)));
       },
       // 성공 시
       (tags) {
@@ -72,6 +77,7 @@ class TagBloc extends Bloc<TagEvent, TagState> {
             isLoading: false,
           ),
         );
+        emitUiEffect(TagUiEffect.showError(_getFailureMessage(failure)));
       },
       // 성공 시
       (createdTag) {
@@ -82,6 +88,7 @@ class TagBloc extends Bloc<TagEvent, TagState> {
             isLoading: false,
           ),
         );
+        emitUiEffect(const TagUiEffect.showSuccess('태그가 생성되었습니다'));
       },
     );
   }
@@ -100,5 +107,17 @@ class TagBloc extends Bloc<TagEvent, TagState> {
     Emitter<TagState> emit,
   ) {
     emit(state.copyWith(selectedTagId: null));
+  }
+
+  /// Failure 객체를 사용자 친화적인 메시지로 변환
+  String _getFailureMessage(Failure failure) {
+    return switch (failure) {
+      NetworkFailure(:final message) => '네트워크 오류: $message',
+      ServerFailure(:final message) => '서버 오류: $message',
+      AuthFailure(:final message) => '인증 오류: $message',
+      CacheFailure(:final message) => '캐시 오류: $message',
+      UnknownFailure(:final message) => '알 수 없는 오류: $message',
+      _ => '오류가 발생했습니다',
+    };
   }
 }

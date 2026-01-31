@@ -9,5 +9,54 @@ workspace:
   - packages/core
   - packages/auth
   - packages/diary
-  - packages/weather
   - packages/settings
+  - packages/weather
+
+dev_dependencies:
+  melos: ^7.4.0
+
+melos:
+  name: photo_diary_workspace
+
+  packages:
+    - apps/*
+    - packages/*
+
+  sdkPath: .fvm/flutter_sdk
+
+  command:
+    bootstrap:
+      enforceLockfile: false
+
+  scripts:
+    clean:
+      run: melos exec -- "flutter clean"
+      description: Clean all packages
+
+    get:
+      run: melos exec -- "flutter pub get"
+      description: Get dependencies for all packages
+
+    build_runner:
+      run: melos exec --order-dependents --concurrency=1 --depends-on="build_runner" -- "dart run build_runner build --delete-conflicting-outputs"
+      description: Run build_runner for all packages in dependency order
+
+    build_runner:watch:
+      run: melos exec --depends-on="build_runner" -- "dart run build_runner watch --delete-conflicting-outputs"
+      description: Run build_runner in watch mode
+
+    analyze:
+      run: melos exec -- "flutter analyze"
+      description: Analyze all packages
+
+    test:
+      run: melos exec -- "flutter test"
+      description: Run tests for all packages
+
+    build:apk:
+      run: cd apps/photo_diary && flutter build apk --debug
+      description: Build Android APK (debug)
+
+    build:ios:
+      run: cd apps/photo_diary && flutter build ios --no-codesign
+      description: Build iOS (no codesign)

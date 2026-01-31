@@ -344,5 +344,192 @@ void main() {
       // 다크 테마 표시 확인
       expect(find.text('다크'), findsOneWidget);
     });
+
+    testWidgets('시스템 테마 설정이 올바르게 표시된다', (tester) async {
+      // 시스템 테마로 설정된 상태
+      final systemThemeSettings = const AppSettings(
+        themeMode: ThemeMode.system,
+        languageCode: 'ko',
+        notificationsEnabled: true,
+        biometricLockEnabled: false,
+      );
+
+      when(() => mockSettingsBloc.state).thenReturn(
+        SettingsState(settings: systemThemeSettings),
+      );
+      when(() => mockSettingsBloc.stream).thenAnswer(
+        (_) => Stream.value(SettingsState(settings: systemThemeSettings)),
+      );
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // 시스템 테마 표시 확인
+      expect(find.text('시스템'), findsOneWidget);
+    });
+
+    testWidgets('테마 타일 탭 시 다이얼로그가 열린다', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // 테마 타일 탭
+      await tester.tap(find.text('테마'));
+      await tester.pumpAndSettle();
+
+      // 다이얼로그가 열렸는지 확인
+      expect(find.text('테마 선택'), findsOneWidget);
+      expect(find.byType(AlertDialog), findsOneWidget);
+    });
+
+    testWidgets('테마 다이얼로그에서 선택 시 이벤트가 전송된다', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // 테마 타일 탭
+      await tester.tap(find.text('테마'));
+      await tester.pumpAndSettle();
+
+      // 다크 테마 선택
+      await tester.tap(find.text('다크'));
+      await tester.pumpAndSettle();
+
+      // 이벤트가 전송되었는지 확인 (lines 179-181)
+      verify(
+        () => mockSettingsBloc.add(
+          const SettingsEvent.updateThemeMode(ThemeMode.dark),
+        ),
+      ).called(1);
+    });
+
+    testWidgets('언어 타일 탭 시 다이얼로그가 열린다', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // 언어 타일 탭 (두 번째 '언어' - 타일의 제목)
+      final languageTiles = find.text('언어');
+      await tester.tap(languageTiles.last);
+      await tester.pumpAndSettle();
+
+      // 다이얼로그가 열렸는지 확인
+      expect(find.text('언어 선택'), findsOneWidget);
+      expect(find.byType(AlertDialog), findsOneWidget);
+    });
+
+    testWidgets('언어 다이얼로그에서 선택 시 이벤트가 전송된다', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // 언어 타일 탭
+      final languageTiles = find.text('언어');
+      await tester.tap(languageTiles.last);
+      await tester.pumpAndSettle();
+
+      // 일본어 선택
+      await tester.tap(find.text('日本語'));
+      await tester.pumpAndSettle();
+
+      // 이벤트가 전송되었는지 확인 (lines 196-198)
+      verify(
+        () => mockSettingsBloc.add(
+          const SettingsEvent.updateLocale(Locale('ja')),
+        ),
+      ).called(1);
+    });
+
+    testWidgets('로그아웃 다이얼로그 취소 버튼이 작동한다', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // 하단 항목을 보기 위해 스크롤
+      await tester.drag(find.byType(ListView), const Offset(0, -500));
+      await tester.pumpAndSettle();
+
+      // 로그아웃 타일 탭
+      await tester.tap(find.text('로그아웃'));
+      await tester.pumpAndSettle();
+
+      // 다이얼로그 확인
+      expect(find.byType(AlertDialog), findsOneWidget);
+
+      // 취소 버튼 탭
+      await tester.tap(find.text('취소').first);
+      await tester.pumpAndSettle();
+
+      // 다이얼로그가 닫혔는지 확인
+      expect(find.byType(AlertDialog), findsNothing);
+    });
+
+    testWidgets('로그아웃 확인 시 스낵바가 표시된다', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // 하단 항목을 보기 위해 스크롤
+      await tester.drag(find.byType(ListView), const Offset(0, -500));
+      await tester.pumpAndSettle();
+
+      // 로그아웃 타일 탭
+      await tester.tap(find.text('로그아웃'));
+      await tester.pumpAndSettle();
+
+      // 다이얼로그에서 로그아웃 버튼 탭
+      await tester.tap(find.text('로그아웃').last);
+      await tester.pumpAndSettle();
+
+      // 스낵바가 표시되는지 확인
+      expect(find.text('로그아웃되었습니다.'), findsOneWidget);
+    });
+
+    testWidgets('설정 초기화 다이얼로그 취소 버튼이 작동한다', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // 하단 항목을 보기 위해 스크롤
+      await tester.drag(find.byType(ListView), const Offset(0, -500));
+      await tester.pumpAndSettle();
+
+      // 설정 초기화 타일 탭
+      await tester.tap(find.text('설정 초기화'));
+      await tester.pumpAndSettle();
+
+      // 다이얼로그 확인
+      expect(find.byType(AlertDialog), findsOneWidget);
+
+      // 취소 버튼 탭
+      await tester.tap(find.text('취소').first);
+      await tester.pumpAndSettle();
+
+      // 다이얼로그가 닫혔는지 확인
+      expect(find.byType(AlertDialog), findsNothing);
+
+      // 이벤트가 전송되지 않았는지 확인
+      verifyNever(
+        () => mockSettingsBloc.add(const SettingsEvent.resetSettings()),
+      );
+    });
+
+    testWidgets('설정 초기화 확인 시 스낵바가 표시된다', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // 하단 항목을 보기 위해 스크롤
+      await tester.drag(find.byType(ListView), const Offset(0, -500));
+      await tester.pumpAndSettle();
+
+      // 설정 초기화 타일 탭
+      await tester.tap(find.text('설정 초기화'));
+      await tester.pumpAndSettle();
+
+      // 다이얼로그에서 초기화 버튼 탭
+      await tester.tap(find.text('초기화').last);
+      await tester.pumpAndSettle();
+
+      // 이벤트가 전송되었는지 확인
+      verify(
+        () => mockSettingsBloc.add(const SettingsEvent.resetSettings()),
+      ).called(1);
+
+      // 스낵바가 표시되는지 확인
+      expect(find.text('설정이 초기화되었습니다.'), findsOneWidget);
+    });
   });
 }

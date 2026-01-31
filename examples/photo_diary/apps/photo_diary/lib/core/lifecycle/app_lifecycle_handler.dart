@@ -1,12 +1,10 @@
 import 'package:core/core.dart';
-import 'package:injectable/injectable.dart';
 
 /// 앱 생명주기 핸들러
 ///
 /// 앱 상태 변화에 따른 동작을 정의하고 실행합니다.
 /// 포그라운드 복귀, 백그라운드 진입 등의 상황에서
 /// 필요한 작업을 수행합니다.
-@singleton
 class AppLifecycleHandler {
   /// 생체인증 활성화 여부 저장 키
   static const String _biometricEnabledKey = 'biometric_enabled';
@@ -171,7 +169,6 @@ class AppLifecycleHandler {
   /// 핸들러 정리
   ///
   /// 생명주기 리스너를 제거합니다.
-  @disposeMethod
   void dispose() {
     _lifecycleService.removeListener(_onStateChanged);
   }

@@ -129,7 +129,7 @@ class _SearchPageState extends State<SearchPage> {
             // 태그 칩들
             ...tags.map((tag) {
               final isSelected = _selectedTagId == tag.id;
-              final tagColor = _parseColor(tag.colorHex);
+              final tagColor = ColorUtils.parseHex(tag.colorHex);
 
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
@@ -165,6 +165,7 @@ class _SearchPageState extends State<SearchPage> {
   /// 검색 결과 빌드
   Widget _buildSearchResults(BuildContext context) {
     return BlocBuilder<DiaryBloc, DiaryState>(
+      buildWhen: (prev, curr) => prev.entries != curr.entries || prev.isLoading != curr.isLoading || prev.failure != curr.failure || prev.searchKeyword != curr.searchKeyword,
       builder: (context, state) {
         // 로딩 중
         if (state.isLoading) {
@@ -236,34 +237,31 @@ class _SearchPageState extends State<SearchPage> {
 
   /// UI 이펙트 처리
   void _handleUiEffect(BuildContext context, DiaryUiEffect effect) {
-    effect.when(
-      showError: (message) {
+    switch (effect) {
+      case DiaryShowError(:final message):
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
-      },
-      showSuccess: (message) {
+      case DiaryShowSuccess(:final message):
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
             backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
-      },
-      navigateToDetail: (entryId) {
+      case DiaryNavigateToDetail():
         // TODO: 상세 페이지로 이동
         // context.push('/diary/$entryId');
-      },
-      navigateBack: () {
+        break;
+      case DiaryNavigateBack():
         Navigator.of(context).pop();
-      },
-      confirmDelete: (entryId) {
+      case DiaryConfirmDelete():
         // 이 페이지에서는 사용하지 않음
-      },
-    );
+        break;
+    }
   }
 
   /// 태그 목록 가져오기
@@ -272,11 +270,5 @@ class _SearchPageState extends State<SearchPage> {
   /// 현재는 빈 리스트를 반환하여 태그 필터 UI를 숨김
   List<Tag> _getMockTags() {
     return [];
-  }
-
-  /// Hex 컬러 문자열을 Color로 파싱
-  Color _parseColor(String hexColor) {
-    final hexCode = hexColor.replaceAll('#', '');
-    return Color(int.parse('FF$hexCode', radix: 16));
   }
 }

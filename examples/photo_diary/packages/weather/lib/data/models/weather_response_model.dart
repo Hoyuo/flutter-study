@@ -7,7 +7,7 @@ part 'weather_response_model.g.dart';
 
 /// Weather response model from OpenWeatherMap API
 @freezed
-class WeatherResponseModel with _$WeatherResponseModel {
+abstract class WeatherResponseModel with _$WeatherResponseModel {
   const WeatherResponseModel._();
 
   const factory WeatherResponseModel({
@@ -47,7 +47,7 @@ class WeatherResponseModel with _$WeatherResponseModel {
 
 /// Weather condition data
 @freezed
-class WeatherCondition with _$WeatherCondition {
+abstract class WeatherCondition with _$WeatherCondition {
   const factory WeatherCondition({
     /// Weather condition (e.g., 'Clear', 'Clouds', 'Rain')
     required String main,
@@ -65,7 +65,7 @@ class WeatherCondition with _$WeatherCondition {
 
 /// Main weather data (temperature, humidity, etc.)
 @freezed
-class MainWeatherData with _$MainWeatherData {
+abstract class MainWeatherData with _$MainWeatherData {
   const factory MainWeatherData({
     /// Temperature in Celsius
     required double temp,

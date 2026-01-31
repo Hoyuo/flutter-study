@@ -98,20 +98,63 @@ flutter pub get
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-### 3. Firebase 설정
-- `google-services.json` (Android)
-- `GoogleService-Info.plist` (iOS)
+### 3. 실행 방법 선택
 
-### 4. 환경 변수 설정
+#### Option A: Firebase Emulator 사용 (추천 - Firebase 프로젝트 필요 없음)
+
+실제 Firebase 프로젝트 없이 로컬에서 앱을 테스트할 수 있습니다.
+
+**1) Firebase CLI 설치**
 ```bash
-cp .env.example .env.dev
-# OPENWEATHERMAP_API_KEY 등 설정
+npm install -g firebase-tools
 ```
 
-### 5. 실행
+**2) Emulator 시작**
+```bash
+cd examples/photo_diary
+firebase emulators:start
+```
+
+Emulator UI: http://localhost:4000
+
+**3) 앱 실행 (Emulator 모드)**
+```bash
+cd apps/photo_diary
+
+# .env.emulator 파일을 .env.dev로 복사
+cp .env.emulator .env.dev
+
+flutter run
+```
+
+> **참고**: Android Emulator에서는 `10.0.2.2`가 호스트 머신의 localhost입니다.
+> iOS Simulator에서는 `.env.emulator`의 `EMULATOR_HOST`를 `localhost`로 변경하세요.
+
+#### Option B: 실제 Firebase 프로젝트 사용
+
+**1) Firebase 설정 파일 추가**
+- `android/app/google-services.json`
+- `ios/Runner/GoogleService-Info.plist`
+
+**2) 환경 변수 설정**
+```bash
+cp .env.example .env.dev
+# Firebase 설정값 입력
+```
+
+**3) 앱 실행**
 ```bash
 flutter run
 ```
+
+### Firebase Emulator 포트 정보
+
+| 서비스 | 포트 |
+|--------|------|
+| Emulator UI | 4000 |
+| Auth | 9099 |
+| Firestore | 8080 |
+| Storage | 9199 |
 
 ## 🧪 테스트
 

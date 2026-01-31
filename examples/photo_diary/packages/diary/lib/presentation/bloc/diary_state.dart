@@ -7,7 +7,7 @@ part 'diary_state.freezed.dart';
 ///
 /// Freezed를 사용하여 불변 상태를 정의합니다.
 @freezed
-class DiaryState with _$DiaryState {
+abstract class DiaryState with _$DiaryState {
   const factory DiaryState({
     /// 일기 목록
     @Default([]) List<DiaryEntry> entries,

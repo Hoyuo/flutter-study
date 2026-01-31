@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,9 +8,17 @@ import 'package:mocktail/mocktail.dart';
 import 'package:auth/presentation/bloc/bloc.dart';
 import 'package:auth/presentation/pages/login_page.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:go_router/go_router.dart';
 
 // Mock 클래스들
 class MockAuthBloc extends Mock implements AuthBloc {}
+
+class MockGoRouter extends Mock implements GoRouter {}
+
+class MockGoRouterDelegate extends Mock implements GoRouterDelegate {}
+
+class MockGoRouteInformationProvider extends Mock
+    implements GoRouteInformationProvider {}
 
 // 테스트용 인메모리 AssetLoader
 class TestAssetLoader extends AssetLoader {
@@ -75,6 +84,13 @@ void main() {
       when(() => mockAuthBloc.effectStream).thenAnswer(
         (_) => const Stream.empty(),
       );
+    });
+
+    test('LoginPage 위젯을 생성할 수 있다', () {
+      // 생성자 커버리지를 위한 테스트
+      final loginPage = LoginPage(key: UniqueKey());
+      expect(loginPage, isNotNull);
+      expect(loginPage, isA<LoginPage>());
     });
 
     Future<void> pumpTestWidget(WidgetTester tester,
@@ -292,6 +308,199 @@ void main() {
           ),
         ),
       ).called(1);
+    });
+
+    testWidgets('AuthShowError 효과 발생 시 에러 스낵바가 표시된다', (tester) async {
+      final effectController = StreamController<AuthUiEffect>.broadcast();
+
+      when(() => mockAuthBloc.effectStream)
+          .thenAnswer((_) => effectController.stream);
+
+      await pumpTestWidget(tester);
+
+      // AuthShowError 효과 발생
+      effectController.add(const AuthShowError('Login failed'));
+      await tester.pumpAndSettle();
+
+      // 스낵바가 표시되는지 확인
+      expect(find.text('Login failed'), findsOneWidget);
+      expect(find.byType(SnackBar), findsOneWidget);
+
+      await effectController.close();
+    });
+
+    testWidgets('AuthShowSuccessSnackBar 효과 발생 시 성공 스낵바가 표시된다',
+        (tester) async {
+      final effectController = StreamController<AuthUiEffect>.broadcast();
+
+      when(() => mockAuthBloc.effectStream)
+          .thenAnswer((_) => effectController.stream);
+
+      await pumpTestWidget(tester);
+
+      // AuthShowSuccessSnackBar 효과 발생
+      effectController
+          .add(const AuthShowSuccessSnackBar('Success message'));
+      await tester.pumpAndSettle();
+
+      // 스낵바가 표시되는지 확인
+      expect(find.text('Success message'), findsOneWidget);
+      expect(find.byType(SnackBar), findsOneWidget);
+
+      await effectController.close();
+    });
+
+    testWidgets('AuthNavigateToHome 효과 발생 시 홈으로 이동한다', (tester) async {
+      final effectController = StreamController<AuthUiEffect>.broadcast();
+
+      when(() => mockAuthBloc.effectStream)
+          .thenAnswer((_) => effectController.stream);
+
+      // GoRouter 설정
+      final goRouter = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) => const Scaffold(
+              body: Text('Home Page'),
+            ),
+          ),
+          GoRoute(
+            path: '/login',
+            builder: (context, state) => BlocProvider<AuthBloc>.value(
+              value: mockAuthBloc,
+              child: const LoginPage(),
+            ),
+          ),
+        ],
+        initialLocation: '/login',
+      );
+
+      await tester.pumpWidget(
+        EasyLocalization(
+          supportedLocales: const [Locale('ko')],
+          path: 'assets/translations',
+          fallbackLocale: const Locale('ko'),
+          useOnlyLangCode: true,
+          useFallbackTranslations: true,
+          assetLoader: TestAssetLoader(),
+          child: Builder(
+            builder: (context) {
+              return MaterialApp.router(
+                localizationsDelegates: context.localizationDelegates,
+                supportedLocales: context.supportedLocales,
+                locale: context.locale,
+                routerConfig: goRouter,
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // AuthNavigateToHome 효과 발생
+      effectController.add(const AuthNavigateToHome());
+      await tester.pumpAndSettle();
+
+      // 홈 페이지로 이동했는지 확인
+      expect(find.text('Home Page'), findsOneWidget);
+
+      await effectController.close();
+    });
+
+    testWidgets('AuthNavigateToLogin 효과는 로그인 페이지에서 무시된다', (tester) async {
+      final effectController = StreamController<AuthUiEffect>.broadcast();
+
+      when(() => mockAuthBloc.effectStream)
+          .thenAnswer((_) => effectController.stream);
+
+      await pumpTestWidget(tester);
+
+      // AuthNavigateToLogin 효과 발생 (로그인 페이지에서는 무시됨)
+      effectController.add(const AuthNavigateToLogin());
+      await tester.pumpAndSettle();
+
+      // 여전히 로그인 페이지에 있는지 확인 (아무 변화 없음)
+      expect(find.byType(LoginPage), findsOneWidget);
+
+      await effectController.close();
+    });
+
+    testWidgets('회원가입 버튼 탭 시 회원가입 페이지로 이동한다', (tester) async {
+      // GoRouter 설정
+      final goRouter = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) => const Scaffold(
+              body: Text('Home Page'),
+            ),
+          ),
+          GoRoute(
+            path: '/login',
+            builder: (context, state) => BlocProvider<AuthBloc>.value(
+              value: mockAuthBloc,
+              child: const LoginPage(),
+            ),
+          ),
+          GoRoute(
+            path: '/register',
+            builder: (context, state) => const Scaffold(
+              body: Text('Register Page'),
+            ),
+          ),
+        ],
+        initialLocation: '/login',
+      );
+
+      await tester.pumpWidget(
+        EasyLocalization(
+          supportedLocales: const [Locale('ko')],
+          path: 'assets/translations',
+          fallbackLocale: const Locale('ko'),
+          useOnlyLangCode: true,
+          useFallbackTranslations: true,
+          assetLoader: TestAssetLoader(),
+          child: Builder(
+            builder: (context) {
+              return MaterialApp.router(
+                localizationsDelegates: context.localizationDelegates,
+                supportedLocales: context.supportedLocales,
+                locale: context.locale,
+                routerConfig: goRouter,
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 회원가입 버튼 탭
+      await tester.tap(find.byType(TextButton));
+      await tester.pumpAndSettle();
+
+      // 회원가입 페이지로 이동했는지 확인
+      expect(find.text('Register Page'), findsOneWidget);
+    });
+
+    testWidgets('로딩 중일 때 회원가입 버튼이 비활성화된다', (tester) async {
+      // 로딩 상태로 설정
+      when(() => mockAuthBloc.state).thenReturn(
+        const AuthState(isSubmitting: true),
+      );
+      when(() => mockAuthBloc.stream).thenAnswer(
+        (_) => const Stream.empty(),
+      );
+
+      await pumpTestWidget(tester, skipSettle: true);
+
+      // TextButton (회원가입 버튼) 찾기
+      final registerButton = tester.widget<TextButton>(
+        find.byType(TextButton),
+      );
+
+      // 버튼이 비활성화되어 있는지 확인
+      expect(registerButton.onPressed, isNull);
     });
   });
 }

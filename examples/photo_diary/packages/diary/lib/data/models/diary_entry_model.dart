@@ -8,7 +8,7 @@ part 'diary_entry_model.g.dart';
 
 /// Data model for diary entry with Firestore mapping
 @freezed
-class DiaryEntryModel with _$DiaryEntryModel {
+abstract class DiaryEntryModel with _$DiaryEntryModel {
   const DiaryEntryModel._();
 
   const factory DiaryEntryModel({

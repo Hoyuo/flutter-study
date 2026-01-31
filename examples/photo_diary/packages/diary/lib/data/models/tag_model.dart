@@ -7,7 +7,7 @@ part 'tag_model.g.dart';
 
 /// Data model for tag with Firestore mapping
 @freezed
-class TagModel with _$TagModel {
+abstract class TagModel with _$TagModel {
   const TagModel._();
 
   const factory TagModel({

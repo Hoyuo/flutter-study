@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:core/core.dart';
 import '../../domain/entities/tag.dart';
 
 /// 태그 선택 위젯
@@ -50,7 +51,7 @@ class TagSelector extends StatelessWidget {
             // 기존 태그들
             ...availableTags.map((tag) {
               final isSelected = selectedTagIds.contains(tag.id);
-              final tagColor = _parseColor(tag.colorHex);
+              final tagColor = ColorUtils.parseHex(tag.colorHex);
 
               return FilterChip(
                 label: Text(tag.name),
@@ -81,12 +82,6 @@ class TagSelector extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  /// Hex 컬러 문자열을 Color로 파싱
-  Color _parseColor(String hexColor) {
-    final hexCode = hexColor.replaceAll('#', '');
-    return Color(int.parse('FF$hexCode', radix: 16));
   }
 }
 

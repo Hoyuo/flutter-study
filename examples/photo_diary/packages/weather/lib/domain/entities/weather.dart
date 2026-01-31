@@ -1,11 +1,10 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'weather.freezed.dart';
-part 'weather.g.dart';
 
 /// Weather entity representing current weather information
 @freezed
-class Weather with _$Weather {
+abstract class Weather with _$Weather {
   const factory Weather({
     /// Weather condition (e.g., 'Clear', 'Clouds', 'Rain')
     required String condition,
@@ -31,7 +30,4 @@ class Weather with _$Weather {
     /// Timestamp when the weather data was fetched
     required DateTime timestamp,
   }) = _Weather;
-
-  factory Weather.fromJson(Map<String, dynamic> json) =>
-      _$WeatherFromJson(json);
 }

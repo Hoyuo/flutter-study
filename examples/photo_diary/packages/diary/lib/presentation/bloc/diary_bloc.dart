@@ -359,12 +359,13 @@ class DiaryBloc extends Bloc<DiaryEvent, DiaryState>
 
   /// Failure 객체를 사용자 친화적인 메시지로 변환
   String _getFailureMessage(Failure failure) {
-    return failure.when(
-      network: (message, _) => '네트워크 오류: $message',
-      server: (message, _, __) => '서버 오류: $message',
-      auth: (message, _) => '인증 오류: $message',
-      cache: (message, _) => '캐시 오류: $message',
-      unknown: (message, _) => '알 수 없는 오류: $message',
-    );
+    return switch (failure) {
+      NetworkFailure(:final message) => '네트워크 오류: $message',
+      ServerFailure(:final message) => '서버 오류: $message',
+      AuthFailure(:final message) => '인증 오류: $message',
+      CacheFailure(:final message) => '캐시 오류: $message',
+      UnknownFailure(:final message) => '알 수 없는 오류: $message',
+      _ => '오류가 발생했습니다',
+    };
   }
 }

@@ -7,7 +7,7 @@ part 'tag_state.freezed.dart';
 ///
 /// Freezed를 사용하여 불변 상태를 정의합니다.
 @freezed
-class TagState with _$TagState {
+abstract class TagState with _$TagState {
   const factory TagState({
     /// 태그 목록
     @Default([]) List<Tag> tags,

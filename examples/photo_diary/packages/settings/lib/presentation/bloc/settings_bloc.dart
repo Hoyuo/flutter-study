@@ -5,9 +5,13 @@ import '../../domain/entities/entities.dart';
 import '../../domain/usecases/usecases.dart';
 import 'settings_event.dart';
 import 'settings_state.dart';
+import 'settings_ui_effect.dart';
 
 /// 설정 BLoC
-class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
+///
+/// BlocUiEffectMixin을 사용하여 일회성 UI 이벤트를 처리합니다.
+class SettingsBloc extends Bloc<SettingsEvent, SettingsState>
+    with BlocUiEffectMixin<SettingsUiEffect, SettingsState> {
   final GetSettingsUseCase _getSettingsUseCase;
   final UpdateSettingsUseCase _updateSettingsUseCase;
 
@@ -35,10 +39,13 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     final result = await _getSettingsUseCase(const NoParams());
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        isLoading: false,
-        failure: failure,
-      )),
+      (failure) {
+        emit(state.copyWith(
+          isLoading: false,
+          failure: failure,
+        ));
+        emitUiEffect(SettingsUiEffect.showError(_getFailureMessage(failure)));
+      },
       (settings) => emit(state.copyWith(
         isLoading: false,
         settings: settings,
@@ -66,15 +73,21 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     );
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        isSaving: false,
-        failure: failure,
-      )),
-      (settings) => emit(state.copyWith(
-        isSaving: false,
-        settings: settings,
-        failure: null,
-      )),
+      (failure) {
+        emit(state.copyWith(
+          isSaving: false,
+          failure: failure,
+        ));
+        emitUiEffect(SettingsUiEffect.showError(_getFailureMessage(failure)));
+      },
+      (settings) {
+        emit(state.copyWith(
+          isSaving: false,
+          settings: settings,
+          failure: null,
+        ));
+        emitUiEffect(const SettingsUiEffect.showSuccess('테마가 변경되었습니다'));
+      },
     );
   }
 
@@ -97,15 +110,21 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     );
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        isSaving: false,
-        failure: failure,
-      )),
-      (settings) => emit(state.copyWith(
-        isSaving: false,
-        settings: settings,
-        failure: null,
-      )),
+      (failure) {
+        emit(state.copyWith(
+          isSaving: false,
+          failure: failure,
+        ));
+        emitUiEffect(SettingsUiEffect.showError(_getFailureMessage(failure)));
+      },
+      (settings) {
+        emit(state.copyWith(
+          isSaving: false,
+          settings: settings,
+          failure: null,
+        ));
+        emitUiEffect(const SettingsUiEffect.showSuccess('언어가 변경되었습니다'));
+      },
     );
   }
 
@@ -128,15 +147,23 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     );
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        isSaving: false,
-        failure: failure,
-      )),
-      (settings) => emit(state.copyWith(
-        isSaving: false,
-        settings: settings,
-        failure: null,
-      )),
+      (failure) {
+        emit(state.copyWith(
+          isSaving: false,
+          failure: failure,
+        ));
+        emitUiEffect(SettingsUiEffect.showError(_getFailureMessage(failure)));
+      },
+      (settings) {
+        emit(state.copyWith(
+          isSaving: false,
+          settings: settings,
+          failure: null,
+        ));
+        emitUiEffect(SettingsUiEffect.showSuccess(
+          event.enabled ? '생체인증이 활성화되었습니다' : '생체인증이 비활성화되었습니다',
+        ));
+      },
     );
   }
 
@@ -159,15 +186,23 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     );
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        isSaving: false,
-        failure: failure,
-      )),
-      (settings) => emit(state.copyWith(
-        isSaving: false,
-        settings: settings,
-        failure: null,
-      )),
+      (failure) {
+        emit(state.copyWith(
+          isSaving: false,
+          failure: failure,
+        ));
+        emitUiEffect(SettingsUiEffect.showError(_getFailureMessage(failure)));
+      },
+      (settings) {
+        emit(state.copyWith(
+          isSaving: false,
+          settings: settings,
+          failure: null,
+        ));
+        emitUiEffect(SettingsUiEffect.showSuccess(
+          event.enabled ? '푸시 알림이 활성화되었습니다' : '푸시 알림이 비활성화되었습니다',
+        ));
+      },
     );
   }
 
@@ -186,15 +221,33 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     );
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        isSaving: false,
-        failure: failure,
-      )),
-      (settings) => emit(state.copyWith(
-        isSaving: false,
-        settings: settings,
-        failure: null,
-      )),
+      (failure) {
+        emit(state.copyWith(
+          isSaving: false,
+          failure: failure,
+        ));
+        emitUiEffect(SettingsUiEffect.showError(_getFailureMessage(failure)));
+      },
+      (settings) {
+        emit(state.copyWith(
+          isSaving: false,
+          settings: settings,
+          failure: null,
+        ));
+        emitUiEffect(const SettingsUiEffect.showSuccess('설정이 초기화되었습니다'));
+      },
     );
+  }
+
+  /// Failure 객체를 사용자 친화적인 메시지로 변환
+  String _getFailureMessage(Failure failure) {
+    return switch (failure) {
+      NetworkFailure(:final message) => '네트워크 오류: $message',
+      ServerFailure(:final message) => '서버 오류: $message',
+      AuthFailure(:final message) => '인증 오류: $message',
+      CacheFailure(:final message) => '캐시 오류: $message',
+      UnknownFailure(:final message) => '알 수 없는 오류: $message',
+      _ => '오류가 발생했습니다',
+    };
   }
 }

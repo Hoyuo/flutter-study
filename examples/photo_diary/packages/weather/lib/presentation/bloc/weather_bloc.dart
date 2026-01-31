@@ -1,8 +1,10 @@
+import 'package:core/core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/usecases/usecases.dart';
 import 'weather_event.dart';
 import 'weather_state.dart';
+import 'weather_ui_effect.dart';
 
 export 'weather_event.dart';
 export 'weather_state.dart';
@@ -10,7 +12,9 @@ export 'weather_state.dart';
 /// Weather BLoC - 날씨 정보 관리
 ///
 /// 위치 기반 날씨 조회, 새로고침, 초기화 기능 제공
-class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
+/// BlocUiEffectMixin을 사용하여 일회성 UI 이벤트를 처리합니다.
+class WeatherBloc extends Bloc<WeatherEvent, WeatherState>
+    with BlocUiEffectMixin<WeatherUiEffect, WeatherState> {
   final GetCurrentWeatherUseCase _getCurrentWeatherUseCase;
 
   WeatherBloc({
@@ -37,10 +41,13 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
     final result = await _getCurrentWeatherUseCase(params);
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        isLoading: false,
-        failure: failure,
-      )),
+      (failure) {
+        emit(state.copyWith(
+          isLoading: false,
+          failure: failure,
+        ));
+        emitUiEffect(WeatherUiEffect.showError(_getFailureMessage(failure)));
+      },
       (weather) => emit(state.copyWith(
         isLoading: false,
         weather: weather,
@@ -70,10 +77,13 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
     final result = await _getCurrentWeatherUseCase(params);
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        isLoading: false,
-        failure: failure,
-      )),
+      (failure) {
+        emit(state.copyWith(
+          isLoading: false,
+          failure: failure,
+        ));
+        emitUiEffect(WeatherUiEffect.showError(_getFailureMessage(failure)));
+      },
       (weather) => emit(state.copyWith(
         isLoading: false,
         weather: weather,
@@ -89,5 +99,17 @@ class WeatherBloc extends Bloc<WeatherEvent, WeatherState> {
     Emitter<WeatherState> emit,
   ) {
     emit(const WeatherState());
+  }
+
+  /// Failure 객체를 사용자 친화적인 메시지로 변환
+  String _getFailureMessage(Failure failure) {
+    return switch (failure) {
+      NetworkFailure(:final message) => '네트워크 오류: $message',
+      ServerFailure(:final message) => '서버 오류: $message',
+      AuthFailure(:final message) => '인증 오류: $message',
+      CacheFailure(:final message) => '캐시 오류: $message',
+      UnknownFailure(:final message) => '알 수 없는 오류: $message',
+      _ => '오류가 발생했습니다',
+    };
   }
 }

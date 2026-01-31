@@ -3,10 +3,10 @@ description: A beautiful photo diary application with weather integration
 publish_to: none
 version: 1.0.0+1
 
-resolution: workspace
-
 environment:
   sdk: '>=3.8.0 <4.0.0'
+
+resolution: workspace
 
 dependencies:
   flutter:
@@ -14,37 +14,33 @@ dependencies:
 
   # Local Packages
   core:
-    path: ../../packages/core
-  diary:
-    path: ../../packages/diary
   auth:
-    path: ../../packages/auth
+  diary:
   settings:
-    path: ../../packages/settings
 
   # State Management
-  flutter_bloc: ^8.1.6
+  flutter_bloc: ^9.0.0
 
   # Routing
-  go_router: ^14.6.2
+  go_router: ^17.0.0
 
   # Localization
   easy_localization: ^3.0.7
 
   # Firebase
-  firebase_core: ^3.8.1
-  firebase_auth: ^5.3.3
-  cloud_firestore: ^5.5.2
-  firebase_storage: ^12.3.6
-  firebase_analytics: ^11.3.6
-  firebase_crashlytics: ^4.1.6
+  firebase_core: ^4.4.0
+  firebase_auth: ^6.1.4
+  cloud_firestore: ^6.1.2
+  firebase_storage: ^13.0.6
+  firebase_analytics: ^12.1.1
+  firebase_crashlytics: ^5.0.7
 
   # Dependency Injection
-  get_it: ^8.0.2
+  get_it: ^9.2.0
   injectable: ^2.5.0
 
   # Environment Variables
-  flutter_dotenv: ^5.2.1
+  flutter_dotenv: ^6.0.0
 
   # Image Handling
   image_picker: ^1.1.2
@@ -55,22 +51,22 @@ dependencies:
 
   # Utilities
   intl: ^0.20.2
-  freezed_annotation: ^2.4.4
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.9.0
   fpdart: ^1.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
   integration_test:
     sdk: flutter
 
   # Code Generation
   build_runner: ^2.4.13
   injectable_generator: ^2.6.2
-  go_router_builder: ^2.7.1
-  freezed: ^2.5.7
+  go_router_builder: ^4.1.3
+  freezed: ^3.2.3
   json_serializable: ^6.8.0
 
 flutter:
@@ -78,8 +74,8 @@ flutter:
 
   assets:
     - assets/translations/
-    # - .env.dev  # Uncomment when env files are added
-    # - .env.prod
+    - .env.dev
+    - .env.emulator
 
   # fonts:
   #   - family: Pretendard

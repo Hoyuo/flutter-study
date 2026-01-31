@@ -34,9 +34,9 @@ class DiaryRepositoryImpl implements DiaryRepository {
       if (_localDataSource != null) {
         try {
           await _localDataSource.cacheDiary(createdModel);
-        } catch (e) {
+        } catch (e, stackTrace) {
           // Log cache error but don't fail the operation
-          // In production, use proper logging
+          AppLogger.w('Failed to cache diary after creation', e, stackTrace);
         }
       }
 
@@ -88,8 +88,9 @@ class DiaryRepositoryImpl implements DiaryRepository {
       if (_localDataSource != null && models.isNotEmpty) {
         try {
           await _localDataSource.cacheDiaries(models);
-        } catch (e) {
+        } catch (e, stackTrace) {
           // Log cache error but don't fail the operation
+          AppLogger.w('Failed to cache diaries list', e, stackTrace);
         }
       }
 
@@ -108,8 +109,9 @@ class DiaryRepositoryImpl implements DiaryRepository {
             final entries = cachedModels.map((m) => m.toEntity()).toList();
             return Right(entries);
           }
-        } catch (cacheError) {
+        } catch (cacheError, stackTrace) {
           // Cache also failed, return original error
+          AppLogger.w('Failed to retrieve cached diaries as fallback', cacheError, stackTrace);
         }
       }
       return Left(Failure.server(message: e.toString()));
@@ -148,8 +150,9 @@ class DiaryRepositoryImpl implements DiaryRepository {
       if (_localDataSource != null) {
         try {
           await _localDataSource.cacheDiary(model);
-        } catch (e) {
+        } catch (e, stackTrace) {
           // Log cache error but don't fail the operation
+          AppLogger.w('Failed to cache diary by ID', e, stackTrace);
         }
       }
 
@@ -163,8 +166,9 @@ class DiaryRepositoryImpl implements DiaryRepository {
           if (cachedModel != null) {
             return Right(cachedModel.toEntity());
           }
-        } catch (cacheError) {
+        } catch (cacheError, stackTrace) {
           // Cache also failed, return original error
+          AppLogger.w('Failed to retrieve cached diary by ID as fallback', cacheError, stackTrace);
         }
       }
       return Left(Failure.server(message: e.toString()));
@@ -186,8 +190,9 @@ class DiaryRepositoryImpl implements DiaryRepository {
       if (_localDataSource != null) {
         try {
           await _localDataSource.updateCachedDiary(updatedModel);
-        } catch (e) {
+        } catch (e, stackTrace) {
           // Log cache error but don't fail the operation
+          AppLogger.w('Failed to update cached diary', e, stackTrace);
         }
       }
 
@@ -225,8 +230,9 @@ class DiaryRepositoryImpl implements DiaryRepository {
           userId: userId,
           diaryId: diaryId,
         );
-      } catch (e) {
+      } catch (e, stackTrace) {
         // Log error but continue with diary deletion
+        AppLogger.w('Failed to delete images for diary', e, stackTrace);
       }
 
       // Delete from remote data source
@@ -239,8 +245,9 @@ class DiaryRepositoryImpl implements DiaryRepository {
       if (_localDataSource != null) {
         try {
           await _localDataSource.deleteCachedDiary(diaryId);
-        } catch (e) {
+        } catch (e, stackTrace) {
           // Log cache error but don't fail the operation
+          AppLogger.w('Failed to delete cached diary', e, stackTrace);
         }
       }
 

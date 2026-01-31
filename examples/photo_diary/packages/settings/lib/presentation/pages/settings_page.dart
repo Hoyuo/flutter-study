@@ -15,6 +15,7 @@ class SettingsPage extends StatelessWidget {
         title: const Text('설정'),
       ),
       body: BlocConsumer<SettingsBloc, SettingsState>(
+        buildWhen: (prev, curr) => prev.settings != curr.settings || prev.isLoading != curr.isLoading,
         listener: (context, state) {
           // 에러 처리
           if (state.failure != null) {

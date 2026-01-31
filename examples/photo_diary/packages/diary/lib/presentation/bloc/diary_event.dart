@@ -7,7 +7,7 @@ part 'diary_event.freezed.dart';
 ///
 /// Freezed를 사용하여 sealed class로 정의된 이벤트들입니다.
 @freezed
-sealed class DiaryEvent with _$DiaryEvent {
+abstract class DiaryEvent with _$DiaryEvent {
   /// 일기 목록 로드 이벤트
   ///
   /// [startDate] 시작 날짜 (선택)

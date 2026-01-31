@@ -163,6 +163,32 @@ void main() {
               .having((s) => s.failure, 'failure', isNotNull),
         ],
       );
+
+      blocTest<DiaryBloc, DiaryState>(
+        '검색어가 설정된 상태에서 loadEntries 호출 시 검색 실행',
+        build: () {
+          when(() => mockSearchDiaries(any())).thenAnswer(
+            (_) async => Right([testEntry1]),
+          );
+          return bloc;
+        },
+        seed: () => const DiaryState(searchKeyword: '날씨'),
+        act: (bloc) => bloc.add(const DiaryEvent.loadEntries()),
+        expect: () => [
+          // 로딩 시작
+          isA<DiaryState>().having((s) => s.isLoading, 'isLoading', true),
+          // 검색 결과 로드
+          isA<DiaryState>()
+              .having((s) => s.entries.length, 'entries length', 1)
+              .having((s) => s.hasReachedEnd, 'hasReachedEnd', true),
+          // 로딩 종료
+          isA<DiaryState>().having((s) => s.isLoading, 'isLoading', false),
+        ],
+        verify: (_) {
+          verify(() => mockSearchDiaries(any())).called(1);
+          verifyNever(() => mockGetDiaries(any()));
+        },
+      );
     });
 
     group('특정 일기 로드 (LoadDiaryEntry)', () {
@@ -186,6 +212,63 @@ void main() {
         verify: (_) {
           verify(() => mockGetDiaryById('entry-1')).called(1);
         },
+      );
+
+      blocTest<DiaryBloc, DiaryState>(
+        '특정 일기 로드 실패 - AuthFailure',
+        build: () {
+          when(() => mockGetDiaryById(any())).thenAnswer(
+            (_) async => const Left(Failure.auth(message: '인증 오류')),
+          );
+          return bloc;
+        },
+        act: (bloc) => bloc.add(const DiaryEvent.loadEntry('entry-1')),
+        expect: () => [
+          // 로딩 시작
+          isA<DiaryState>().having((s) => s.isLoading, 'isLoading', true),
+          // 실패
+          isA<DiaryState>()
+              .having((s) => s.isLoading, 'isLoading', false)
+              .having((s) => s.failure, 'failure', isNotNull),
+        ],
+      );
+
+      blocTest<DiaryBloc, DiaryState>(
+        '특정 일기 로드 실패 - CacheFailure',
+        build: () {
+          when(() => mockGetDiaryById(any())).thenAnswer(
+            (_) async => const Left(Failure.cache(message: '캐시 오류')),
+          );
+          return bloc;
+        },
+        act: (bloc) => bloc.add(const DiaryEvent.loadEntry('entry-1')),
+        expect: () => [
+          // 로딩 시작
+          isA<DiaryState>().having((s) => s.isLoading, 'isLoading', true),
+          // 실패
+          isA<DiaryState>()
+              .having((s) => s.isLoading, 'isLoading', false)
+              .having((s) => s.failure, 'failure', isNotNull),
+        ],
+      );
+
+      blocTest<DiaryBloc, DiaryState>(
+        '특정 일기 로드 실패 - UnknownFailure',
+        build: () {
+          when(() => mockGetDiaryById(any())).thenAnswer(
+            (_) async => const Left(Failure.unknown(message: '알 수 없는 오류')),
+          );
+          return bloc;
+        },
+        act: (bloc) => bloc.add(const DiaryEvent.loadEntry('entry-1')),
+        expect: () => [
+          // 로딩 시작
+          isA<DiaryState>().having((s) => s.isLoading, 'isLoading', true),
+          // 실패
+          isA<DiaryState>()
+              .having((s) => s.isLoading, 'isLoading', false)
+              .having((s) => s.failure, 'failure', isNotNull),
+        ],
       );
     });
 
@@ -234,6 +317,40 @@ void main() {
               .having((s) => s.entries, 'entries', isEmpty),
         ],
       );
+
+      blocTest<DiaryBloc, DiaryState>(
+        '일기 생성 실패 - AuthFailure',
+        build: () {
+          when(() => mockCreateDiary(any())).thenAnswer(
+            (_) async => const Left(Failure.auth(message: '인증 오류')),
+          );
+          return bloc;
+        },
+        act: (bloc) => bloc.add(DiaryEvent.createEntry(testEntry1)),
+        expect: () => [
+          isA<DiaryState>().having((s) => s.isLoading, 'isLoading', true),
+          isA<DiaryState>()
+              .having((s) => s.isLoading, 'isLoading', false)
+              .having((s) => s.failure, 'failure', isNotNull),
+        ],
+      );
+
+      blocTest<DiaryBloc, DiaryState>(
+        '일기 생성 실패 - CacheFailure',
+        build: () {
+          when(() => mockCreateDiary(any())).thenAnswer(
+            (_) async => const Left(Failure.cache(message: '캐시 오류')),
+          );
+          return bloc;
+        },
+        act: (bloc) => bloc.add(DiaryEvent.createEntry(testEntry1)),
+        expect: () => [
+          isA<DiaryState>().having((s) => s.isLoading, 'isLoading', true),
+          isA<DiaryState>()
+              .having((s) => s.isLoading, 'isLoading', false)
+              .having((s) => s.failure, 'failure', isNotNull),
+        ],
+      );
     });
 
     group('일기 수정 (UpdateDiaryEntry)', () {
@@ -267,6 +384,42 @@ void main() {
           verify(() => mockUpdateDiary(updatedEntry)).called(1);
         },
       );
+
+      blocTest<DiaryBloc, DiaryState>(
+        '일기 수정 실패 - AuthFailure',
+        build: () {
+          when(() => mockUpdateDiary(any())).thenAnswer(
+            (_) async => const Left(Failure.auth(message: '인증 오류')),
+          );
+          return bloc;
+        },
+        seed: () => DiaryState(entries: [testEntry1]),
+        act: (bloc) => bloc.add(DiaryEvent.updateEntry(updatedEntry)),
+        expect: () => [
+          isA<DiaryState>().having((s) => s.isLoading, 'isLoading', true),
+          isA<DiaryState>()
+              .having((s) => s.isLoading, 'isLoading', false)
+              .having((s) => s.failure, 'failure', isNotNull),
+        ],
+      );
+
+      blocTest<DiaryBloc, DiaryState>(
+        '일기 수정 실패 - CacheFailure',
+        build: () {
+          when(() => mockUpdateDiary(any())).thenAnswer(
+            (_) async => const Left(Failure.cache(message: '캐시 오류')),
+          );
+          return bloc;
+        },
+        seed: () => DiaryState(entries: [testEntry1]),
+        act: (bloc) => bloc.add(DiaryEvent.updateEntry(updatedEntry)),
+        expect: () => [
+          isA<DiaryState>().having((s) => s.isLoading, 'isLoading', true),
+          isA<DiaryState>()
+              .having((s) => s.isLoading, 'isLoading', false)
+              .having((s) => s.failure, 'failure', isNotNull),
+        ],
+      );
     });
 
     group('일기 삭제 (DeleteDiaryEntry)', () {
@@ -292,6 +445,42 @@ void main() {
         verify: (_) {
           verify(() => mockDeleteDiary('entry-1')).called(1);
         },
+      );
+
+      blocTest<DiaryBloc, DiaryState>(
+        '일기 삭제 실패 - AuthFailure',
+        build: () {
+          when(() => mockDeleteDiary(any())).thenAnswer(
+            (_) async => const Left(Failure.auth(message: '인증 오류')),
+          );
+          return bloc;
+        },
+        seed: () => DiaryState(entries: [testEntry1]),
+        act: (bloc) => bloc.add(const DiaryEvent.deleteEntry('entry-1')),
+        expect: () => [
+          isA<DiaryState>().having((s) => s.isLoading, 'isLoading', true),
+          isA<DiaryState>()
+              .having((s) => s.isLoading, 'isLoading', false)
+              .having((s) => s.failure, 'failure', isNotNull),
+        ],
+      );
+
+      blocTest<DiaryBloc, DiaryState>(
+        '일기 삭제 실패 - CacheFailure',
+        build: () {
+          when(() => mockDeleteDiary(any())).thenAnswer(
+            (_) async => const Left(Failure.cache(message: '캐시 오류')),
+          );
+          return bloc;
+        },
+        seed: () => DiaryState(entries: [testEntry1]),
+        act: (bloc) => bloc.add(const DiaryEvent.deleteEntry('entry-1')),
+        expect: () => [
+          isA<DiaryState>().having((s) => s.isLoading, 'isLoading', true),
+          isA<DiaryState>()
+              .having((s) => s.isLoading, 'isLoading', false)
+              .having((s) => s.failure, 'failure', isNotNull),
+        ],
       );
     });
 
@@ -339,6 +528,44 @@ void main() {
         verify: (_) {
           verifyNever(() => mockSearchDiaries(any()));
         },
+      );
+
+      blocTest<DiaryBloc, DiaryState>(
+        '검색 실패 - AuthFailure',
+        build: () {
+          when(() => mockSearchDiaries(any())).thenAnswer(
+            (_) async => const Left(Failure.auth(message: '인증 오류')),
+          );
+          return bloc;
+        },
+        act: (bloc) => bloc.add(const DiaryEvent.searchByKeyword('날씨')),
+        expect: () => [
+          isA<DiaryState>()
+              .having((s) => s.searchKeyword, 'searchKeyword', '날씨')
+              .having((s) => s.isLoading, 'isLoading', true),
+          isA<DiaryState>()
+              .having((s) => s.failure, 'failure', isNotNull),
+          isA<DiaryState>().having((s) => s.isLoading, 'isLoading', false),
+        ],
+      );
+
+      blocTest<DiaryBloc, DiaryState>(
+        '검색 실패 - CacheFailure',
+        build: () {
+          when(() => mockSearchDiaries(any())).thenAnswer(
+            (_) async => const Left(Failure.cache(message: '캐시 오류')),
+          );
+          return bloc;
+        },
+        act: (bloc) => bloc.add(const DiaryEvent.searchByKeyword('날씨')),
+        expect: () => [
+          isA<DiaryState>()
+              .having((s) => s.searchKeyword, 'searchKeyword', '날씨')
+              .having((s) => s.isLoading, 'isLoading', true),
+          isA<DiaryState>()
+              .having((s) => s.failure, 'failure', isNotNull),
+          isA<DiaryState>().having((s) => s.isLoading, 'isLoading', false),
+        ],
       );
     });
 

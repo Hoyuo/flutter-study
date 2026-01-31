@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'app_settings.freezed.dart';
-part 'app_settings.g.dart';
 
 /// Application settings entity
 @freezed
-class AppSettings with _$AppSettings {
+abstract class AppSettings with _$AppSettings {
   const factory AppSettings({
     /// Theme mode (light, dark, or system)
     @Default(ThemeMode.system) ThemeMode themeMode,
@@ -23,9 +22,6 @@ class AppSettings with _$AppSettings {
     /// Reminder time for daily diary entries (null if disabled)
     @TimeOfDayConverter() TimeOfDay? reminderTime,
   }) = _AppSettings;
-
-  factory AppSettings.fromJson(Map<String, dynamic> json) =>
-      _$AppSettingsFromJson(json);
 }
 
 /// Converter for TimeOfDay to/from JSON

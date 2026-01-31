@@ -28,7 +28,16 @@
     "biometric_error": "생체인증 중 오류가 발생했습니다",
     "biometric_reason": "앱 잠금을 해제하려면 인증하세요",
     "authenticating": "인증 중...",
-    "retry_biometric": "다시 시도"
+    "retry_biometric": "다시 시도",
+    "welcome": "환영합니다",
+    "email_field": "이메일",
+    "email_hint": "이메일을 입력하세요",
+    "password_field": "비밀번호",
+    "password_hint": "비밀번호를 입력하세요",
+    "show_password": "비밀번호 보기",
+    "login_button": "로그인",
+    "no_account": "계정이 없으신가요?",
+    "register_link": "회원가입"
   },
   "diary": {
     "title": "일기",

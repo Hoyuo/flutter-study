@@ -133,6 +133,7 @@ class _DiaryEditPageState extends State<DiaryEditPage> {
   /// Body 빌드
   Widget _buildBody(BuildContext context) {
     return BlocBuilder<DiaryBloc, DiaryState>(
+      buildWhen: (prev, curr) => prev.isLoading != curr.isLoading || prev.selectedEntry != curr.selectedEntry,
       builder: (context, state) {
         // 로딩 중 (수정 모드 데이터 로드)
         if (_isEditing && state.isLoading && state.selectedEntry == null) {
@@ -250,6 +251,9 @@ class _DiaryEditPageState extends State<DiaryEditPage> {
 
       if (_isEditing) {
         // 수정
+        final state = context.read<DiaryBloc>().state;
+        final originalCreatedAt = state.selectedEntry?.createdAt ?? DateTime.now();
+
         final entry = DiaryEntry(
           id: widget.entryId!,
           userId: userId,
@@ -258,7 +262,7 @@ class _DiaryEditPageState extends State<DiaryEditPage> {
           photoUrls: _photoUrls,
           tags: tags,
           weather: _currentWeather,
-          createdAt: DateTime.now(), // 실제로는 기존 날짜 유지
+          createdAt: originalCreatedAt,
           updatedAt: DateTime.now(),
         );
         context.read<DiaryBloc>().add(DiaryEvent.updateEntry(entry));
@@ -304,36 +308,32 @@ class _DiaryEditPageState extends State<DiaryEditPage> {
 
   /// UI 이펙트 처리
   void _handleUiEffect(BuildContext context, DiaryUiEffect effect) {
-    effect.when(
-      showError: (message) {
+    switch (effect) {
+      case DiaryShowError(:final message):
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
-      },
-      showSuccess: (message) {
+      case DiaryShowSuccess(:final message):
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
             backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
-      },
-      navigateToDetail: (entryId) {
+      case DiaryNavigateToDetail():
         // 저장 성공 후 상세 페이지로 이동
         Navigator.of(context).pop();
         // TODO: 상세 페이지로 이동
         // context.push('/diary/$entryId');
-      },
-      navigateBack: () {
+      case DiaryNavigateBack():
         Navigator.of(context).pop();
-      },
-      confirmDelete: (entryId) {
+      case DiaryConfirmDelete():
         // 이 페이지에서는 사용하지 않음
-      },
-    );
+        break;
+    }
   }
 
   /// 태그 목록 가져오기

@@ -1,15 +1,11 @@
 import 'package:core/services/services.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:injectable/injectable.dart';
 import 'package:auth/auth.dart';
+import 'package:diary/diary.dart';
+import 'package:settings/settings.dart';
 
 import '../../features/splash/presentation/pages/splash_page.dart';
-import '../../features/diary/presentation/pages/diary_list_page.dart';
-import '../../features/diary/presentation/pages/diary_detail_page.dart';
-import '../../features/diary/presentation/pages/diary_edit_page.dart';
-import '../../features/search/presentation/pages/search_page.dart';
-import '../../features/settings/presentation/pages/settings_page.dart';
 import 'analytics_route_observer.dart';
 
 /// 앱 전체의 라우팅을 관리하는 클래스
@@ -19,7 +15,6 @@ import 'analytics_route_observer.dart';
 /// - 계층적 라우팅 구조
 /// - Deep Link 지원
 /// - Analytics 화면 조회 추적
-@singleton
 class AppRouter {
   final AuthBloc _authBloc;
   final AnalyticsService _analyticsService;

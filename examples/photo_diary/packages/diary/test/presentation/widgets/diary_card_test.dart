@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 // import 'package:network_image_mock/network_image_mock.dart';
 import 'package:diary/domain/entities/entities.dart';
 import 'package:diary/presentation/widgets/diary_card.dart';
+import 'package:diary/presentation/widgets/weather_info_card.dart';
 import 'package:core/core.dart';
 
 // 임시 헬퍼 함수 (network_image_mock 패키지 없이 테스트 실행)
@@ -233,6 +234,94 @@ void main() {
         expect(find.byType(Chip), findsNWidgets(3));
         // 4번째 태그는 표시되지 않음
         expect(find.text('태그4'), findsNothing);
+      });
+    });
+
+    testWidgets('어제 작성된 일기는 "어제" 포맷으로 표시된다', (tester) async {
+      // 어제 날짜로 일기 생성
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final yesterday = today.subtract(const Duration(days: 1));
+      final yesterdayWithTime = DateTime(
+        yesterday.year,
+        yesterday.month,
+        yesterday.day,
+        14,
+        30,
+      );
+
+      final yesterdayEntry = DiaryEntry(
+        id: '4',
+        userId: 'user_1',
+        title: '어제의 일기',
+        content: '어제 좋은 하루였다',
+        photoUrls: [],
+        tags: [],
+        createdAt: yesterdayWithTime,
+        updatedAt: yesterdayWithTime,
+      );
+
+      await mockNetworkImagesFor(() async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: DiaryCard(
+                entry: yesterdayEntry,
+                onTap: () {},
+              ),
+            ),
+          ),
+        );
+
+        // "어제" 텍스트가 표시되는지 확인 (Semantics 포함하여 여러 개 있을 수 있음)
+        expect(find.textContaining('어제'), findsAtLeastNWidgets(1));
+      });
+    });
+
+    testWidgets('날씨 정보가 있으면 WeatherInfoCard를 표시한다', (tester) async {
+      await mockNetworkImagesFor(() async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: DiaryCard(
+                entry: testEntry,
+                onTap: () {},
+              ),
+            ),
+          ),
+        );
+
+        // WeatherInfoCard가 표시되는지 확인
+        expect(find.byType(WeatherInfoCard), findsOneWidget);
+      });
+    });
+
+    testWidgets('날씨 정보가 없으면 WeatherInfoCard를 표시하지 않는다', (tester) async {
+      final entryWithoutWeather = DiaryEntry(
+        id: '5',
+        userId: 'user_1',
+        title: '날씨 없는 일기',
+        content: '내용',
+        photoUrls: [],
+        tags: [],
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      await mockNetworkImagesFor(() async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: DiaryCard(
+                entry: entryWithoutWeather,
+                onTap: () {},
+              ),
+            ),
+          ),
+        );
+
+        // WeatherInfoCard가 표시되지 않는지 확인
+        expect(find.byType(WeatherInfoCard), findsNothing);
       });
     });
   });

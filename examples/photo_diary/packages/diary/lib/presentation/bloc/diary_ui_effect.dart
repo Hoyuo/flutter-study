@@ -6,7 +6,7 @@ part 'diary_ui_effect.freezed.dart';
 ///
 /// 일회성 이벤트로, 스낵바 표시, 네비게이션 등에 사용됩니다.
 @freezed
-sealed class DiaryUiEffect with _$DiaryUiEffect {
+abstract class DiaryUiEffect with _$DiaryUiEffect {
   /// 에러 메시지 표시 이벤트
   ///
   /// [message] 표시할 에러 메시지

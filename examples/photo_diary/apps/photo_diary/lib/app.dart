@@ -36,6 +36,7 @@ class PhotoDiaryApp extends StatelessWidget {
         ),
       ],
       child: BlocBuilder<SettingsBloc, SettingsState>(
+        buildWhen: (prev, curr) => prev.settings?.themeMode != curr.settings?.themeMode || prev.settings?.languageCode != curr.settings?.languageCode,
         builder: (context, settingsState) {
           final appRouter = getIt<AppRouter>();
 

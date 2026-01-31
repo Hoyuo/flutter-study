@@ -51,6 +51,7 @@ class _DiaryDetailPageState extends State<DiaryDetailPage> {
   /// Body 빌드
   Widget _buildBody(BuildContext context) {
     return BlocBuilder<DiaryBloc, DiaryState>(
+      buildWhen: (prev, curr) => prev.selectedEntry != curr.selectedEntry || prev.isLoading != curr.isLoading || prev.failure != curr.failure,
       builder: (context, state) {
         // 로딩 중
         if (state.isLoading) {
@@ -197,7 +198,7 @@ class _DiaryDetailPageState extends State<DiaryDetailPage> {
                         .map(
                           (tag) => Chip(
                             label: Text(tag.name),
-                            backgroundColor: _parseColor(tag.colorHex),
+                            backgroundColor: ColorUtils.parseHex(tag.colorHex),
                           ),
                         )
                         .toList(),
@@ -310,44 +311,34 @@ class _DiaryDetailPageState extends State<DiaryDetailPage> {
 
   /// UI 이펙트 처리
   void _handleUiEffect(BuildContext context, DiaryUiEffect effect) {
-    effect.when(
-      showError: (message) {
+    switch (effect) {
+      case DiaryShowError(:final message):
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
-      },
-      showSuccess: (message) {
+      case DiaryShowSuccess(:final message):
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
             backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
-      },
-      navigateToDetail: (entryId) {
+      case DiaryNavigateToDetail():
         // 이미 상세 페이지에 있음
-      },
-      navigateBack: () {
+        break;
+      case DiaryNavigateBack():
         Navigator.of(context).pop();
-      },
-      confirmDelete: (entryId) {
+      case DiaryConfirmDelete(:final entryId):
         _showDeleteDialog(context, entryId);
-      },
-    );
+    }
   }
 
   /// 날짜 포맷팅
   String _formatDate(DateTime date) {
     return '${date.year}년 ${date.month}월 ${date.day}일 '
         '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-  }
-
-  /// Hex 컬러 문자열을 Color로 파싱
-  Color _parseColor(String hexColor) {
-    final hexCode = hexColor.replaceAll('#', '');
-    return Color(int.parse('FF$hexCode', radix: 16));
   }
 }

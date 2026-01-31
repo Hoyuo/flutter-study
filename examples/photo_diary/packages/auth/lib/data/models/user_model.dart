@@ -7,7 +7,7 @@ part 'user_model.g.dart';
 
 /// Data model for User entity
 @freezed
-class UserModel with _$UserModel {
+abstract class UserModel with _$UserModel {
   const UserModel._();
 
   const factory UserModel({

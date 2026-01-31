@@ -7,7 +7,7 @@ part 'auth_event.freezed.dart';
 /// Freezed를 사용하여 불변 이벤트 클래스들을 생성합니다.
 /// 각 이벤트는 사용자의 인증 관련 액션을 나타냅니다.
 @freezed
-sealed class AuthEvent with _$AuthEvent {
+abstract class AuthEvent with _$AuthEvent {
   /// 로그인 요청 이벤트
   ///
   /// [email]: 사용자 이메일

@@ -8,7 +8,7 @@ part 'app_settings_model.g.dart';
 
 /// Application settings data model for persistence
 @freezed
-class AppSettingsModel with _$AppSettingsModel {
+abstract class AppSettingsModel with _$AppSettingsModel {
   const AppSettingsModel._();
 
   const factory AppSettingsModel({

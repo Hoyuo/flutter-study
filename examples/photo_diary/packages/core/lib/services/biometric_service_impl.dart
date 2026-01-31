@@ -1,7 +1,5 @@
-import 'package:flutter/services.dart';
 import 'package:injectable/injectable.dart';
 import 'package:local_auth/local_auth.dart' as local_auth;
-import 'package:local_auth/error_codes.dart' as auth_error;
 
 import 'biometric_service.dart';
 
@@ -52,8 +50,9 @@ class BiometricServiceImpl implements BiometricService {
             return BiometricType.fingerprint;
           case local_auth.BiometricType.iris:
             return BiometricType.iris;
-          default:
-            return BiometricType.none;
+          case local_auth.BiometricType.strong:
+          case local_auth.BiometricType.weak:
+            return BiometricType.fingerprint;
         }
       }).toList();
     } catch (e) {
@@ -74,33 +73,16 @@ class BiometricServiceImpl implements BiometricService {
       // 생체인증 수행
       final authenticated = await _localAuth.authenticate(
         localizedReason: localizedReason,
-        options: const local_auth.AuthenticationOptions(
-          // 생체인증만 사용 (PIN/패턴 제외)
-          biometricOnly: false,
-          // 인증 상태 유지 (백그라운드에서 돌아와도 재인증 불필요)
-          stickyAuth: true,
-          // iOS에서 민감한 정보 처리 여부
-          sensitiveTransaction: true,
-        ),
+        // 생체인증만 사용 (PIN/패턴 제외)
+        biometricOnly: false,
+        // 인증 상태 유지 (백그라운드에서 돌아와도 재인증 불필요)
+        persistAcrossBackgrounding: true,
       );
 
       return authenticated;
-    } on PlatformException catch (e) {
-      // 플랫폼별 에러 처리
-      if (e.code == auth_error.notAvailable) {
-        // 생체인증 사용 불가
-        return false;
-      } else if (e.code == auth_error.notEnrolled) {
-        // 등록된 생체정보 없음
-        return false;
-      } else if (e.code == auth_error.lockedOut ||
-          e.code == auth_error.permanentlyLockedOut) {
-        // 너무 많은 실패로 인한 잠금
-        return false;
-      } else {
-        // 기타 에러 (사용자 취소 포함)
-        return false;
-      }
+    } on local_auth.LocalAuthException catch (_) {
+      // 모든 local_auth 예외는 인증 실패로 처리
+      return false;
     } catch (e) {
       // 예상치 못한 에러
       return false;

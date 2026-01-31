@@ -199,6 +199,38 @@ void main() {
           verify(() => mockUpdateSettings(any())).called(1);
         },
       );
+
+      blocTest<SettingsBloc, SettingsState>(
+        '언어 업데이트 실패',
+        build: () {
+          when(() => mockUpdateSettings(any())).thenAnswer(
+            (_) async => const Left(Failure.cache(message: '저장 실패')),
+          );
+          return bloc;
+        },
+        seed: () => const SettingsState(settings: defaultSettings),
+        act: (bloc) => bloc.add(const SettingsEvent.updateLocale(Locale('ko'))),
+        expect: () => [
+          // 저장 시작
+          isA<SettingsState>().having((s) => s.isSaving, 'isSaving', true),
+          // 저장 실패
+          isA<SettingsState>()
+              .having((s) => s.isSaving, 'isSaving', false)
+              .having((s) => s.failure, 'failure', isNotNull)
+              .having((s) => s.failure?.message, 'failure message', '저장 실패'),
+        ],
+      );
+
+      blocTest<SettingsBloc, SettingsState>(
+        '현재 설정이 없을 때 언어 업데이트 무시',
+        build: () => bloc,
+        seed: () => const SettingsState(settings: null),
+        act: (bloc) => bloc.add(const SettingsEvent.updateLocale(Locale('ko'))),
+        expect: () => [],
+        verify: (_) {
+          verifyNever(() => mockUpdateSettings(any()));
+        },
+      );
     });
 
     group('생체인증 토글 (ToggleBiometricAuth)', () {
@@ -244,6 +276,38 @@ void main() {
               .having((s) => s.settings?.biometricLockEnabled,
                   'biometricLockEnabled', false),
         ],
+      );
+
+      blocTest<SettingsBloc, SettingsState>(
+        '생체인증 토글 실패',
+        build: () {
+          when(() => mockUpdateSettings(any())).thenAnswer(
+            (_) async => const Left(Failure.cache(message: '저장 실패')),
+          );
+          return bloc;
+        },
+        seed: () => const SettingsState(settings: defaultSettings),
+        act: (bloc) => bloc.add(const SettingsEvent.toggleBiometricAuth(true)),
+        expect: () => [
+          // 저장 시작
+          isA<SettingsState>().having((s) => s.isSaving, 'isSaving', true),
+          // 저장 실패
+          isA<SettingsState>()
+              .having((s) => s.isSaving, 'isSaving', false)
+              .having((s) => s.failure, 'failure', isNotNull)
+              .having((s) => s.failure?.message, 'failure message', '저장 실패'),
+        ],
+      );
+
+      blocTest<SettingsBloc, SettingsState>(
+        '현재 설정이 없을 때 생체인증 토글 무시',
+        build: () => bloc,
+        seed: () => const SettingsState(settings: null),
+        act: (bloc) => bloc.add(const SettingsEvent.toggleBiometricAuth(true)),
+        expect: () => [],
+        verify: (_) {
+          verifyNever(() => mockUpdateSettings(any()));
+        },
       );
     });
 
@@ -292,6 +356,40 @@ void main() {
               .having((s) => s.settings?.notificationsEnabled,
                   'notificationsEnabled', true),
         ],
+      );
+
+      blocTest<SettingsBloc, SettingsState>(
+        '푸시 알림 토글 실패',
+        build: () {
+          when(() => mockUpdateSettings(any())).thenAnswer(
+            (_) async => const Left(Failure.cache(message: '저장 실패')),
+          );
+          return bloc;
+        },
+        seed: () => const SettingsState(settings: defaultSettings),
+        act: (bloc) =>
+            bloc.add(const SettingsEvent.togglePushNotification(false)),
+        expect: () => [
+          // 저장 시작
+          isA<SettingsState>().having((s) => s.isSaving, 'isSaving', true),
+          // 저장 실패
+          isA<SettingsState>()
+              .having((s) => s.isSaving, 'isSaving', false)
+              .having((s) => s.failure, 'failure', isNotNull)
+              .having((s) => s.failure?.message, 'failure message', '저장 실패'),
+        ],
+      );
+
+      blocTest<SettingsBloc, SettingsState>(
+        '현재 설정이 없을 때 푸시 알림 토글 무시',
+        build: () => bloc,
+        seed: () => const SettingsState(settings: null),
+        act: (bloc) =>
+            bloc.add(const SettingsEvent.togglePushNotification(false)),
+        expect: () => [],
+        verify: (_) {
+          verifyNever(() => mockUpdateSettings(any()));
+        },
       );
     });
 
@@ -372,6 +470,25 @@ void main() {
               .having((s) => s.isSaving, 'isSaving', false)
               .having((s) => s.settings?.themeMode, 'themeMode', ThemeMode.dark)
               .having((s) => s.settings?.languageCode, 'languageCode', 'ko'),
+        ],
+      );
+    });
+
+    group('_getFailureMessage 메서드 테스트', () {
+      blocTest<SettingsBloc, SettingsState>(
+        'UnknownFailure 발생 시 메시지 생성',
+        build: () {
+          when(() => mockGetSettings(any())).thenAnswer(
+            (_) async => const Left(Failure.unknown(message: '알 수 없는 오류')),
+          );
+          return bloc;
+        },
+        act: (bloc) => bloc.add(const SettingsEvent.loadSettings()),
+        expect: () => [
+          isA<SettingsState>().having((s) => s.isLoading, 'isLoading', true),
+          isA<SettingsState>()
+              .having((s) => s.isLoading, 'isLoading', false)
+              .having((s) => s.failure, 'failure', isNotNull),
         ],
       );
     });

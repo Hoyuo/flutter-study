@@ -32,9 +32,9 @@ class Validators {
   }
 
   /// 비밀번호 확인
-  static String? Function(String?) confirmPassword(String password) {
+  static String? Function(String?) confirmPassword(String Function() password) {
     return (String? value) {
-      if (value != password) {
+      if (value != password()) {
         return '비밀번호가 일치하지 않습니다';
       }
       return null;
