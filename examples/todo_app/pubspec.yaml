@@ -1,0 +1,61 @@
+name: todo_app_workspace
+publish_to: none
+
+environment:
+  sdk: ">=3.10.0 <4.0.0"
+
+workspace:
+  - apps/todo_app
+  - packages/core
+  - packages/task
+  - packages/category
+  - packages/settings
+
+dev_dependencies:
+  melos: ^7.0.0
+
+melos:
+  name: todo_app_workspace
+
+  packages:
+    - apps/*
+    - packages/*
+
+  sdkPath: .fvm/flutter_sdk
+
+  command:
+    bootstrap:
+      enforceLockfile: false
+
+  scripts:
+    clean:
+      run: melos exec -- "flutter clean"
+      description: Clean all packages
+
+    get:
+      run: melos exec -- "flutter pub get"
+      description: Get dependencies for all packages
+
+    build_runner:
+      run: melos exec --order-dependents --concurrency=1 --depends-on="build_runner" -- "dart run build_runner build --delete-conflicting-outputs"
+      description: Run build_runner for all packages in dependency order
+
+    build_runner:watch:
+      run: melos exec --depends-on="build_runner" -- "dart run build_runner watch --delete-conflicting-outputs"
+      description: Run build_runner in watch mode
+
+    analyze:
+      run: melos exec -- "flutter analyze"
+      description: Analyze all packages
+
+    test:
+      run: melos exec -- "flutter test"
+      description: Run tests for all packages
+
+    build:apk:
+      run: cd apps/todo_app && flutter build apk --debug
+      description: Build Android APK (debug)
+
+    build:ios:
+      run: cd apps/todo_app && flutter build ios --no-codesign
+      description: Build iOS (no codesign)
