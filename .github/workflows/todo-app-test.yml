@@ -1,6 +1,7 @@
 name: Todo App - Test & Coverage
 
 on:
+  workflow_dispatch:  # Manual trigger
   push:
     branches: [main, develop]
     paths:
