@@ -21,7 +21,7 @@ melos:
     - apps/*
     - packages/*
 
-  sdkPath: .fvm/flutter_sdk
+  # sdkPath: .fvm/flutter_sdk  # Disabled for CI compatibility - uses system Flutter
 
   command:
     bootstrap:
