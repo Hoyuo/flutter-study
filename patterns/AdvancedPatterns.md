@@ -372,7 +372,7 @@ void main() {
     .and(OrderTotalAboveSpec(Money(100, 'USD')));
   
   if (eligibleForDiscount.isSatisfiedBy(order)) {
-    print('Discount can be applied!');
+    debugPrint('Discount can be applied!');
   }
 }
 ```

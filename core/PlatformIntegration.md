@@ -567,7 +567,7 @@ class LocationStreamHandler: NSObject, FlutterStreamHandler, CLLocationManagerDe
 class ImageTransferChannel {
   static const BasicMessageChannel<ByteData> _channel = BasicMessageChannel(
     'com.example.app/image_transfer',
-    StandardMessageCodec(),
+    BinaryCodec(),
   );
 
   Future<void> sendImage(Uint8List imageBytes) async {

@@ -597,7 +597,8 @@ class Event with _$Event {
 DateTime _dateFromJson(String json) => DateTime.parse(json);
 String _dateToJson(DateTime date) => date.toIso8601String();
 
-Color _colorFromJson(int json) => Color(json);
+// Flutter 3.27+: Color.fromARGB32() 사용 (Color(int) 생성자는 deprecated)
+Color _colorFromJson(int json) => Color.fromARGB32(json);
 // Flutter 3.27+ (Dart 3.6+): toARGB32() 사용
 // Flutter 3.27 미만: color.value 사용
 int _colorToJson(Color color) => color.toARGB32();
