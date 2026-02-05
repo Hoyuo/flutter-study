@@ -415,10 +415,22 @@ class ConnectivityBloc extends Bloc<ConnectivityEvent, ConnectivityState> {
 // App에서 제공
 MultiBlocProvider(
   providers: [
-    BlocProvider<AuthBloc>(create: (_) => GetIt.I<AuthBloc>()),
-    BlocProvider<ThemeBloc>(create: (_) => GetIt.I<ThemeBloc>()),
-    BlocProvider<LocaleBloc>(create: (_) => GetIt.I<LocaleBloc>()),
-    BlocProvider<ConnectivityBloc>(create: (_) => GetIt.I<ConnectivityBloc>()),
+    BlocProvider<AuthBloc>(
+      create: (_) => AuthBloc(
+        GetIt.I<AuthRepository>(),
+      ),
+    ),
+    BlocProvider<ThemeBloc>(
+      create: (_) => ThemeBloc(),
+    ),
+    BlocProvider<LocaleBloc>(
+      create: (_) => LocaleBloc(),
+    ),
+    BlocProvider<ConnectivityBloc>(
+      create: (_) => ConnectivityBloc(
+        GetIt.I<ConnectivityRepository>(),
+      ),
+    ),
   ],
   child: const MyApp(),
 )
@@ -494,6 +506,7 @@ class AppState with _$AppState {
     @Default({}) Map<String, Order> ordersById,
     @Default({}) Map<String, Product> productsById,
     @Default({}) Map<String, User> usersById,
+    Failure? error,
   }) = _AppState;
 }
 
