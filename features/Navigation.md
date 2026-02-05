@@ -20,14 +20,15 @@ dependencies:
 - ShellRoute의 네비게이션 변경이 기본적으로 GoRouter의 observers에 알림을 보냅니다.
 - 최소 지원 버전: Flutter 3.32, Dart 3.8 (go_router v17)
 
-> **버전 호환성 참고:**
-> | go_router 버전 | Flutter 최소 버전 | Dart 최소 버전 |
-> |---------------|------------------|---------------|
-> | v17.x | Flutter 3.32+ | Dart 3.8+ |
-> | v14.x - v16.x | Flutter 3.19+ | Dart 3.3+ |
-> | v13.x | Flutter 3.16+ | Dart 3.2+ |
+> **⚠️ 버전 호환성 주의:**
+> | go_router 버전 | Flutter 최소 버전 | Dart 최소 버전 | 비고 |
+> |---------------|------------------|---------------|------|
+> | v17.x | Flutter 3.32+ | Dart 3.8+ | 차기 Flutter 버전 필요 |
+> | v14.x - v16.x | Flutter 3.19+ | Dart 3.3+ | **Flutter 3.27 호환** |
+> | v13.x | Flutter 3.16+ | Dart 3.2+ | 레거시 |
 >
-> Flutter 3.27 사용 시 `go_router: ^14.0.0` ~ `^16.x.x`를 사용하세요.
+> **현재 Flutter 3.27 사용 시 `go_router: ^14.0.0` ~ `^16.x.x`를 사용하세요.**
+> go_router v17은 아직 출시되지 않은 Flutter 3.32+를 요구하므로, 현재 프로젝트에서는 v14~v16을 권장합니다.
 
 **New Features:**
 - `notifyRootObserver` 파라미터 추가 (ShellRouteBase, ShellRoute, StatefulShellRoute)

@@ -19,6 +19,21 @@ Toast, Dialog, Navigation 등 일회성 이벤트 처리 패턴에 대한 가이
 
 ---
 
+> **TL;DR - 언제 사용하나요?**
+>
+> Toast, SnackBar, Dialog, Navigation 같은 **일회성 UI 이벤트**를 Bloc에서 처리해야 할 때 이 패턴을 사용합니다.
+>
+> | 상황 | 해결책 |
+> |------|--------|
+> | State로 표현 가능 (로딩, 에러 화면) | `BlocBuilder`로 처리 |
+> | 일회성 이벤트 (Toast, Navigation) | `BlocListener` + UiEffect 패턴 |
+>
+> 핵심: State는 **지속되는 UI 상태**, UiEffect는 **한 번 실행되고 사라지는 액션**입니다.
+>
+> 관련 문서: [Bloc.md](./Bloc.md) - Bloc 기본 패턴
+
+---
+
 ## 1. 문제 상황
 
 ### 이런 코드, 작성해본 적 있으신가요?

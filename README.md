@@ -1,6 +1,6 @@
 # Flutter Clean Architecture Reference Guide
 
-Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 32개의 문서와 실제 구현 예제를 제공합니다.
+Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 41개의 문서와 실제 구현 예제를 제공합니다.
 
 ## Overview
 
@@ -15,16 +15,16 @@ Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architect
 
 ```
 flutter-study/
-├── core/           # 핵심 아키텍처 (5개)
-├── infrastructure/ # 인프라 (5개)
+├── core/           # 핵심 아키텍처 (8개)
+├── infrastructure/ # 인프라 (6개)
 ├── networking/     # 네트워킹 (2개)
 ├── features/       # 기능별 가이드 (4개)
-├── patterns/       # 필수 패턴 (7개)
-├── system/         # 시스템 (9개)
+├── patterns/       # 필수 패턴 (8개)
+├── system/         # 시스템 (12개)
 └── examples/       # 실제 구현 예제
 ```
 
-**총 32개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
+**총 41개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
 
 ## Quick Start
 
@@ -42,7 +42,7 @@ flutter-study/
 
 ### 2. 예제 앱 실행
 
-[Photo Diary](./examples/photo_diary/) 앱은 32개 문서의 모든 패턴을 구현한 완전한 예제입니다.
+[Photo Diary](./examples/photo_diary/) 앱은 41개 문서의 모든 패턴을 구현한 완전한 예제입니다.
 
 ```bash
 cd examples/photo_diary
@@ -53,13 +53,13 @@ flutter run
 
 ## Documentation Categories
 
-### Core (5개)
+### Core (8개)
 핵심 아키텍처 패턴
-- Architecture, Bloc, BlocUiEffect, Freezed, Fpdart
+- Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, AdvancedStateManagement, PlatformIntegration
 
-### Infrastructure (5개)
+### Infrastructure (6개)
 인프라 설정
-- DI, Environment, LocalStorage, CICD, StoreSubmission
+- DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD
 
 ### Networking (2개)
 네트워크 통신
@@ -69,13 +69,25 @@ flutter run
 기능별 구현
 - Navigation, Localization, Permission, PushNotification
 
-### Patterns (7개)
+### Patterns (8개)
 공통 패턴
-- Analytics, ImageHandling, Pagination, FormValidation, InAppPurchase, Animation, OfflineSupport
+- Analytics, ImageHandling, Pagination, FormValidation, InAppPurchase, Animation, OfflineSupport, AdvancedPatterns
 
-### System (9개)
+### System (12개)
 시스템 품질
-- ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring
+- ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring, AdvancedPerformance, AdvancedTesting, AdvancedSecurity, ProductionOperations
+
+### Advanced - Senior Level (9개)
+10년차+ 시니어 개발자를 위한 고급 주제
+- [ModularArchitecture](./core/ModularArchitecture.md) - Mono-repo, Melos, Micro Frontend
+- [AdvancedStateManagement](./core/AdvancedStateManagement.md) - CQRS, Event Sourcing, Undo/Redo
+- [PlatformIntegration](./core/PlatformIntegration.md) - Platform Channel, FFI, Pigeon
+- [AdvancedPerformance](./system/AdvancedPerformance.md) - Custom RenderObject, Impeller, Memory Profiling
+- [AdvancedTesting](./system/AdvancedTesting.md) - Property-based, Golden Test, E2E
+- [AdvancedSecurity](./system/AdvancedSecurity.md) - Code Obfuscation, RASP, mTLS
+- [AdvancedCICD](./infrastructure/AdvancedCICD.md) - Trunk-based, Canary Release, Shorebird
+- [ProductionOperations](./system/ProductionOperations.md) - SLO/SLI, Crash-free Rate, Incident Management
+- [AdvancedPatterns](./patterns/AdvancedPatterns.md) - DDD, Hexagonal, Saga, Specification
 
 ## Tech Stack
 

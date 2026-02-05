@@ -738,3 +738,12 @@ inside GetIt.
 - [GetIt 공식 문서](https://pub.dev/packages/get_it)
 - [Injectable 공식 문서](https://pub.dev/packages/injectable)
 - [Injectable Generator](https://pub.dev/packages/injectable_generator)
+
+## 관련 문서
+
+| 문서 | 설명 |
+|------|------|
+| [Architecture.md](../core/Architecture.md) | DI가 적용되는 전체 아키텍처 |
+| [Environment.md](./Environment.md) | 환경별 DI 설정 |
+| [Bloc.md](../core/Bloc.md) | Bloc은 Injectable로 등록하지 않는 이유 |
+| [Testing.md](../system/Testing.md) | DI Mock을 활용한 테스트 |

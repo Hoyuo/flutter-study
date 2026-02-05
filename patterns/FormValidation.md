@@ -83,8 +83,8 @@ class _BasicFormExampleState extends State<BasicFormExample> {
     if (_formKey.currentState?.validate() ?? false) {
       _formKey.currentState!.save();
       // 폼 유효함 - 제출 로직
-      print('Email: ${_emailController.text}');
-      print('Password: ${_passwordController.text}');
+      debugPrint('Email: ${_emailController.text}');
+      debugPrint('Password: ${_passwordController.text}');
     }
   }
 }

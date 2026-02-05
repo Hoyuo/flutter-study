@@ -241,8 +241,9 @@ final userName = result.map((user) => user.name);
 
 ```dart
 // 여러 Either 연산을 연결
-// ❌ 잘못된 방법: flatMap은 동기 함수만 받음
-// return userResult.flatMap((user) async { ... });  // 컴파일 에러!
+// ❌ 잘못된 방법: Either.flatMap은 동기적으로 Either를 반환해야 함
+// return userResult.flatMap((user) async { ... });  // 컴파일 에러! (Future 반환 불가)
+// 참고: TaskEither.flatMap은 동기적으로 TaskEither를 반환하며, 비동기 작업은 TaskEither 내부에서 처리
 
 // ✅ 방법 1: fold 사용
 Future<Either<UserFailure, Profile>> getUserProfile(String userId) async {
@@ -956,3 +957,12 @@ class UserBloc {
 - [fpdart 공식 문서](https://pub.dev/packages/fpdart)
 - [fpdart GitHub](https://github.com/SandroMaglione/fpdart)
 - [Functional Programming in Dart](https://www.sandromaglione.com/articles/functional-programming-in-dart-and-flutter)
+
+## 관련 문서
+
+| 문서 | 설명 |
+|------|------|
+| [Architecture.md](./Architecture.md) | Either 패턴이 적용되는 전체 아키텍처 |
+| [ErrorHandling.md](../system/ErrorHandling.md) | Failure 클래스 설계와 에러 분류 |
+| [Bloc.md](./Bloc.md) | Bloc에서 Either 결과 처리 |
+| [Networking_Dio.md](../networking/Networking_Dio.md) | DioException → Either 변환 |

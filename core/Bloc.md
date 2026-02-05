@@ -23,6 +23,42 @@ Flutter에서 Bloc(Business Logic Component) 패턴을 사용한 상태 관리 �
 
 ---
 
+> **Quick Start (5분 요약)**
+>
+> Bloc은 `Event → Bloc → State` 흐름으로 상태를 관리합니다.
+> ```dart
+> // 1. Event 정의 (Freezed)
+> @freezed
+> class HomeEvent with _$HomeEvent {
+>   const factory HomeEvent.load() = _Load;
+> }
+>
+> // 2. State 정의 (Freezed)
+> @freezed
+> class HomeState with _$HomeState {
+>   const factory HomeState.initial() = _Initial;
+>   const factory HomeState.loaded(HomeData data) = _Loaded;
+>   const factory HomeState.error(HomeFailure failure) = _Error;
+> }
+>
+> // 3. Bloc 구현
+> class HomeBloc extends Bloc<HomeEvent, HomeState> {
+>   HomeBloc(this._useCase) : super(const HomeState.initial()) {
+>     on<HomeEvent>((event, emit) async {
+>       final result = await _useCase();
+>       result.fold(
+>         (failure) => emit(HomeState.error(failure)),
+>         (data) => emit(HomeState.loaded(data)),
+>       );
+>     });
+>   }
+>   final GetHomeDataUseCase _useCase;
+> }
+> ```
+> 자세한 내용은 아래 각 섹션을 참조하세요.
+
+---
+
 ## 1. Bloc 개요
 
 ### Bloc이란?
