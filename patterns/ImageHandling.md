@@ -593,13 +593,13 @@ class FileCleanupUtility {
             try {
               await entity.delete();
             } catch (e) {
-              print('Failed to delete old file: ${entity.path} - $e');
+              debugPrint('Failed to delete old file: ${entity.path} - $e');
             }
           }
         }
       }
     } catch (e) {
-      print('Failed to cleanup old temp files: $e');
+      debugPrint('Failed to cleanup old temp files: $e');
     }
   }
 
@@ -608,9 +608,9 @@ class FileCleanupUtility {
     try {
       // 플랫폼별 캐시 디렉토리 정리는 path_provider 사용
       // 여기서는 예시만 제공
-      print('Cache cleared successfully');
+      debugPrint('Cache cleared successfully');
     } catch (e) {
-      print('Failed to clear cache: $e');
+      debugPrint('Failed to clear cache: $e');
     }
   }
 }

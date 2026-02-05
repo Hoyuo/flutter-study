@@ -288,7 +288,7 @@ class SagaOrchestrator {
   
   Future<void> _compensate() async {
     for (final step in executedSteps.reversed) {
-      print('Compensating: ${step.name}');
+      debugPrint('Compensating: ${step.name}');
       await step.compensate();
     }
   }

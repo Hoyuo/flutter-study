@@ -2459,100 +2459,191 @@ class StateSnapshot<S> {
 
 ### 9.2 Time-travel Bloc
 
+Time-travel 기능을 Bloc에 통합할 때는 **Mixin 패턴**을 사용하는 것이 권장됩니다.
+제네릭 상속(`TimeTravelBloc<E, S>`)은 타입 안전성 문제를 일으킵니다:
+- `Bloc<E, S>`의 이벤트 타입 `E`와 time-travel 이벤트(`TimeTravelBack` 등)가 호환되지 않음
+- `add(TimeTravelBack() as E)`와 같은 unsafe cast가 런타임 에러를 유발
+
+Mixin 접근법은 time-travel 기능을 도메인 이벤트와 분리하여 타입 안전성을 유지합니다.
+
 ```dart
-// Time travel events
-abstract class TimeTravelEvent {}
-class TimeTravelBack extends TimeTravelEvent {}
-class TimeTravelForward extends TimeTravelEvent {}
-class TimeTravelJumpTo extends TimeTravelEvent {
-  final int index;
-  TimeTravelJumpTo(this.index);
-}
-
-class TimeTravelBloc<E, S> extends Bloc<E, S> {
-  final StateHistoryTracker<S> _historyTracker;
+// Time Travel 기능을 Mixin으로 제공
+// 각 Bloc은 자신의 도메인 이벤트에 undo/redo 이벤트를 추가하여 사용
+mixin TimeTravelMixin<S> on BlocBase<S> {
+  final List<S> _history = [];
+  int _currentIndex = -1;
   bool _isTimeTraveling = false;
+  final int _maxHistorySize = 100;
 
-  TimeTravelBloc(
-    S initialState, {
-    int maxHistorySize = 100,
-  })  : _historyTracker = StateHistoryTracker(maxHistorySize: maxHistorySize),
-        super(initialState) {
-    // 초기 상태 기록
-    _historyTracker.record(initialState);
+  /// 새로운 상태를 히스토리에 기록
+  /// time-travel 중에는 기록하지 않음 (무한 루프 방지)
+  void recordState(S state) {
+    if (_isTimeTraveling) return;
 
-    // 모든 상태 변화 추적
-    stream.listen((state) {
-      if (!_isTimeTraveling) {
-        _historyTracker.record(state);
-      }
-    });
+    // 현재 위치 이후의 히스토리 제거 (새로운 분기 생성)
+    if (_currentIndex < _history.length - 1) {
+      _history.removeRange(_currentIndex + 1, _history.length);
+    }
 
-    // ⚠️ Bloc 8.x+: emit()은 on<Event> 핸들러 내부에서만 호출 가능
-    on<TimeTravelBack>((event, emit) {
-      final previousState = _historyTracker.goBack();
-      if (previousState != null) {
-        _isTimeTraveling = true;
-        emit(previousState);
-        _isTimeTraveling = false;
-      }
-    });
+    _history.add(state);
+    _currentIndex = _history.length - 1;
 
-    on<TimeTravelForward>((event, emit) {
-      final nextState = _historyTracker.goForward();
-      if (nextState != null) {
-        _isTimeTraveling = true;
-        emit(nextState);
-        _isTimeTraveling = false;
-      }
-    });
-
-    on<TimeTravelJumpTo>((event, emit) {
-      final targetState = _historyTracker.jumpTo(event.index);
-      if (targetState != null) {
-        _isTimeTraveling = true;
-        emit(targetState);
-        _isTimeTraveling = false;
-      }
-    });
+    // 히스토리 크기 제한
+    if (_history.length > _maxHistorySize) {
+      _history.removeAt(0);
+      _currentIndex--;
+    }
   }
 
-  // Time travel 메서드 - 이제 이벤트를 dispatch함
-  void goBack() => add(TimeTravelBack() as E);
-  void goForward() => add(TimeTravelForward() as E);
-  void jumpToState(int index) => add(TimeTravelJumpTo(index) as E);
+  /// 이전 상태로 이동 (emit 포함)
+  void undoState(Emitter<S> emit) {
+    if (canUndo) {
+      _isTimeTraveling = true;
+      _currentIndex--;
+      emit(_history[_currentIndex]);
+      _isTimeTraveling = false;
+    }
+  }
 
-  bool get canGoBack => _historyTracker.canGoBack();
-  bool get canGoForward => _historyTracker.canGoForward();
+  /// 다음 상태로 이동 (emit 포함)
+  void redoState(Emitter<S> emit) {
+    if (canRedo) {
+      _isTimeTraveling = true;
+      _currentIndex++;
+      emit(_history[_currentIndex]);
+      _isTimeTraveling = false;
+    }
+  }
 
-  List<StateSnapshot<S>> get stateHistory => _historyTracker.history;
-  int get currentHistoryIndex => _historyTracker.currentIndex;
+  /// 특정 인덱스로 점프 (emit 포함)
+  void jumpToState(int index, Emitter<S> emit) {
+    if (index >= 0 && index < _history.length) {
+      _isTimeTraveling = true;
+      _currentIndex = index;
+      emit(_history[_currentIndex]);
+      _isTimeTraveling = false;
+    }
+  }
+
+  bool get canUndo => _currentIndex > 0;
+  bool get canRedo => _currentIndex < _history.length - 1;
+
+  S? get previousState => canUndo ? _history[_currentIndex - 1] : null;
+  S? get nextState => canRedo ? _history[_currentIndex + 1] : null;
+
+  List<S> get stateHistory => List.unmodifiable(_history);
+  int get historyIndex => _currentIndex;
 }
 
-// 사용 예
-class CounterBloc extends TimeTravelBloc<CounterEvent, int> {
+// 사용 예: CounterBloc
+sealed class CounterEvent {}
+class CounterIncremented extends CounterEvent {}
+class CounterDecremented extends CounterEvent {}
+class CounterUndone extends CounterEvent {}  // undo 이벤트
+class CounterRedone extends CounterEvent {}  // redo 이벤트
+class CounterJumpedTo extends CounterEvent {
+  final int index;
+  CounterJumpedTo(this.index);
+}
+
+class CounterBloc extends Bloc<CounterEvent, int> with TimeTravelMixin<int> {
   CounterBloc() : super(0) {
-    on<Increment>((event, emit) => emit(state + 1));
-    on<Decrement>((event, emit) => emit(state - 1));
+    // 초기 상태 기록
+    recordState(state);
+
+    on<CounterIncremented>((event, emit) {
+      final newState = state + 1;
+      emit(newState);
+      recordState(newState);  // 상태 변경 후 기록
+    });
+
+    on<CounterDecremented>((event, emit) {
+      final newState = state - 1;
+      emit(newState);
+      recordState(newState);
+    });
+
+    // Time-travel 이벤트 핸들러
+    on<CounterUndone>((event, emit) => undoState(emit));
+    on<CounterRedone>((event, emit) => redoState(emit));
+    on<CounterJumpedTo>((event, emit) => jumpToState(event.index, emit));
   }
 }
+
+// UI에서 사용
+// bloc.add(CounterIncremented());
+// bloc.add(CounterUndone());  // undo
+// bloc.add(CounterRedone());  // redo
 ```
 
 ### 9.3 Time-travel DevTools UI
 
 ```dart
-class TimeTravelDebugger extends StatelessWidget {
-  final TimeTravelBloc bloc;
+// Bloc이 제공해야 하는 undo/redo 이벤트 인터페이스
+// 각 Bloc은 이 이벤트들을 자신의 이벤트 타입으로 구현해야 함
+abstract class UndoableBloc<E, S> extends Bloc<E, S> with TimeTravelMixin<S> {
+  UndoableBloc(super.initialState);
 
-  const TimeTravelDebugger({super.key, required this.bloc});
+  // UI에서 호출할 메서드 - 구현 블록에서 적절한 이벤트를 dispatch
+  void undo();
+  void redo();
+  void jumpTo(int index);
+}
+
+// CounterBloc을 UndoableBloc으로 재구성
+class CounterBlocWithDebugger extends UndoableBloc<CounterEvent, int> {
+  CounterBlocWithDebugger() : super(0) {
+    recordState(state);
+
+    on<CounterIncremented>((event, emit) {
+      final newState = state + 1;
+      emit(newState);
+      recordState(newState);
+    });
+
+    on<CounterDecremented>((event, emit) {
+      final newState = state - 1;
+      emit(newState);
+      recordState(newState);
+    });
+
+    on<CounterUndone>((event, emit) => undoState(emit));
+    on<CounterRedone>((event, emit) => redoState(emit));
+    on<CounterJumpedTo>((event, emit) => jumpToState(event.index, emit));
+  }
+
+  @override
+  void undo() => add(CounterUndone());
+
+  @override
+  void redo() => add(CounterRedone());
+
+  @override
+  void jumpTo(int index) => add(CounterJumpedTo(index));
+}
+
+// 범용 Time-travel Debugger UI
+class TimeTravelDebugger<E, S> extends StatelessWidget {
+  final UndoableBloc<E, S> bloc;
+  final String Function(S)? stateFormatter;
+
+  const TimeTravelDebugger({
+    super.key,
+    required this.bloc,
+    this.stateFormatter,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
+    return StreamBuilder<S>(
       stream: bloc.stream,
       builder: (context, snapshot) {
         final history = bloc.stateHistory;
-        final currentIndex = bloc.currentHistoryIndex;
+        final currentIndex = bloc.historyIndex;
+
+        if (history.isEmpty) {
+          return const Center(child: Text('No history'));
+        }
 
         return Column(
           children: [
@@ -2561,11 +2652,9 @@ class TimeTravelDebugger extends StatelessWidget {
               value: currentIndex.toDouble(),
               min: 0,
               max: (history.length - 1).toDouble(),
-              divisions: history.length - 1,
-              label: 'State ${currentIndex + 1}',
-              onChanged: (value) {
-                bloc.jumpToState(value.toInt());
-              },
+              divisions: history.length > 1 ? history.length - 1 : 1,
+              label: 'State ${currentIndex + 1}/${history.length}',
+              onChanged: (value) => bloc.jumpTo(value.toInt()),
             ),
 
             // Control Buttons
@@ -2574,11 +2663,14 @@ class TimeTravelDebugger extends StatelessWidget {
               children: [
                 IconButton(
                   icon: const Icon(Icons.skip_previous),
-                  onPressed: bloc.canGoBack ? bloc.goBack : null,
+                  onPressed: bloc.canUndo ? bloc.undo : null,
+                  tooltip: 'Undo',
                 ),
+                Text('${currentIndex + 1}/${history.length}'),
                 IconButton(
                   icon: const Icon(Icons.skip_next),
-                  onPressed: bloc.canGoForward ? bloc.goForward : null,
+                  onPressed: bloc.canRedo ? bloc.redo : null,
+                  tooltip: 'Redo',
                 ),
               ],
             ),
@@ -2588,28 +2680,25 @@ class TimeTravelDebugger extends StatelessWidget {
               child: ListView.builder(
                 itemCount: history.length,
                 itemBuilder: (context, index) {
-                  final snapshot = history[index];
+                  final state = history[index];
                   final isActive = index == currentIndex;
 
                   return ListTile(
                     leading: CircleAvatar(
-                      child: Text('${index + 1}'),
                       backgroundColor: isActive ? Colors.blue : Colors.grey,
+                      child: Text('${index + 1}'),
                     ),
                     title: Text(
-                      snapshot.eventName ?? 'State ${index + 1}',
+                      'State ${index + 1}',
                       style: TextStyle(
                         fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
-                    subtitle: Text(
-                      _formatTimestamp(snapshot.timestamp),
-                    ),
                     trailing: Text(
-                      snapshot.state.toString(),
+                      stateFormatter?.call(state) ?? state.toString(),
                       style: const TextStyle(fontFamily: 'monospace'),
                     ),
-                    onTap: () => bloc.jumpToState(index),
+                    onTap: () => bloc.jumpTo(index),
                   );
                 },
               ),
@@ -2619,11 +2708,13 @@ class TimeTravelDebugger extends StatelessWidget {
       },
     );
   }
-
-  String _formatTimestamp(DateTime timestamp) {
-    return '${timestamp.hour}:${timestamp.minute}:${timestamp.second}.${timestamp.millisecond}';
-  }
 }
+
+// 사용 예
+// TimeTravelDebugger(
+//   bloc: counterBloc,
+//   stateFormatter: (count) => 'Count: $count',
+// )
 ```
 
 ### 9.4 Redux DevTools 통합

@@ -1190,13 +1190,13 @@ void setupFCM() {
 
 Future<void> _handler(RemoteMessage message) async {
   // Notification Message는 여기서 호출되지 않음!
-  print(message.notification?.title); // null일 수 있음
+  debugPrint(message.notification?.title); // null일 수 있음
 }
 
 // ✅ 올바른 예: Data Message 사용
 Future<void> _handler(RemoteMessage message) async {
   final data = message.data;
-  print(data['title']); // 항상 접근 가능
+  debugPrint(data['title']); // 항상 접근 가능
   await _showLocalNotification(message);
 }
 ```

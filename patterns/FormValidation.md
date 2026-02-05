@@ -1384,7 +1384,7 @@ class _LoginWithAutofillPageState extends State<LoginWithAutofillPage> {
     TextInput.finishAutofillContext();
 
     // 로그인 로직
-    print('Login: ${_emailController.text}');
+    debugPrint('Login: ${_emailController.text}');
   }
 
   @override
