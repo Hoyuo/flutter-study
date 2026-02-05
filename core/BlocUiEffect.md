@@ -955,7 +955,7 @@ Effect를 "소비"하는 패턴입니다.
 ```dart
 class OneTimeEffect<T> {
   final T effect;
-  bool _consumed = false;
+  bool _consumed = false;  // Dart는 단일 스레드이므로 동기 컨텍스트에서는 안전하지만, 비동기 갭을 넘어 소비될 경우 주의 필요
 
   OneTimeEffect(this.effect);
 
@@ -1744,15 +1744,29 @@ final getIt = GetIt.instance;
 @InjectableInit()
 void configureDependencies() => getIt.init();
 
-// Bloc 등록
+// Repository 등록 (올바른 패턴)
 @lazySingleton
+class AuthRepository {
+  final AuthDataSource _dataSource;
+
+  AuthRepository(this._dataSource);
+}
+
+// ⚠️ 주의: Bloc은 GetIt에 등록하지 않음!
+// Bloc은 BlocProvider에서 직접 생성해야 함
+// 이유: BlocProvider가 close한 Bloc을 GetIt이 다시 반환하면 에러 발생
+
+// ❌ 잘못된 패턴 - 절대 금지
+// @lazySingleton
+// class AuthBloc extends BaseBloc<AuthEvent, AuthState, AuthEffect> { ... }
+
+// ✅ 올바른 패턴 - BlocProvider로 생성
 class AuthBloc extends BaseBloc<AuthEvent, AuthState, AuthEffect> {
   final AuthRepository _repo;
 
   AuthBloc(this._repo) : super(const AuthState());
 }
 
-@lazySingleton
 class LoginBloc extends BaseBloc<LoginEvent, LoginState, LoginEffect> {
   final AuthRepository _repo;
 

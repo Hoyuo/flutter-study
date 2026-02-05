@@ -1222,13 +1222,13 @@ class ParallelBuilder {
   ParallelBuilder({this.maxConcurrency = 4});
 
   Future<void> buildPackages(List<String> packages) async {
-    final queue = packages.toList();
+    final packageList = packages.toList();
     final results = <String, bool>{};
 
     // 동시 실행 제한
     final tasks = <Future>[];
-    for (var i = 0; i < maxConcurrency && queue.isNotEmpty; i++) {
-      tasks.add(_buildWorker(queue, results));
+    for (var i = 0; i < maxConcurrency && i < packageList.length; i++) {
+      tasks.add(_buildWorker(packageList, results));
     }
 
     await Future.wait(tasks);
@@ -1246,17 +1246,24 @@ class ParallelBuilder {
     print('All packages built successfully!');
   }
 
+  int _currentIndex = 0;
+
   Future<void> _buildWorker(
-    List<String> queue,
-    Map<String, bool> results,
-  ) async {
-    while (queue.isNotEmpty) {
-      final package = queue.removeAt(0);
+    List<String> packages,
+    Map<String, bool> results, {
+    String buildTarget = 'apk',  // 'apk', 'ios', 'web' 등
+  }) async {
+    while (true) {
+      // 원자적 인덱스 증가로 race condition 방지
+      final index = _currentIndex++;
+      if (index >= packages.length) break;
+
+      final package = packages[index];
       print('Building $package...');
 
       final result = await Process.run(
         'flutter',
-        ['build', 'apk'],
+        ['build', buildTarget],
         workingDirectory: package,
       );
 

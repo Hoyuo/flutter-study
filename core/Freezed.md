@@ -116,52 +116,52 @@ class User with _$User {
 > **⚠️ 버전 선택 가이드 (2026년 1월 기준)**
 >
 > Freezed는 현재 두 가지 버전이 공존하고 있습니다:
-> - **안정 버전 (2.5.x)**: 프로덕션 환경 권장
-> - **개발 버전 (3.x)**: 베타/실험 기능 포함, 프로덕션 사용 주의
+> - **Freezed 2.5.x**: 기존 프로젝트에 적합한 안정 버전
+> - **Freezed 3.x**: 새로운 안정 버전 (상속, 비상수 기본값 등 신규 기능 포함)
 
-#### 옵션 1: 안정 버전 (프로덕션 권장)
+#### 옵션 1: Freezed 2.x (기존 프로젝트)
 
 ```yaml
-# pubspec.yaml - 안정 버전 (Stable)
+# pubspec.yaml - Freezed 2.x (기존 프로젝트)
 dependencies:
-  freezed_annotation: ^2.2.0  # 안정
+  freezed_annotation: ^2.2.0
   json_annotation: ^4.9.0
 
 dev_dependencies:
   build_runner: ^2.10.5
-  freezed: ^2.5.7  # 안정
+  freezed: ^2.5.7
   json_serializable: ^6.11.4
 ```
 
-#### 옵션 2: 개발 버전 (실험적 기능 필요 시)
+#### 옵션 2: Freezed 3.x (신규 프로젝트 권장)
 
 ```yaml
-# pubspec.yaml - 개발 버전 (Development/Beta)
+# pubspec.yaml - Freezed 3.x (신규 프로젝트)
 dependencies:
-  freezed_annotation: ^3.1.0  # 개발 버전
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.9.0
 
 dev_dependencies:
   build_runner: ^2.10.5
-  freezed: ^3.2.4  # 개발 버전
+  freezed: ^3.2.4
   json_serializable: ^6.11.4
 ```
 
-> **⚠️ Freezed 3.x 주의사항:**
+> **💡 Freezed 3.x 안내:**
 >
-> Freezed 3.x는 **아직 개발/베타 단계**입니다.
-> - **프로덕션 환경**: 안정 버전 2.5.x 사용 강력 권장
-> - **실험 프로젝트**: 3.x의 새 기능 테스트 가능
-> - **마이그레이션**: 충분한 테스트 후 점진적 전환
+> Freezed 3.x는 pub.dev에서 **안정 버전(stable)**으로 공개되었습니다.
+> - **신규 프로젝트**: Freezed 3.x 사용 권장 (새 기능 활용 가능)
+> - **기존 프로젝트**: Freezed 2.5.x 유지 가능 (마이그레이션 시 충분한 테스트 필요)
+> - **주요 변경사항**: Dart 3.6.0 이상 필수
 >
-> **Freezed 3.0 새 기능 (개발 중):**
+> **Freezed 3.0 주요 기능:**
 > - **상속(extends) 지원**: Freezed 클래스가 다른 클래스를 상속 가능
 > - **비상수 기본값**: `@Default`에서 non-constant 값 사용 가능
 > - **Mixed mode**: Factory와 일반 생성자 혼합 가능
 > - Dart 3.6.0 이상 필수
 >
 > ```dart
-> // Freezed 3.0 상속 예시 (개발 버전만 지원)
+> // Freezed 3.0 상속 예시
 > @freezed
 > class Person extends Entity with _$Person {
 >   const factory Person({
@@ -598,6 +598,8 @@ DateTime _dateFromJson(String json) => DateTime.parse(json);
 String _dateToJson(DateTime date) => date.toIso8601String();
 
 Color _colorFromJson(int json) => Color(json);
+// Flutter 3.27+ (Dart 3.6+): toARGB32() 사용
+// Flutter 3.27 미만: color.value 사용
 int _colorToJson(Color color) => color.toARGB32();
 ```
 

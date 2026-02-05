@@ -64,6 +64,8 @@ class _AnimatedBoxExampleState extends State<AnimatedBoxExample> {
           boxShadow: _isActive
               ? [
                   BoxShadow(
+                    // Flutter 3.27+ (Dart 3.6+): withValues() 사용
+                    // Flutter 3.27 미만: Colors.blue.withOpacity(0.4) 사용
                     color: Colors.blue.withValues(alpha: 0.4),
                     blurRadius: 12,
                     offset: const Offset(0, 6),

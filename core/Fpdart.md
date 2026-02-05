@@ -538,7 +538,10 @@ TaskEither<OrderFailure, Cart> getCart(String cartId) {
 TaskEither<OrderFailure, Cart> validateStock(Cart cart) {
   return TaskEither.tryCatch(
     () => _orderRepository.checkStock(cart.items),
-    (error, stackTrace) => const OrderFailure.outOfStock(),
+    (error, stackTrace) {
+      if (error is NetworkException) return OrderFailure.networkError();
+      return const OrderFailure.outOfStock();
+    },
   ).flatMap((valid) {
     if (!valid) return TaskEither.left(const OrderFailure.outOfStock());
     return TaskEither.right(cart);

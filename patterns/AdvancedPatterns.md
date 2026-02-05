@@ -272,11 +272,11 @@ class SagaOrchestrator {
   
   Future<Either<Failure, void>> execute() async {
     for (final step in steps) {
-      print('Executing: ${step.name}');
+      debugPrint('Executing: ${step.name}');
       final result = await step.execute();
-      
+
       if (result.isLeft()) {
-        print('Failed at: ${step.name}. Starting compensation...');
+        debugPrint('Failed at: ${step.name}. Starting compensation...');
         await _compensate();
         return result;
       }

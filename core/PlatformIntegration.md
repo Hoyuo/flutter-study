@@ -1990,9 +1990,9 @@ import android.content.Intent
 import androidx.work.*
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
+import io.flutter.embedding.engine.loader.FlutterLoader
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.view.FlutterCallbackInformation
-import io.flutter.view.FlutterMain
 
 class BackgroundWorker(
     context: Context,
@@ -2000,9 +2000,10 @@ class BackgroundWorker(
 ) : Worker(context, params) {
 
     override fun doWork(): Result {
-        // Flutter Engine 초기화
-        FlutterMain.startInitialization(applicationContext)
-        FlutterMain.ensureInitializationComplete(applicationContext, null)
+        // Flutter Engine 초기화 (FlutterLoader 사용)
+        val flutterLoader = FlutterLoader()
+        flutterLoader.startInitialization(applicationContext)
+        flutterLoader.ensureInitializationComplete(applicationContext, null)
 
         val flutterEngine = FlutterEngine(applicationContext)
 
@@ -2013,7 +2014,7 @@ class BackgroundWorker(
         flutterEngine.dartExecutor.executeDartCallback(
             DartExecutor.DartCallback(
                 applicationContext.assets,
-                FlutterMain.findAppBundlePath()!!,
+                flutterLoader.findAppBundlePath()!!,
                 callbackInfo
             )
         )
@@ -2102,7 +2103,7 @@ class BackgroundPlugin: NSObject, FlutterPlugin {
     }
 
     private func stopBackgroundTask() {
-        flutterEngine?.destroyContext()
+        // FlutterEngine 정리 (destroyContext()는 존재하지 않음)
         flutterEngine = nil
     }
 }

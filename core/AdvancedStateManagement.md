@@ -381,27 +381,34 @@ final userProvider = Provider((ref) {
 // ============= Global State =============
 // 앱 전역에서 접근 필요한 상태
 
+// ⚠️ Bloc은 GetIt에 등록하지 않음 - BlocProvider에서 직접 생성
+// Bloc의 의존성(Repository 등)만 GetIt에 등록하고, Bloc은 BlocProvider가 관리
+
 // 1. Authentication State
-@injectable
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
+  final AuthRepository _authRepository; // GetIt에서 주입받음
+
+  AuthBloc(this._authRepository) : super(AuthInitial());
   // 모든 Feature에서 접근
 }
 
 // 2. Theme State
-@injectable
 class ThemeBloc extends Cubit<ThemeMode> {
+  ThemeBloc() : super(ThemeMode.system);
   // 앱 전체 테마
 }
 
 // 3. Locale State
-@injectable
 class LocaleBloc extends Cubit<Locale> {
+  LocaleBloc() : super(const Locale('ko', 'KR'));
   // 앱 전체 언어 설정
 }
 
 // 4. Connectivity State
-@injectable
 class ConnectivityBloc extends Bloc<ConnectivityEvent, ConnectivityState> {
+  final ConnectivityRepository _repository; // GetIt에서 주입받음
+
+  ConnectivityBloc(this._repository) : super(ConnectivityInitial());
   // 네트워크 연결 상태
 }
 
@@ -672,30 +679,34 @@ BlocBuilder<ProductListBloc, ProductListState>(
 )
 
 // 성능 최적화: Memoization
-class MemoizedProductListState extends ProductListState {
-  List<Product>? _cachedFilteredProducts;
-  String? _cachedSearchQuery;
-  ProductFilter? _cachedFilter;
-  ProductSort? _cachedSortBy;
+// ⚠️ Freezed 2.x는 클래스 상속을 지원하지 않으므로 composition 패턴 사용
+class MemoizedProductListState {
+  final ProductListState state;
+  final Map<String, List<Product>> _cache = {};
 
-  @override
+  MemoizedProductListState(this.state);
+
   List<Product> get filteredProducts {
-    // 캐시 유효성 검사
-    if (_cachedFilteredProducts != null &&
-        _cachedSearchQuery == searchQuery &&
-        _cachedFilter == filter &&
-        _cachedSortBy == sortBy) {
-      return _cachedFilteredProducts!;
+    // 캐시 키 생성
+    final cacheKey = '${state.searchQuery}_${state.filter}_${state.sortBy}';
+
+    // 캐시에서 조회
+    if (_cache.containsKey(cacheKey)) {
+      return _cache[cacheKey]!;
     }
 
     // 캐시 갱신
-    _cachedFilteredProducts = super.filteredProducts;
-    _cachedSearchQuery = searchQuery;
-    _cachedFilter = filter;
-    _cachedSortBy = sortBy;
+    final filtered = state.filteredProducts;
+    _cache[cacheKey] = filtered;
 
-    return _cachedFilteredProducts!;
+    return filtered;
   }
+
+  // state의 다른 속성들을 위임
+  List<Product> get products => state.products;
+  String get searchQuery => state.searchQuery;
+  ProductFilter get filter => state.filter;
+  ProductSort get sortBy => state.sortBy;
 }
 ```
 
@@ -2449,6 +2460,15 @@ class StateSnapshot<S> {
 ### 9.2 Time-travel Bloc
 
 ```dart
+// Time travel events
+abstract class TimeTravelEvent {}
+class TimeTravelBack extends TimeTravelEvent {}
+class TimeTravelForward extends TimeTravelEvent {}
+class TimeTravelJumpTo extends TimeTravelEvent {
+  final int index;
+  TimeTravelJumpTo(this.index);
+}
+
 class TimeTravelBloc<E, S> extends Bloc<E, S> {
   final StateHistoryTracker<S> _historyTracker;
   bool _isTimeTraveling = false;
@@ -2467,35 +2487,40 @@ class TimeTravelBloc<E, S> extends Bloc<E, S> {
         _historyTracker.record(state);
       }
     });
+
+    // ⚠️ Bloc 8.x+: emit()은 on<Event> 핸들러 내부에서만 호출 가능
+    on<TimeTravelBack>((event, emit) {
+      final previousState = _historyTracker.goBack();
+      if (previousState != null) {
+        _isTimeTraveling = true;
+        emit(previousState);
+        _isTimeTraveling = false;
+      }
+    });
+
+    on<TimeTravelForward>((event, emit) {
+      final nextState = _historyTracker.goForward();
+      if (nextState != null) {
+        _isTimeTraveling = true;
+        emit(nextState);
+        _isTimeTraveling = false;
+      }
+    });
+
+    on<TimeTravelJumpTo>((event, emit) {
+      final targetState = _historyTracker.jumpTo(event.index);
+      if (targetState != null) {
+        _isTimeTraveling = true;
+        emit(targetState);
+        _isTimeTraveling = false;
+      }
+    });
   }
 
-  // Time travel 메서드
-  void goBack() {
-    final previousState = _historyTracker.goBack();
-    if (previousState != null) {
-      _isTimeTraveling = true;
-      emit(previousState);
-      _isTimeTraveling = false;
-    }
-  }
-
-  void goForward() {
-    final nextState = _historyTracker.goForward();
-    if (nextState != null) {
-      _isTimeTraveling = true;
-      emit(nextState);
-      _isTimeTraveling = false;
-    }
-  }
-
-  void jumpToState(int index) {
-    final targetState = _historyTracker.jumpTo(index);
-    if (targetState != null) {
-      _isTimeTraveling = true;
-      emit(targetState);
-      _isTimeTraveling = false;
-    }
-  }
+  // Time travel 메서드 - 이제 이벤트를 dispatch함
+  void goBack() => add(TimeTravelBack() as E);
+  void goForward() => add(TimeTravelForward() as E);
+  void jumpToState(int index) => add(TimeTravelJumpTo(index) as E);
 
   bool get canGoBack => _historyTracker.canGoBack();
   bool get canGoForward => _historyTracker.canGoForward();

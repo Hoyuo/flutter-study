@@ -520,6 +520,7 @@ class FeatureGate extends StatelessWidget {
 ```dart
 // 사용자 버킷 기반 롤아웃
 bool shouldEnableForUser(String userId, double rolloutPercentage) {
+  // rolloutPercentage: 0.0 ~ 1.0 (예: 0.1 = 10%)
   final hash = userId.hashCode.abs();
   final bucket = hash % 100;
   return bucket < (rolloutPercentage * 100);
@@ -594,22 +595,24 @@ final router = GoRouter(
 
 // 딥링크 핸들러
 class DeepLinkHandler {
+  static final _appLinks = AppLinks();
+
   static Future<void> handleInitialLink() async {
-    final initialLink = await getInitialLink();
+    // app_links 6.x API 사용
+    final initialLink = await _appLinks.getInitialLink();
     if (initialLink != null) {
       _processLink(initialLink);
     }
   }
 
   static void listenToLinks() {
-    linkStream.listen((link) {
-      _processLink(link);
+    // app_links 6.x API: uriLinkStream 사용
+    _appLinks.uriLinkStream.listen((Uri uri) {
+      _processLink(uri);
     });
   }
 
-  static void _processLink(String link) {
-    final uri = Uri.parse(link);
-
+  static void _processLink(Uri uri) {
     // UTM 파라미터 추출
     final campaign = uri.queryParameters['utm_campaign'];
     if (campaign != null) {

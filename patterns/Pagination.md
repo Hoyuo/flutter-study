@@ -255,10 +255,11 @@ class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
     result.fold(
       (failure) => emit(state.copyWith(
         isLoadingMore: false,
-        // loadMore 실패는 기존 데이터 유지, 에러 메시지만 표시
+        error: failure.message,  // 에러 메시지 설정
       )),
       (response) => emit(state.copyWith(
         isLoadingMore: false,
+        error: null,  // 성공 시 에러 메시지 초기화
         products: [...state.products, ...response.items],
         currentPage: response.currentPage,
         hasNextPage: response.hasNextPage,

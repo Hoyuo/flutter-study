@@ -237,13 +237,25 @@ class HomeFailureMapper {
 ### 5.1 절대 규칙: Bloc은 Injectable로 등록하지 않음
 
 ```dart
-// ❌ 절대 금지 - Bloc을 GetIt에 등록
-@injectable  // 금지!
-class HomeBloc extends Bloc<HomeEvent, HomeState> { ... }
+// ❌ 절대 금지 - Bloc을 GetIt에 등록하면 안됨!
+// @injectable  // 이렇게 하면 안됨!
+// class HomeBloc extends Bloc<HomeEvent, HomeState> { ... }
 
-// 왜?
-// 1. BlocProvider가 close한 Bloc을 GetIt이 다시 반환
-// 2. "Bad state: Cannot add new events after calling close" 에러 발생
+// ⚠️ Bloc은 GetIt에 등록하지 않음 - BlocProvider로 생성
+// 이유:
+// 1. BlocProvider가 dispose 시 Bloc.close()를 호출함
+// 2. GetIt이 close된 Bloc을 다시 반환하면 에러 발생
+// 3. "Bad state: Cannot add new events after calling close"
+
+// ✅ 올바른 패턴: UseCase나 Repository만 GetIt에 등록
+@injectable
+class GetHomeDataUseCase {
+  final HomeRepository _repository;
+
+  GetHomeDataUseCase(this._repository);
+
+  Future<Result> call() => _repository.getHomeData();
+}
 ```
 
 ### 5.2 올바른 Bloc 생성 패턴
