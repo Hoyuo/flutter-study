@@ -20,6 +20,7 @@ Flutter 앱 개발의 핵심 아키텍처와 패턴을 다루는 문서 모음�
 | `PlatformIntegration.md` | Platform Channel, Method Channel, FFI, Pigeon 코드 생성 |
 | `AdvancedStateManagement.md` | CQRS, Event Sourcing, Optimistic UI, Undo/Redo, State Sync |
 | `Riverpod.md` | Riverpod 상태 관리, Provider 종류, Code Generation, Bloc 마이그레이션 |
+| `Isolates.md` | Isolate 개념, compute() 함수, 백그라운드 처리, Worker Pool, 병렬 처리 패턴 |
 
 ## For AI Agents
 

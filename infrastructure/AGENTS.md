@@ -18,6 +18,8 @@
 | `StoreSubmission.md` | 앱스토어 제출 가이드, Play Store, App Store, 스크린샷, ASO |
 | `AdvancedCICD.md` | Trunk-based 개발, Canary Release, Shorebird OTA, Feature Flags |
 | `Firebase.md` | Firebase 통합 (Auth, Firestore, Storage, FCM, Crashlytics, Analytics, Security Rules) |
+| `FlutterMultiPlatform.md` | Web/Desktop 멀티플랫폼 확장, 플랫폼별 조건부 렌더링, Responsive Design |
+| `PackageDevelopment.md` | Dart/Flutter 패키지 개발, Pub.dev 배포, 버전 관리, API 문서화 |
 
 ## For AI Agents
 

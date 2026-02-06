@@ -1,6 +1,6 @@
 # Flutter Clean Architecture Reference Guide
 
-Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 44개의 문서와 실제 구현 예제를 제공합니다.
+Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 52개의 문서와 실제 구현 예제를 제공합니다.
 
 ## Overview
 
@@ -15,15 +15,15 @@ Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architect
 
 ```
 flutter-study/
-├── core/           # 핵심 아키텍처 (9개)
-├── infrastructure/ # 인프라 (7개)
-├── networking/     # 네트워킹 (3개)
-├── features/       # 기능별 가이드 (4개)
-├── patterns/       # 필수 패턴 (8개)
+├── core/           # 핵심 아키텍처 (10개)
+├── infrastructure/ # 인프라 (9개)
+├── networking/     # 네트워킹 (4개)
+├── features/       # 기능별 가이드 (7개)
+├── patterns/       # 필수 패턴 (9개)
 └── system/         # 시스템 (13개)
 ```
 
-**총 44개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
+**총 52개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
 
 ## Quick Start
 
@@ -41,25 +41,25 @@ flutter-study/
 
 ## Documentation Categories
 
-### Core (9개)
+### Core (10개)
 핵심 아키텍처 패턴
-- Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, AdvancedStateManagement, PlatformIntegration, Riverpod
+- Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, AdvancedStateManagement, PlatformIntegration, Riverpod, Isolates
 
-### Infrastructure (7개)
+### Infrastructure (9개)
 인프라 설정
-- DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD, Firebase
+- DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD, Firebase, FlutterMultiPlatform, PackageDevelopment
 
-### Networking (3개)
+### Networking (4개)
 네트워크 통신
-- Networking_Dio, Networking_Retrofit, WebSocket
+- Networking_Dio, Networking_Retrofit, WebSocket, GraphQL
 
-### Features (4개)
+### Features (7개)
 기능별 구현
-- Navigation, Localization, Permission, PushNotification
+- Navigation, Localization, Permission, PushNotification, DeepLinking, MapsGeolocation, CameraMedia
 
-### Patterns (8개)
+### Patterns (9개)
 공통 패턴
-- Analytics, ImageHandling, Pagination, FormValidation, InAppPurchase, Animation, OfflineSupport, AdvancedPatterns
+- Analytics, ImageHandling, Pagination, FormValidation, InAppPurchase, Animation, OfflineSupport, AdvancedPatterns, CustomPainting
 
 ### System (13개)
 시스템 품질
@@ -83,11 +83,11 @@ flutter-study/
 |---------|---------|---------|
 | flutter_bloc | ^9.1.1 | State Management |
 | freezed | ^3.1.0 | Immutable Data Classes |
-| fpdart | ^1.1.0 | Functional Programming |
-| get_it + injectable | ^8.0.2 | Dependency Injection |
-| go_router | ^14.6.2 | Navigation |
+| fpdart | ^1.2.0 | Functional Programming |
+| get_it + injectable | ^9.2.0 | Dependency Injection |
+| go_router | ^17.0.1 | Navigation |
 | dio + retrofit | ^5.9.0 | HTTP Client |
-| riverpod | ^2.6.1 | Alternative State Management |
+| riverpod | ^3.0.0 | Alternative State Management |
 | web_socket_channel | ^3.0.2 | WebSocket Communication |
 | firebase_core | ^3.12.1 | Firebase Integration |
 | easy_localization | ^3.0.7 | i18n (KR/JP/TW) |

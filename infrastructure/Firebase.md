@@ -102,20 +102,20 @@ dependencies:
   firebase_remote_config: ^5.0.1
 
   # State Management & DI
-  flutter_bloc: ^8.1.3
-  injectable: ^2.3.2
-  get_it: ^7.6.4
+  flutter_bloc: ^9.1.1
+  injectable: ^2.7.1
+  get_it: ^9.2.0
 
   # Functional Programming
-  fpdart: ^1.1.0
-  freezed_annotation: ^2.4.1
+  fpdart: ^1.2.0
+  freezed_annotation: ^3.1.0
 
   # Code Generation
   json_annotation: ^4.8.1
 
 dev_dependencies:
   build_runner: ^2.4.6
-  freezed: ^2.4.5
+  freezed: ^3.2.4
   json_serializable: ^6.7.1
   injectable_generator: ^2.4.1
 ```

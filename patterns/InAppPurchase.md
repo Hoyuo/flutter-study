@@ -27,10 +27,10 @@ dependencies:
   purchases_flutter: ^8.10.0
 
   # 상태 관리
-  flutter_bloc: ^8.1.6
+  flutter_bloc: ^9.1.1
 
   # 네트워크
-  dio: ^5.7.0
+  dio: ^5.9.0
 ```
 
 ### Android 설정

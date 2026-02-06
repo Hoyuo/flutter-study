@@ -233,7 +233,7 @@ dependencies:
 // Level 1: Level 0 패키지만 의존
 // core/core_network/pubspec.yaml
 dependencies:
-  dio: ^5.7.0
+  dio: ^5.9.0
   retrofit: ^5.0.0
 
 // Level 2: Level 0-1 패키지 의존
@@ -1167,7 +1167,7 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.38.8'
+          flutter-version: '3.27.0'
           cache: true
 
       - name: Get changed packages
@@ -1188,7 +1188,7 @@ jobs:
 
 ```dockerfile
 # Dockerfile for CI/CD with build cache
-FROM cirrusci/flutter:3.38.8
+FROM cirrusci/flutter:3.27.0
 
 WORKDIR /app
 
@@ -1412,7 +1412,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.38.8'
+          flutter-version: '3.27.0'
           cache: true
 
       - name: Test ${{ matrix.module }}

@@ -14,6 +14,7 @@ HTTP 통신 및 API 연동을 다루는 문서 모음입니다. Dio HTTP 클라�
 | `Networking_Dio.md` | Dio HTTP 클라이언트 설정, Interceptor 구성, 에러 처리, 토큰 갱신 |
 | `Networking_Retrofit.md` | Retrofit 코드 생성, API 서비스 인터페이스 정의, 응답 매핑 |
 | `WebSocket.md` | WebSocket 실시간 통신, Socket.IO, 재연결 로직, 채팅 구현, Stream 처리 |
+| `GraphQL.md` | GraphQL 클라이언트 구현, Ferry/graphql_flutter, 쿼리/뮤테이션, 캐싱, 구독 |
 
 ## For AI Agents
 

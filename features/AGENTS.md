@@ -15,6 +15,9 @@
 | `Localization.md` | easy_localization 다국어 지원, JSON 번역 파일 관리, 런타임 언어 변경 |
 | `Permission.md` | permission_handler 권한 관리, 플랫폼별 설정, 권한 요청 플로우 |
 | `PushNotification.md` | FCM + flutter_local_notifications 푸시 알림, 토픽 구독, 백그라운드 처리 |
+| `DeepLinking.md` | Universal Links, App Links, 딥링크 처리, 라우팅 통합, 동적 링크 |
+| `MapsGeolocation.md` | Google Maps 통합, 위치 서비스, Geofencing, 마커/폴리라인, 권한 처리 |
+| `CameraMedia.md` | 카메라 촬영, 이미지/비디오 처리, 갤러리 접근, 미디어 압축, 권한 관리 |
 
 ## For AI Agents
 

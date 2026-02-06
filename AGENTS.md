@@ -16,14 +16,14 @@ Flutter 개발팀을 위한 포괄적인 개발 가이드 문서 저장소입니
 
 | Directory | Purpose | Documents |
 |-----------|---------|-----------|
-| `core/` | 핵심 아키텍처 - Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, PlatformIntegration, AdvancedStateManagement, Riverpod | 9개 (see `core/AGENTS.md`) |
-| `infrastructure/` | 인프라 - DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD, Firebase | 7개 (see `infrastructure/AGENTS.md`) |
-| `networking/` | 네트워킹 - Dio, Retrofit, WebSocket | 3개 (see `networking/AGENTS.md`) |
-| `features/` | 기능별 - Navigation, Localization, Permission, PushNotification | 4개 (see `features/AGENTS.md`) |
-| `patterns/` | 필수 패턴 - Analytics, ImageHandling, Pagination, FormValidation, OfflineSupport, InAppPurchase, Animation, AdvancedPatterns | 8개 (see `patterns/AGENTS.md`) |
+| `core/` | 핵심 아키텍처 - Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, PlatformIntegration, AdvancedStateManagement, Riverpod, Isolates | 10개 (see `core/AGENTS.md`) |
+| `infrastructure/` | 인프라 - DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD, Firebase, FlutterMultiPlatform, PackageDevelopment | 9개 (see `infrastructure/AGENTS.md`) |
+| `networking/` | 네트워킹 - Dio, Retrofit, WebSocket, GraphQL | 4개 (see `networking/AGENTS.md`) |
+| `features/` | 기능별 - Navigation, Localization, Permission, PushNotification, DeepLinking, MapsGeolocation, CameraMedia | 7개 (see `features/AGENTS.md`) |
+| `patterns/` | 필수 패턴 - Analytics, ImageHandling, Pagination, FormValidation, OfflineSupport, InAppPurchase, Animation, AdvancedPatterns, CustomPainting | 9개 (see `patterns/AGENTS.md`) |
 | `system/` | 시스템 - ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring, AdvancedPerformance, AdvancedTesting, ProductionOperations, AdvancedSecurity | 13개 (see `system/AGENTS.md`) |
 
-**총 44개 문서**
+**총 52개 문서**
 
 ## Directory Structure
 
@@ -40,7 +40,8 @@ flutter-study/
 │   ├── ModularArchitecture.md
 │   ├── PlatformIntegration.md
 │   ├── AdvancedStateManagement.md
-│   └── Riverpod.md
+│   ├── Riverpod.md
+│   └── Isolates.md
 ├── infrastructure/           ← 인프라
 │   ├── AGENTS.md
 │   ├── DI.md
@@ -49,18 +50,24 @@ flutter-study/
 │   ├── CICD.md
 │   ├── StoreSubmission.md
 │   ├── AdvancedCICD.md
-│   └── Firebase.md
+│   ├── Firebase.md
+│   ├── FlutterMultiPlatform.md
+│   └── PackageDevelopment.md
 ├── networking/               ← 네트워킹
 │   ├── AGENTS.md
 │   ├── Networking_Dio.md
 │   ├── Networking_Retrofit.md
-│   └── WebSocket.md
+│   ├── WebSocket.md
+│   └── GraphQL.md
 ├── features/                 ← 기능별
 │   ├── AGENTS.md
 │   ├── Navigation.md
 │   ├── Localization.md
 │   ├── Permission.md
-│   └── PushNotification.md
+│   ├── PushNotification.md
+│   ├── DeepLinking.md
+│   ├── MapsGeolocation.md
+│   └── CameraMedia.md
 ├── patterns/                 ← 필수 패턴
 │   ├── AGENTS.md
 │   ├── Analytics.md
@@ -70,7 +77,8 @@ flutter-study/
 │   ├── OfflineSupport.md
 │   ├── InAppPurchase.md
 │   ├── Animation.md
-│   └── AdvancedPatterns.md
+│   ├── AdvancedPatterns.md
+│   └── CustomPainting.md
 └── system/                   ← 시스템
     ├── AGENTS.md
     ├── ErrorHandling.md
@@ -221,5 +229,13 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 41. `core/Riverpod.md` - Riverpod 상태 관리, Bloc 마이그레이션
 42. `networking/WebSocket.md` - WebSocket 실시간 통신, Socket.IO, 채팅 구현
 43. `infrastructure/Firebase.md` - Firebase 통합 (Auth, Firestore, FCM, Crashlytics)
+44. `core/Isolates.md` - Isolate, compute(), 백그라운드 처리
+45. `infrastructure/FlutterMultiPlatform.md` - Web/Desktop 멀티플랫폼 확장
+46. `infrastructure/PackageDevelopment.md` - Dart/Flutter 패키지 개발 및 배포
+47. `networking/GraphQL.md` - GraphQL 클라이언트 (Ferry, graphql_flutter)
+48. `features/DeepLinking.md` - Universal Links, App Links, 딥링크 처리
+49. `features/MapsGeolocation.md` - Google Maps, 위치 서비스, Geofencing
+50. `features/CameraMedia.md` - 카메라, 이미지/비디오 촬영, 미디어 처리
+51. `patterns/CustomPainting.md` - Canvas API, CustomPainter, 커스텀 그래픽
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->

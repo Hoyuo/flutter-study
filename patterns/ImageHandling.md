@@ -752,7 +752,7 @@ class ImageUploadService {
 import 'dart:io';
 
 // pubspec.yaml dependencies 섹션에 추가:
-// fpdart: ^1.1.0  # Either, Option 타입 사용
+// fpdart: ^1.2.0  # Either, Option 타입 사용
 import 'package:fpdart/fpdart.dart';
 import 'package:injectable/injectable.dart';
 

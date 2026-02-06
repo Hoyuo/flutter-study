@@ -29,20 +29,20 @@ dependencies:
   hive_flutter: ^1.1.0
 
   # 상태 관리
-  flutter_bloc: ^8.1.6
+  flutter_bloc: ^9.1.1
   freezed_annotation: ^3.0.0  # Dart 3.6 호환
 
   # UUID 생성
   uuid: ^4.0.0
 
   # 함수형 프로그래밍
-  fpdart: ^1.1.0
+  fpdart: ^1.2.0
 
   # 백그라운드 작업
   workmanager: ^0.5.2
 
 dev_dependencies:
-  freezed: ^3.0.0            # Dart 3.6 호환
+  freezed: ^3.2.4            # Dart 3.6 호환
   build_runner: ^2.4.13
   drift_dev: ^2.22.0
   hive_generator: ^2.0.1

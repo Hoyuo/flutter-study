@@ -75,18 +75,18 @@ dependencies:
   socket_io_client: ^2.0.3         # Socket.IO 클라이언트
 
   # 상태 관리 & 아키텍처
-  flutter_bloc: ^8.1.4
+  flutter_bloc: ^9.1.1
   bloc_concurrency: ^0.2.4
 
   # 의존성 주입
-  get_it: ^7.6.7
-  injectable: ^2.3.5
+  get_it: ^9.2.0
+  injectable: ^2.7.1
 
   # 함수형 프로그래밍
-  fpdart: ^1.1.0
+  fpdart: ^1.2.0
 
   # 코드 생성
-  freezed_annotation: ^2.4.1
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.8.1
 
   # 유틸리티
@@ -100,7 +100,7 @@ dev_dependencies:
 
   # 코드 생성
   build_runner: ^2.4.8
-  freezed: ^2.4.7
+  freezed: ^3.2.4
   json_serializable: ^6.7.1
   injectable_generator: ^2.4.1
 
