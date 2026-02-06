@@ -1,6 +1,6 @@
 # Flutter Clean Architecture Reference Guide
 
-Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 41개의 문서와 실제 구현 예제를 제공합니다.
+Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 44개의 문서와 실제 구현 예제를 제공합니다.
 
 ## Overview
 
@@ -15,15 +15,15 @@ Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architect
 
 ```
 flutter-study/
-├── core/           # 핵심 아키텍처 (8개)
-├── infrastructure/ # 인프라 (6개)
-├── networking/     # 네트워킹 (2개)
+├── core/           # 핵심 아키텍처 (9개)
+├── infrastructure/ # 인프라 (7개)
+├── networking/     # 네트워킹 (3개)
 ├── features/       # 기능별 가이드 (4개)
 ├── patterns/       # 필수 패턴 (8개)
 └── system/         # 시스템 (13개)
 ```
 
-**총 41개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
+**총 44개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
 
 ## Quick Start
 
@@ -41,17 +41,17 @@ flutter-study/
 
 ## Documentation Categories
 
-### Core (8개)
+### Core (9개)
 핵심 아키텍처 패턴
-- Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, AdvancedStateManagement, PlatformIntegration
+- Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, AdvancedStateManagement, PlatformIntegration, Riverpod
 
-### Infrastructure (6개)
+### Infrastructure (7개)
 인프라 설정
-- DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD
+- DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD, Firebase
 
-### Networking (2개)
+### Networking (3개)
 네트워크 통신
-- Networking_Dio, Networking_Retrofit
+- Networking_Dio, Networking_Retrofit, WebSocket
 
 ### Features (4개)
 기능별 구현
@@ -87,6 +87,9 @@ flutter-study/
 | get_it + injectable | ^8.0.2 | Dependency Injection |
 | go_router | ^14.6.2 | Navigation |
 | dio + retrofit | ^5.9.0 | HTTP Client |
+| riverpod | ^2.6.1 | Alternative State Management |
+| web_socket_channel | ^3.0.2 | WebSocket Communication |
+| firebase_core | ^3.12.1 | Firebase Integration |
 | easy_localization | ^3.0.7 | i18n (KR/JP/TW) |
 
 ## For AI Agents
