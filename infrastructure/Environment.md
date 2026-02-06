@@ -2,6 +2,11 @@
 
 > 이 문서는 KR, JP, TW 다국가 환경 설정 및 코드 패리티를 유지하는 방법을 설명합니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Flavor를 사용하여 dev/stg/prod 환경을 분리할 수 있다
+> - 다국가(KR/JP/TW) 환경별 설정을 구성할 수 있다
+> - 환경 변수를 안전하게 관리하고 코드 패리티를 유지할 수 있다
+
 ## 1. 개요
 
 ### 1.1 핵심 원칙: 코드 패리티
@@ -1257,3 +1262,20 @@ class TwPaymentService { }
 - [Flutter Flavors](https://docs.flutter.dev/deployment/flavors)
 - [flutter_dotenv](https://pub.dev/packages/flutter_dotenv)
 - [Firebase Remote Config](https://firebase.google.com/docs/remote-config)
+
+---
+
+## 실습 과제
+
+### 과제 1: Flavor 환경 분리
+dev, staging, prod 3개의 Flavor를 설정하고, 각 환경에서 다른 API 엔드포인트와 앱 이름을 사용하도록 구성하세요.
+
+### 과제 2: 다국가 설정 구현
+KR과 JP 두 국가에 대해 서로 다른 결제 수단, API 서버, 약관 URL을 환경 변수로 관리하세요.
+
+## Self-Check
+
+- [ ] Flavor별 빌드 설정(Android productFlavors, iOS Scheme)을 구성할 수 있는가?
+- [ ] 환경 변수를 안전하게 관리하고 .env 파일을 gitignore 처리하는가?
+- [ ] dart-define을 사용하여 빌드 시 환경 값을 주입할 수 있는가?
+- [ ] 국가별 설정을 코드 패리티를 유지하면서 분리할 수 있는가?

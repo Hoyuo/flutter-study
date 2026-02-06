@@ -2,6 +2,11 @@
 
 Toast, Dialog, Navigation 등 일회성 이벤트 처리 패턴에 대한 가이드입니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Toast, Dialog, Navigation 등 일회성 UI 이벤트를 Bloc에서 올바르게 처리할 수 있습니다
+> - BlocListener를 사용하여 Side Effect를 State와 분리하여 처리할 수 있습니다
+> - BaseBloc + Effect Stream 패턴을 구현하여 일관된 구조를 유지할 수 있습니다
+
 ---
 
 ## 목차
@@ -1897,3 +1902,45 @@ lib/
 
 > **용어는 팀과 합의하세요!**
 > Side Effect든 UiEffect든, 팀 전체가 같은 용어를 쓰는 게 중요합니다.
+
+---
+## 실습 과제
+
+### 과제 1: UiEffect 패턴 구현
+State에 UiEffect를 포함하는 방식으로 구현해보세요.
+
+1. sealed class로 LoginUiEffect 정의 (ShowToast, ShowErrorDialog, NavigateToHome)
+2. LoginState에 uiEffect 필드 추가
+3. LoginBloc에서 성공/실패 시 적절한 UiEffect emit
+4. BlocListener에서 UiEffect 처리 (고유 ID 추가하여 중복 방지)
+5. 처리 후 null 초기화 구현
+
+### 과제 2: BaseBloc + Effect Stream 구현
+별도 Stream 방식으로 리팩토링하세요.
+
+1. BaseBloc 클래스 구현 (Effect용 StreamController 포함)
+2. emitEffect() 메서드 구현 (isClosed 체크 포함)
+3. BlocEffectMixin 구현 (자동 구독 및 해제)
+4. LoginBloc을 BaseBloc으로 전환
+5. StatefulWidget에서 Mixin 사용하여 Effect 처리
+
+### 과제 3: Navigation Effect 개선
+Navigation을 State 기반으로 처리하도록 개선하세요.
+
+1. AuthState에 isLoggedIn 필드 추가
+2. BlocListener에서 isLoggedIn 변경 감지
+3. listenWhen으로 불필요한 호출 방지
+4. Effect는 Toast/Dialog만 사용, Navigation은 State 사용
+5. 앱 재시작 시에도 올바르게 동작하는지 확인
+
+## Self-Check
+- [ ] Side Effect가 무엇이고 왜 BlocBuilder에서 처리하면 안 되는지 설명할 수 있다
+- [ ] BlocListener와 BlocBuilder의 차이점을 이해하고 적절히 사용할 수 있다
+- [ ] BlocConsumer를 사용하여 UI 렌더링과 Side Effect를 동시에 처리할 수 있다
+- [ ] UiEffect를 State에 포함하는 방식의 장단점을 설명할 수 있다
+- [ ] 동일한 UiEffect 중복 발행 문제를 해결할 수 있다 (고유 ID, null 초기화, Equatable 제외)
+- [ ] BaseBloc + Effect Stream 패턴을 구현할 수 있다
+- [ ] BlocEffectMixin을 사용하여 자동으로 Effect를 구독/해제할 수 있다
+- [ ] Effect 유실 vs 중복 실행 문제를 이해하고 적절히 대응할 수 있다
+- [ ] Navigation을 State 기반으로 처리하는 것이 Effect보다 안전한 이유를 설명할 수 있다
+- [ ] mounted 체크를 통해 dispose 후 Effect 처리 오류를 방지할 수 있다

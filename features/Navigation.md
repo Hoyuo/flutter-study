@@ -1,5 +1,15 @@
 # Flutter 네비게이션 가이드 (GoRouter)
 
+## 학습 목표
+
+이 문서를 학습하면 다음을 할 수 있습니다:
+
+1. GoRouter를 사용하여 Flutter 앱에 선언적 라우팅 시스템을 구축할 수 있다
+2. ShellRoute와 StatefulShellRoute를 활용한 Bottom Navigation 중첩 네비게이션을 구현할 수 있다
+3. 인증 기반 리다이렉트와 라우트별 리다이렉트를 설정할 수 있다
+4. Path/Query/Extra 파라미터를 활용한 화면 간 데이터 전달을 구현할 수 있다
+5. go_router_builder를 사용한 타입 안전한 라우팅을 적용할 수 있다
+
 ## 개요
 
 GoRouter는 Flutter의 Navigator 2.0 API를 기반으로 한 선언적 라우팅 패키지입니다. URL 기반 라우팅, 딥링크, 리다이렉션, 중첩 네비게이션 등을 간편하게 구현할 수 있습니다.
@@ -1339,6 +1349,25 @@ final appRouter = GoRouter(
 - **자동완성**: IDE에서 라우트와 파라미터 자동완성 지원
 - **리팩토링 용이**: 라우트 이름 변경 시 모든 참조가 자동 업데이트
 - **명확한 타입**: 파라미터 타입이 명확하여 런타임 오류 감소
+
+## 실습 과제
+
+### 과제 1: 기본 라우팅 구현
+GoRouter를 사용하여 홈, 로그인, 프로필(userId 파라미터) 3개 화면으로 구성된 라우터를 구현하세요. 로그인 상태에 따라 미인증 사용자를 로그인 화면으로 리다이렉트하세요.
+
+### 과제 2: StatefulShellRoute 탭 네비게이션
+StatefulShellRoute.indexedStack를 사용하여 3개 탭(홈, 검색, 마이페이지)으로 구성된 Bottom Navigation을 구현하세요. 각 탭은 독립적인 네비게이션 스택을 유지해야 합니다.
+
+### 과제 3: 타입 안전한 라우팅 적용
+go_router_builder를 사용하여 기존 라우트를 타입 안전한 방식으로 변환하세요. Path 파라미터와 Query 파라미터를 포함한 라우트를 최소 2개 이상 정의하세요.
+
+## Self-Check 퀴즈
+
+- [ ] `context.go()`와 `context.push()`의 차이점을 설명할 수 있는가?
+- [ ] ShellRoute와 StatefulShellRoute의 차이점과 각각의 사용 시점을 이해하고 있는가?
+- [ ] GoRouter의 redirect 콜백에서 `null`을 반환하는 것과 경로를 반환하는 것의 의미를 이해하고 있는가?
+- [ ] GoRouterRefreshStream을 사용하여 인증 상태 변화 시 라우터를 자동으로 갱신하는 방법을 구현할 수 있는가?
+- [ ] extra를 사용한 객체 전달의 장단점을 설명할 수 있는가? (딥링크 미지원 등)
 
 ## 체크리스트
 

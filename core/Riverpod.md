@@ -4,6 +4,11 @@
 
 > 이 문서는 Riverpod을 사용한 선언적 상태 관리 패턴을 설명합니다. Riverpod은 Provider의 개선된 버전으로, 컴파일 타임 안전성과 테스트 용이성을 제공합니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Riverpod의 Provider 타입별 차이와 사용 시나리오를 이해할 수 있다
+> - 코드 생성 기반 Riverpod으로 타입 안전한 상태 관리를 구현할 수 있다
+> - Bloc과 Riverpod의 장단점을 비교하고 적절한 상태 관리 도구를 선택할 수 있다
+
 ## 목차
 
 1. [개요](#1-개요)
@@ -2234,3 +2239,20 @@ Riverpod은 Provider의 개선된 버전으로, 다음과 같은 이점을 제�
 - 팀이 Bloc에 익숙함
 
 Riverpod과 Bloc은 각각의 장점이 있으며, 프로젝트 요구사항에 따라 선택하거나 혼용할 수 있습니다.
+
+---
+
+## 실습 과제
+
+### 과제 1: Riverpod Provider 타입 실습
+StateProvider, FutureProvider, StreamProvider, NotifierProvider를 각각 사용하여 간단한 카운터, API 호출, 실시간 데이터, 복합 상태 관리를 구현하세요.
+
+### 과제 2: Bloc vs Riverpod 비교 프로젝트
+동일한 기능(예: Todo 앱)을 Bloc과 Riverpod으로 각각 구현하고, 코드량, 보일러플레이트, 테스트 용이성, 러닝 커브를 비교 분석하세요.
+
+## Self-Check
+
+- [ ] Provider, StateProvider, FutureProvider, NotifierProvider의 차이를 설명할 수 있다
+- [ ] @riverpod 어노테이션을 사용한 코드 생성 방식을 적용할 수 있다
+- [ ] ref.watch, ref.read, ref.listen의 사용 시나리오를 구분할 수 있다
+- [ ] Riverpod과 Bloc의 장단점을 프로젝트 맥락에서 비교할 수 있다

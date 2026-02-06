@@ -2,6 +2,11 @@
 
 Flutter에서 Bloc(Business Logic Component) 패턴을 사용한 상태 관리 가이드입니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Bloc 패턴의 핵심 개념(Event, State, Bloc)을 이해하고 실무에 적용할 수 있습니다
+> - Transformer(sequential, concurrent, droppable, restartable)를 상황에 맞게 선택하여 사용할 수 있습니다
+> - BlocBuilder, BlocListener, BlocConsumer를 적절히 활용하여 UI를 구성할 수 있습니다
+
 ---
 
 ## 목차
@@ -1973,3 +1978,45 @@ Future<void> _onDataRequested(
 - [flutter_bloc 패키지](https://pub.dev/packages/flutter_bloc)
 - [bloc_test 패키지](https://pub.dev/packages/bloc_test)
 - [bloc_concurrency 패키지](https://pub.dev/packages/bloc_concurrency)
+
+---
+## 실습 과제
+
+### 과제 1: Login Bloc 구현
+로그인 기능을 Bloc 패턴으로 구현해보세요.
+
+1. Freezed로 LoginEvent 정의 (emailChanged, passwordChanged, submitted)
+2. Freezed로 LoginState 정의 (initial, loading, success, failure)
+3. LoginBloc 구현 (이벤트 핸들러, 유효성 검사, API 호출)
+4. LoginScreen에서 BlocConsumer로 UI 구성
+5. 로딩 중 중복 요청 방지 (droppable transformer 사용)
+
+### 과제 2: Pagination Bloc 구현
+무한 스크롤 목록을 Bloc으로 구현해보세요.
+
+1. PaginationState 정의 (items, currentPage, hasReachedEnd, isLoading)
+2. ProductListEvent 정의 (started, loadMore, refresh)
+3. droppable transformer로 중복 요청 방지
+4. ScrollNotification으로 80% 스크롤 시 자동 로드
+5. RefreshIndicator로 pull-to-refresh 구현
+
+### 과제 3: Search Bloc with Debounce
+검색 기능을 debounce와 함께 구현해보세요.
+
+1. SearchEvent 정의 (queryChanged, cleared)
+2. 300ms debounce transformer 구현
+3. restartable transformer로 이전 검색 취소
+4. 검색 히스토리 저장 기능 추가
+5. 빈 쿼리 처리 및 에러 핸들링
+
+## Self-Check
+- [ ] Event, State, Bloc의 역할과 데이터 흐름을 설명할 수 있다
+- [ ] Bloc과 Cubit의 차이점을 이해하고 적절히 선택할 수 있다
+- [ ] Freezed를 사용하여 불변 Event와 State를 정의할 수 있다
+- [ ] on<Event> 핸들러에서 emit을 올바르게 사용할 수 있다
+- [ ] sequential, concurrent, droppable, restartable transformer의 차이를 설명하고 상황에 맞게 사용할 수 있다
+- [ ] BlocBuilder, BlocListener, BlocConsumer의 차이를 이해하고 적절히 선택할 수 있다
+- [ ] context.read와 context.watch의 차이를 설명할 수 있다
+- [ ] BlocProvider로 Bloc 생명주기를 관리하는 이유를 설명할 수 있다
+- [ ] 비동기 작업 후 isClosed를 체크하는 이유를 설명할 수 있다
+- [ ] BlocObserver를 사용하여 전역 로깅을 구현할 수 있다

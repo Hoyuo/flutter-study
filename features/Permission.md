@@ -1,5 +1,15 @@
 # Flutter 권한 처리 가이드 (permission_handler)
 
+## 학습 목표
+
+이 문서를 학습하면 다음을 할 수 있습니다:
+
+1. permission_handler를 사용하여 iOS/Android 런타임 권한을 통합적으로 처리할 수 있다
+2. PermissionStatus 상태별(denied, granted, permanentlyDenied, limited) 적절한 UX 흐름을 구현할 수 있다
+3. Android 13+ 저장소 권한 변경(photos/videos/audio)에 대응하는 마이그레이션을 수행할 수 있다
+4. Pre-permission Rationale 다이얼로그로 권한 승인율을 높이는 패턴을 적용할 수 있다
+5. PermissionService 추상화와 Bloc을 연동한 Clean Architecture 기반 권한 관리 시스템을 구축할 수 있다
+
 ## 개요
 
 permission_handler는 Flutter에서 iOS와 Android의 런타임 권한을 통합적으로 처리할 수 있는 패키지입니다. 카메라, 위치, 알림 등 다양한 권한을 일관된 API로 관리할 수 있습니다.
@@ -11,7 +21,7 @@ permission_handler는 Flutter에서 iOS와 Android의 런타임 권한을 통합
 ```yaml
 # pubspec.yaml
 dependencies:
-  permission_handler: ^13.0.0
+  permission_handler: ^11.4.0
   device_info_plus: ^10.1.0  # Android SDK 버전 확인용 (저장소 권한 처리 시 필요)
 ```
 
@@ -1300,6 +1310,25 @@ void main() {
   );
 }
 ```
+
+## 실습 과제
+
+### 과제 1: 권한 요청 화면 구현
+카메라, 사진, 위치, 알림 4개 권한에 대해 각각 상태를 표시하고, 개별/전체 권한을 요청할 수 있는 온보딩 화면을 구현하세요. 각 권한 항목은 허용 여부에 따라 시각적으로 구분되어야 합니다.
+
+### 과제 2: Pre-permission Rationale 적용
+카메라 권한 요청 전에 사용 목적을 설명하는 다이얼로그를 표시하고, 사용자가 "계속"을 선택했을 때만 시스템 권한 팝업을 띄우는 흐름을 구현하세요.
+
+### 과제 3: Android 13+ 저장소 권한 분기 처리
+`device_info_plus`를 사용하여 Android SDK 버전을 확인하고, Android 13 이상에서는 `Permission.photos`/`Permission.videos`를, 이하에서는 `Permission.storage`를 요청하는 분기 로직을 구현하세요.
+
+## Self-Check 퀴즈
+
+- [ ] `PermissionStatus.denied`와 `PermissionStatus.permanentlyDenied`의 차이점과 각 상태에서의 대응 방법을 설명할 수 있는가?
+- [ ] iOS에서 `PermissionStatus.limited` 상태가 발생하는 시점과 사용자에게 안내하는 방법을 이해하고 있는가?
+- [ ] iOS Podfile에서 사용하지 않는 권한을 비활성화(PERMISSION_XXX=0)하는 이유를 설명할 수 있는가?
+- [ ] `openAppSettings()`를 호출해야 하는 시점과 그 전에 사용자에게 안내해야 하는 내용을 이해하고 있는가?
+- [ ] iOS App Tracking Transparency(ATT)의 요청 시점 권장사항과 거부 시 대응 방법을 설명할 수 있는가?
 
 ## 체크리스트
 

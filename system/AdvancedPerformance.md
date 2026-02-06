@@ -2,6 +2,11 @@
 
 > **대상**: 10년차+ 시니어 개발자 | Flutter 3.27+ | Dart 3.10+ | Impeller 렌더링 엔진
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Custom RenderObject로 저수준 렌더링 최적화를 수행할 수 있다
+> - Impeller 렌더러의 특성을 이해하고 최적화할 수 있다
+> - Memory Profiling으로 메모리 누수를 진단하고 해결할 수 있다
+
 ## 개요
 
 이 가이드는 Flutter 앱의 극한 성능을 끌어내기 위한 고급 기법을 다룹니다. Custom RenderObject 작성, Impeller 렌더링 엔진 최적화, Fragment Shader 활용, 메모리 프로파일링 심화, 대용량 데이터 처리 등 실무에서 마주치는 복잡한 성능 문제를 해결하는 방법을 제시합니다.
@@ -1548,3 +1553,20 @@ flutter:
 4. **사용자 경험 우선** - 수치보다 체감 성능
 
 이 가이드의 기법들을 프로덕션에 적용할 때는 항상 A/B 테스트와 실제 사용자 메트릭을 기반으로 검증하세요.
+
+---
+
+## 실습 과제
+
+### 과제 1: Widget Rebuild 최적화
+DevTools Timeline으로 불필요한 Widget Rebuild를 찾고, const 생성자, RepaintBoundary, Selector를 활용하여 최적화하세요.
+
+### 과제 2: 메모리 프로파일링
+DevTools Memory 탭으로 메모리 누수를 진단하고, Stream/Controller의 적절한 dispose를 확인하세요.
+
+## Self-Check
+
+- [ ] DevTools Performance 탭으로 프레임 드롭을 분석할 수 있는가?
+- [ ] RepaintBoundary의 적절한 사용 위치를 판단할 수 있는가?
+- [ ] Impeller와 Skia의 렌더링 차이를 설명할 수 있는가?
+- [ ] 메모리 누수의 일반적 원인(미해제 Stream, Controller)을 진단할 수 있는가?

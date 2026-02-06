@@ -2,6 +2,11 @@
 
 > Flutter 패키지 및 플러그인 개발부터 Pub.dev 배포, 유지보수까지의 전체 프로세스를 다루는 실무 가이드입니다. Dart Package, Flutter Plugin, FFI Plugin의 개발 방법과 API 설계, 테스트, CI/CD, 버전 관리 전략을 포함합니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Dart Package와 Flutter Plugin을 개발할 수 있다
+> - Pub.dev에 패키지를 배포하고 Semantic Versioning을 관리할 수 있다
+> - Federated Plugin 구조로 플랫폼별 확장을 구현할 수 있다
+
 ---
 
 ## 1. 개요
@@ -2085,3 +2090,20 @@ Future<User> createUser({
 - [Semantic Versioning](https://semver.org/)
 - [Melos Documentation](https://melos.invertase.dev/)
 - [Effective Dart](https://dart.dev/effective-dart)
+
+---
+
+## 실습 과제
+
+### 과제 1: Dart 유틸리티 패키지 개발
+자주 사용하는 유틸리티 함수(날짜 포맷, 문자열 검증 등)를 Dart 패키지로 만들고, example 프로젝트와 테스트를 작성하세요.
+
+### 과제 2: Flutter Plugin 개발
+Platform Channel을 사용하여 네이티브 배터리 정보를 가져오는 Flutter Plugin을 만들고 Pub.dev에 배포하세요.
+
+## Self-Check
+
+- [ ] pubspec.yaml의 필수 필드(name, version, description, homepage)를 올바르게 설정할 수 있는가?
+- [ ] dart doc으로 API 문서를 생성할 수 있는가?
+- [ ] Semantic Versioning 규칙(MAJOR.MINOR.PATCH)을 이해하고 적용하는가?
+- [ ] pana 점수를 확인하고 Pub.dev 배포 기준을 충족할 수 있는가?

@@ -2,6 +2,11 @@
 
 > Flutter의 CustomPainter를 활용한 고급 그래픽 렌더링 패턴입니다. Canvas API를 통해 복잡한 도형, 차트, 애니메이션을 직접 그리는 방법을 다룹니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - CustomPainter와 Canvas API를 활용한 커스텀 그래픽을 구현할 수 있다
+> - 복잡한 도형, 차트, 게이지 등 데이터 시각화를 구현할 수 있다
+> - 그래픽 렌더링 성능 최적화와 애니메이션 적용 방법을 이해할 수 있다
+
 ## 목차
 1. [개요](#1-개요)
 2. [CustomPainter 기초](#2-custompainter-기초)
@@ -3283,3 +3288,20 @@ Custom Painting은 Flutter에서 가장 강력한 렌더링 도구입니다. Can
 - Clean Architecture로 로직 분리
 
 더 자세한 내용은 [Flutter 공식 문서](https://docs.flutter.dev/ui/advanced/custom-paint)를 참고하세요.
+
+---
+
+## 실습 과제
+
+### 과제 1: 커스텀 차트 위젯 구현
+CustomPainter를 사용하여 막대 차트(Bar Chart)와 라인 차트(Line Chart)를 직접 그리는 위젯을 구현하세요. 데이터 바인딩, 축 레이블, 터치 인터랙션(값 표시 툴팁)을 포함해 주세요.
+
+### 과제 2: 애니메이션 게이지 위젯
+원형 게이지(Circular Gauge) 위젯을 구현하세요. AnimationController와 CustomPainter를 조합하여 값 변경 시 부드러운 애니메이션, 그라데이션 색상, 눈금 표시를 구현하세요.
+
+## Self-Check
+
+- [ ] CustomPainter의 paint()와 shouldRepaint()를 올바르게 구현할 수 있다
+- [ ] Canvas API로 기본 도형(선, 원, 사각형, 경로)을 그릴 수 있다
+- [ ] Path를 활용한 복잡한 도형과 클리핑을 구현할 수 있다
+- [ ] CustomPainter와 AnimationController를 조합한 애니메이션을 구현할 수 있다

@@ -2,6 +2,11 @@
 
 > **최신 업데이트**: Flutter 3.27 및 flutter_secure_storage 10.0.0 기준으로 작성되었습니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - 민감한 데이터를 SecureStorage로 안전하게 저장할 수 있다
+> - Certificate Pinning으로 네트워크 통신을 보호할 수 있다
+> - OWASP Mobile Top 10 취약점을 이해하고 대응할 수 있다
+
 ## 개요
 
 모바일 앱의 보안은 사용자 데이터 보호와 앱의 무결성 유지에 필수적입니다. 이 가이드는 Flutter 앱에서 적용할 수 있는 실무 기반의 보안 전략을 다룹니다.
@@ -2226,3 +2231,20 @@ const breachNotificationTemplate = '''
 - [ ] 써드파티 라이브러리 보안 검토
 - [ ] 정기적인 보안 업데이트 계획
 - [ ] 응급 대응 계획 수립
+
+---
+
+## 실습 과제
+
+### 과제 1: SecureStorage 토큰 관리
+JWT 토큰과 리프레시 토큰을 SecureStorage에 저장하고, 토큰 만료 시 자동 갱신하는 AuthRepository를 구현하세요.
+
+### 과제 2: Certificate Pinning 적용
+Dio Interceptor에 Certificate Pinning을 적용하여 MITM 공격을 방지하세요.
+
+## Self-Check
+
+- [ ] SecureStorage에 민감 데이터를 저장하고 있는가?
+- [ ] API 통신에 Certificate Pinning이 적용되어 있는가?
+- [ ] 로그에 민감 정보(토큰, 비밀번호)가 노출되지 않는가?
+- [ ] ProGuard/R8으로 코드 난독화를 적용했는가?

@@ -1,5 +1,10 @@
 # Flutter 분석 및 로깅 가이드 (Firebase Analytics + Crashlytics)
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Firebase Analytics를 설정하고 사용자 행동 이벤트를 추적할 수 있다
+> - Crashlytics로 크래시 리포팅 및 비정상 종료를 모니터링할 수 있다
+> - 분석 데이터를 기반으로 앱 개선 포인트를 도출할 수 있다
+
 ## 개요
 
 Firebase Analytics와 Crashlytics를 통해 사용자 행동 분석, 크래시 리포팅, 성능 모니터링을 구현합니다. 프로덕션 앱 운영에 필수적인 기능들입니다.
@@ -1396,3 +1401,20 @@ void main() {
 - [ ] 로그인/로그아웃 시 사용자 정보 설정
 - [ ] 국가별 기본 파라미터 설정
 - [ ] DebugView로 이벤트 확인
+
+---
+
+## 실습 과제
+
+### 과제 1: 이벤트 추적 시스템 구축
+Firebase Analytics를 설정하고, 화면 조회(screen_view), 버튼 클릭, 주요 전환(conversion) 이벤트를 추적하는 AnalyticsService를 구현하세요. 사용자 속성과 세션 파라미터를 포함해 주세요.
+
+### 과제 2: Crashlytics 통합 및 에러 리포팅
+Crashlytics를 설정하고, 처리된 예외(recordError)와 미처리 예외(Fatal)를 분류하여 리포팅하는 시스템을 구현하세요. 사용자 식별과 커스텀 키/로그를 추가하세요.
+
+## Self-Check
+
+- [ ] Firebase Analytics를 초기화하고 커스텀 이벤트를 로깅할 수 있다
+- [ ] Crashlytics로 크래시와 비정상 종료를 모니터링할 수 있다
+- [ ] Debug/Release 모드별 분석 설정을 분리할 수 있다
+- [ ] 분석 대시보드에서 주요 지표를 확인하고 해석할 수 있다

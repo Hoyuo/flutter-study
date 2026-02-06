@@ -2,6 +2,11 @@
 
 > 10년차+ 시니어 개발자를 위한 대규모 프로덕션 환경의 모니터링, 인시던트 관리, 운영 자동화를 다룹니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - SLO/SLI를 정의하고 서비스 품질을 측정할 수 있다
+> - Incident Management 프로세스를 수립할 수 있다
+> - Crash-free Rate를 모니터링하고 개선할 수 있다
+
 ## 목차
 
 1. [Crashlytics 분석 자동화](#1-crashlytics-분석-자동화)
@@ -2138,3 +2143,20 @@ if __name__ == "__main__":
 - [PagerDuty Incident Response](https://response.pagerduty.com/)
 - [Smartlook Mobile SDK](https://www.smartlook.com/docs/)
 - [Google Play Console API](https://developers.google.com/android-publisher)
+
+---
+
+## 실습 과제
+
+### 과제 1: SLO/SLI 정의
+앱의 핵심 기능에 대한 SLO(서비스 레벨 목표)와 SLI(서비스 레벨 지표)를 정의하고 모니터링 대시보드를 구성하세요.
+
+### 과제 2: Incident Response 플레이북
+장애 등급(P1-P4)을 정의하고, 각 등급별 대응 절차와 에스컬레이션 규칙을 포함하는 플레이북을 작성하세요.
+
+## Self-Check
+
+- [ ] SLO, SLI, SLA의 차이를 설명할 수 있는가?
+- [ ] Error Budget 개념을 이해하고 활용할 수 있는가?
+- [ ] Incident 발생 시 대응 프로세스(Detection → Triage → Resolution → Postmortem)를 주도할 수 있는가?
+- [ ] Crash-free Rate 99.5%+ 목표를 달성하기 위한 전략을 수립할 수 있는가?

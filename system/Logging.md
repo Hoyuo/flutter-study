@@ -1,5 +1,10 @@
 # Flutter 로깅 가이드
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - 구조화된 로깅 시스템을 구축할 수 있다
+> - BlocObserver로 상태 변화를 추적할 수 있다
+> - Crashlytics와 연동하여 프로덕션 로그를 수집할 수 있다
+
 ## 개요
 
 효과적인 로깅은 개발, 테스트, 프로덕션 단계에서 앱의 동작을 이해하고 문제를 해결하는 데 필수적입니다. 이 가이드는 구조화된 로깅, 조건부 로깅, 원격 모니터링을 포함한 완벽한 로깅 전략을 다룹니다.
@@ -1567,3 +1572,20 @@ class AppLogger {
 - [Logger 패키지](https://pub.dev/packages/logger)
 - [Firebase Crashlytics](https://firebase.google.com/docs/crashlytics)
 - [Flutter 디버깅 가이드](https://flutter.dev/docs/testing/debugging)
+
+---
+
+## 실습 과제
+
+### 과제 1: 구조화된 로거 구현
+로그 레벨(debug, info, warning, error)을 지원하는 LoggerService를 구현하고 DI로 주입하세요.
+
+### 과제 2: BlocObserver 로깅
+BlocObserver를 구현하여 모든 Bloc의 이벤트, 상태 변화, 에러를 자동으로 로깅하세요.
+
+## Self-Check
+
+- [ ] 로그 레벨에 따라 출력을 필터링할 수 있는가?
+- [ ] 프로덕션 빌드에서 디버그 로그가 노출되지 않는가?
+- [ ] BlocObserver로 상태 변화를 추적하고 있는가?
+- [ ] Crashlytics에 에러 로그가 정상적으로 전송되는가?

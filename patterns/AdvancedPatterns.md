@@ -2,6 +2,11 @@
 
 > 이 문서는 10년 이상 경력의 시니어 개발자를 대상으로 작성된 Flutter 고급 설계 패턴 가이드입니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - DDD, Hexagonal, Clean Architecture 등 고급 설계 패턴을 Flutter에 적용할 수 있다
+> - 복합 패턴을 조합하여 대규모 프로젝트 아키텍처를 설계할 수 있다
+> - 프로젝트 요구사항에 맞는 최적의 아키텍처 패턴을 선택할 수 있다
+
 ## 목차 (Table of Contents)
 
 1. [DDD (Domain-Driven Design)](#1-ddd-domain-driven-design)
@@ -772,3 +777,20 @@ class OptimizedEventSourcedRepository {
 대부분의 Flutter 앱은 **DDD + Hexagonal + Bloc**으로 충분합니다.
 
 Happy Coding! 🚀
+
+---
+
+## 실습 과제
+
+### 과제 1: Hexagonal Architecture 적용
+기존 Clean Architecture 프로젝트에 Hexagonal Architecture의 Port/Adapter 패턴을 적용하세요. 외부 의존성(DB, API, 푸시)을 Adapter로 분리하고, 비즈니스 로직의 완전한 격리를 달성하세요.
+
+### 과제 2: DDD 기반 도메인 모델링
+주문(Order) 도메인을 DDD 패턴으로 모델링하세요. Entity, Value Object, Aggregate Root, Domain Event를 정의하고, Repository 패턴을 통한 영속성 처리를 구현하세요.
+
+## Self-Check
+
+- [ ] DDD의 핵심 개념(Entity, Value Object, Aggregate, Domain Event)을 설명할 수 있다
+- [ ] Hexagonal Architecture의 Port/Adapter 패턴을 Flutter에 적용할 수 있다
+- [ ] Clean Architecture, DDD, Hexagonal의 차이와 조합 방법을 이해할 수 있다
+- [ ] 프로젝트 규모와 요구사항에 맞는 아키텍처 패턴을 선택할 수 있다

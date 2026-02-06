@@ -2,6 +2,11 @@
 
 > 대규모 엔터프라이즈 애플리케이션을 위한 고급 상태 관리 패턴 및 아키텍처
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Event Sourcing, CQRS 등 고급 상태 관리 패턴을 이해하고 구현할 수 있다
+> - Multi-Bloc 조합과 상태 동기화 전략을 설계할 수 있다
+> - 상태 관리의 성능 최적화 및 디버깅 기법을 적용할 수 있다
+
 ## 목차
 
 1. [상태 관리 개요](#1-상태-관리-개요)
@@ -3089,3 +3094,20 @@ class EncryptedStorage implements Storage {
 - [Event Sourcing Pattern](https://martinfowler.com/eaaDev/EventSourcing.html)
 - [CQRS Pattern](https://martinfowler.com/bliki/CQRS.html)
 - [Redux DevTools](https://github.com/reduxjs/redux-devtools)
+
+---
+
+## 실습 과제
+
+### 과제 1: Multi-Bloc 상태 동기화 구현
+3개 이상의 Bloc이 서로 의존하는 시나리오(예: AuthBloc → UserBloc → SettingsBloc)에서 상태 변경이 연쇄적으로 전파되는 패턴을 구현하세요. BlocListener와 StreamSubscription을 활용하세요.
+
+### 과제 2: Event Sourcing 기반 Undo/Redo
+Event Sourcing 패턴으로 사용자 액션의 히스토리를 관리하고, Undo/Redo 기능을 구현하세요. 이벤트 저장소와 스냅샷 복원 로직을 포함해 주세요.
+
+## Self-Check
+
+- [ ] Multi-Bloc 간 상태 동기화 전략을 설계할 수 있다
+- [ ] Event Sourcing과 CQRS 패턴의 차이를 설명할 수 있다
+- [ ] Bloc의 Transformer를 활용한 이벤트 처리 최적화를 적용할 수 있다
+- [ ] 상태 디버깅 도구(DevTools, Observer)를 설정하고 활용할 수 있다

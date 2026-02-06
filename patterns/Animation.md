@@ -1,5 +1,10 @@
 # Flutter 애니메이션 가이드
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - 암시적/명시적 애니메이션의 차이를 이해하고 적절히 사용할 수 있다
+> - Hero 애니메이션과 페이지 전환 효과를 구현할 수 있다
+> - Lottie 통합 및 애니메이션 성능 최적화를 적용할 수 있다
+
 ## 개요
 
 Flutter 애니메이션의 모든 것을 다룹니다. 암시적 애니메이션(Implicit), 명시적 애니메이션(Explicit), 커스텀 애니메이션, 페이지 전환, Hero 애니메이션, Lottie 통합, 성능 최적화 및 접근성 고려사항을 포함합니다.
@@ -2103,3 +2108,20 @@ class _TestAnimationWidgetState extends State<_TestAnimationWidget>
 - [ ] Lottie 파일 크기 최적화
 - [ ] 백그라운드 시 애니메이션 정지
 - [ ] 테스트 작성 (pumpAndSettle 사용)
+
+---
+
+## 실습 과제
+
+### 과제 1: 커스텀 페이지 전환 애니메이션
+PageRouteBuilder를 사용하여 슬라이드, 페이드, 스케일 등 커스텀 페이지 전환 애니메이션을 3가지 이상 구현하세요. Hero 애니메이션과 조합하여 자연스러운 화면 전환을 만들어 보세요.
+
+### 과제 2: Lottie + 명시적 애니메이션 조합
+Lottie 애니메이션을 로딩 인디케이터와 빈 상태 화면에 적용하세요. AnimationController를 사용한 커스텀 애니메이션과 Lottie를 조합하여 풍부한 인터랙션을 구현하세요.
+
+## Self-Check
+
+- [ ] AnimatedContainer, AnimatedOpacity 등 암시적 애니메이션을 사용할 수 있다
+- [ ] AnimationController와 Tween을 사용한 명시적 애니메이션을 구현할 수 있다
+- [ ] Hero 애니메이션으로 화면 간 요소 전환을 구현할 수 있다
+- [ ] 애니메이션 성능 최적화(RepaintBoundary, vsync)를 적용할 수 있다

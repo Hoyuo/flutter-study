@@ -1,5 +1,17 @@
 # Flutter 성능 최적화 가이드
 
+## 학습 목표
+
+이 문서를 학습하면 다음을 할 수 있습니다:
+
+1. Flutter의 **렌더링 파이프라인**(Build → Layout → Paint → Composite)을 이해하고 병목 지점을 식별할 수 있다
+2. **const 생성자**, **RepaintBoundary**, **ListView.builder** 등으로 렌더링을 최적화할 수 있다
+3. **BlocSelector**, **buildWhen**, 상태 정규화로 불필요한 Rebuild를 방지할 수 있다
+4. **compute(Isolate)**, **디바운싱/쓰로틀링**으로 비동기 작업을 최적화할 수 있다
+5. **DevTools Performance 탭**과 **Performance Overlay**를 활용하여 성능을 측정하고 분석할 수 있다
+
+---
+
 ## 개요
 
 Flutter 앱의 성능은 사용자 경험을 결정하는 핵심 요소입니다. 렌더링 파이프라인 이해, 메모리 관리, 효율적인 비동기 처리를 통해 부드러운 60fps(또는 120fps) 유지와 배터리 소비 최소화를 달성할 수 있습니다.
@@ -1687,3 +1699,36 @@ flutter pub run build_runner build --delete-conflicting-outputs
 - [ ] 첫 프레임 이후 비필수 초기화 지연
 - [ ] 앱 시작 시간 측정 및 최적화
 - [ ] Lazy initialization 패턴 적용
+
+---
+
+## 실습 과제
+
+### 과제 1: 불필요한 Rebuild 제거
+아래 코드에서 성능 문제를 찾아 `BlocSelector`와 `buildWhen`으로 최적화하세요.
+- 가격, 재고, 즐겨찾기 상태를 각각 독립적으로 감시하는 위젯으로 분리
+- `BlocBuilder` 하나로 전체를 감싸는 기존 코드와 비교하여 rebuild 횟수 차이를 확인하세요.
+
+### 과제 2: 무한 스크롤 리스트 구현
+`PaginatedListBloc`을 구현하여 무한 스크롤 리스트를 완성하세요.
+- `ListView.builder`로 화면에 보이는 아이템만 렌더링
+- 스크롤 끝에 도달하면 다음 페이지 자동 로드 (쓰로틀링 250ms 적용)
+- Pull-to-refresh로 첫 페이지부터 다시 로드
+- 로딩 인디케이터 표시 및 더 이상 데이터 없을 때 처리하세요.
+
+### 과제 3: Isolate를 활용한 JSON 파싱
+10,000건 이상의 상품 JSON 데이터를 `compute` 함수로 별도 Isolate에서 파싱하세요.
+- 메인 스레드에서 직접 파싱할 때와 Isolate에서 파싱할 때의 UI 반응성 차이를 비교
+- `Stopwatch`로 파싱 시간을 측정하고 로그를 출력하세요.
+
+---
+
+## Self-Check 퀴즈
+
+학습한 내용을 점검해 보세요:
+
+- [ ] Flutter 렌더링 파이프라인의 4단계와 각 단계의 역할을 설명할 수 있는가?
+- [ ] `ListView`와 `ListView.builder`의 성능 차이 및 그 원인(lazy rendering)을 설명할 수 있는가?
+- [ ] `RepaintBoundary`가 성능을 향상시키는 원리와 과도하게 사용할 때의 단점을 설명할 수 있는가?
+- [ ] `compute` 함수의 인자로 전달할 수 있는 함수의 제약조건(top-level 또는 static)을 설명할 수 있는가?
+- [ ] Impeller가 Skia 대비 Shader Compilation Jank를 해결하는 원리를 설명할 수 있는가?

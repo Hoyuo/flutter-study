@@ -1,5 +1,10 @@
 # Flutter Functional Programming with fpdart
 
+
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Either<Failure, Success> 패턴을 사용하여 명시적으로 에러를 처리할 수 있습니다
+> - Repository와 UseCase에서 Either를 반환하고 Bloc에서 fold로 처리할 수 있습니다
+> - Option, TaskEither, Unit 등 함수형 타입을 실무에 적용할 수 있습니다
 > 이 문서는 fpdart 라이브러리를 사용한 함수형 프로그래밍 패턴을 설명합니다.
 
 ## 1. 개요
@@ -969,3 +974,45 @@ class UserBloc {
 | [ErrorHandling.md](../system/ErrorHandling.md) | Failure 클래스 설계와 에러 분류 |
 | [Bloc.md](./Bloc.md) | Bloc에서 Either 결과 처리 |
 | [Networking_Dio.md](../networking/Networking_Dio.md) | DioException → Either 변환 |
+
+---
+## 실습 과제
+
+### 과제 1: Repository에 Either 적용
+기존 예외 기반 코드를 Either 패턴으로 리팩토링하세요.
+
+1. UserRepository 인터페이스를 Either<UserFailure, User> 반환하도록 수정
+2. UserRepositoryImpl에서 try-catch로 DioException 처리
+3. UserFailureMapper로 DioException → UserFailure 변환
+4. GetUserUseCase에서 Either 전달
+5. UserBloc에서 fold로 성공/실패 처리
+
+### 과제 2: 복잡한 비즈니스 로직 체이닝
+여러 비동기 작업을 Either로 연결하세요.
+
+1. CreateOrderUseCase 구현 (장바구니 검증 → 재고 확인 → 결제 처리 → 주문 생성)
+2. fold를 사용한 순차 체이닝 구현
+3. TaskEither로 리팩토링하여 flatMap 사용
+4. 각 단계의 Failure를 OrderFailure로 변환
+5. 중간 실패 시 롤백 로직 추가
+
+### 과제 3: Option으로 캐시 처리
+로컬 캐시를 Option으로 구현하세요.
+
+1. UserLocalDataSource에서 Option<CachedUser> 반환
+2. Repository에서 캐시 확인 (Some → 캐시 반환, None → API 호출)
+3. 캐시가 오래된 경우 백그라운드 갱신
+4. Either.Do 문법으로 여러 Option 조합
+5. Option과 nullable의 차이 분석
+
+## Self-Check
+- [ ] Either<L, R>의 개념과 Left/Right의 의미를 설명할 수 있다
+- [ ] 예외 기반 에러 처리와 Either 기반 에러 처리의 차이를 설명할 수 있다
+- [ ] Repository에서 Either를 반환하고 Bloc에서 fold로 처리할 수 있다
+- [ ] map으로 성공 값만 변환하고, mapLeft로 실패 값만 변환할 수 있다
+- [ ] fold를 사용하여 비동기 Either 작업을 체이닝할 수 있다
+- [ ] TaskEither의 개념과 Future<Either>와의 차이를 설명할 수 있다
+- [ ] Option<T>을 사용하여 nullable 값을 안전하게 처리할 수 있다
+- [ ] Unit 타입을 사용하여 반환값이 없는 성공을 표현할 수 있다
+- [ ] Either.Do와 TaskEither.Do의 차이를 이해하고 적절히 사용할 수 있다
+- [ ] 언제 Either를 사용하고 언제 Exception을 사용해야 하는지 판단할 수 있다

@@ -2,6 +2,18 @@
 
 > 이 문서는 Flutter 프로젝트에서 테스트를 작성하는 방법을 설명합니다.
 
+## 학습 목표
+
+이 문서를 학습하면 다음을 할 수 있습니다:
+
+1. **Unit Test / Widget Test / Integration Test**의 차이와 테스트 피라미드 전략을 이해할 수 있다
+2. **Mockito**(또는 mocktail)를 사용하여 Mock 객체를 생성하고 Stub을 설정할 수 있다
+3. **bloc_test** 패키지로 Bloc의 상태 변화를 `blocTest`로 검증할 수 있다
+4. **Widget Test**에서 `MockBloc`과 `whenListen`을 사용하여 UI 상태별 렌더링을 테스트할 수 있다
+5. **Patrol**을 활용하여 네이티브 권한 처리를 포함한 E2E 테스트를 작성할 수 있다
+
+---
+
 ## 1. 테스트 개요
 
 ### 1.1 테스트 종류
@@ -37,7 +49,8 @@
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  bloc_test: ^10.0.0
+  bloc_test: ^9.1.7
+  mocktail: ^1.0.4
   mockito: ^5.6.3
   build_runner: ^2.4.0  # mockito 코드 생성용
 ```
@@ -1214,7 +1227,7 @@ Patrol은 Flutter의 Integration Test를 강화한 프레임워크로, 네이티
 ```yaml
 # pubspec.yaml
 dev_dependencies:
-  patrol: ^3.0.0
+  patrol: ^3.14.1
 ```
 
 ### 14.2 기본 Patrol Test
@@ -1402,3 +1415,38 @@ jobs:
 - 네이티브 다이얼로그와 상호작용해야 하는 경우
 - E2E 테스트에서 스크린샷이 필요한 경우
 - 더 강력한 선택자 API가 필요한 경우
+
+---
+
+## 실습 과제
+
+### 과제 1: UseCase + Repository 유닛 테스트
+`GetUserProfileUseCase`와 `UserRepositoryImpl`에 대한 테스트를 작성하세요.
+- Mockito로 `MockUserRemoteDataSource` 생성
+- 성공 시 `User` Entity 반환, 네트워크 에러 시 `Failure` 반환 검증
+- AAA 패턴(Arrange-Act-Assert)을 준수하세요.
+
+### 과제 2: Bloc 테스트 작성
+`LoginBloc`에 대해 `blocTest`를 사용하여 다음 시나리오를 테스트하세요.
+- 로그인 성공 시: `loading → loaded` 상태 변화
+- 로그인 실패 시: `loading → error` 상태 변화
+- `seed`를 사용하여 이미 로그인된 상태에서 로그아웃 이벤트 테스트
+- `verify`로 UseCase 호출 횟수 검증하세요.
+
+### 과제 3: Widget Test + MockBloc
+`ProductListScreen`에 대해 Widget Test를 작성하세요.
+- `MockBloc`과 `whenListen`으로 loading/loaded/error 각 상태의 UI를 검증
+- loaded 상태에서 리스트 아이템이 올바르게 렌더링되는지 확인
+- 새로고침 버튼 탭 시 이벤트가 발행되는지 `verify`로 검증하세요.
+
+---
+
+## Self-Check 퀴즈
+
+학습한 내용을 점검해 보세요:
+
+- [ ] 테스트 피라미드에서 Unit:Widget:Integration의 권장 비율(70:20:10)과 그 이유를 설명할 수 있는가?
+- [ ] `setUp`과 `setUpAll`의 차이, 그리고 Mock 초기화 시 `setUp`을 사용해야 하는 이유를 설명할 수 있는가?
+- [ ] `blocTest`의 `build`, `seed`, `act`, `expect`, `verify` 각 파라미터의 역할을 설명할 수 있는가?
+- [ ] `MockBloc`이 mockito 대신 mocktail 스타일을 따르는 이유와 `whenListen`의 사용법을 설명할 수 있는가?
+- [ ] Golden Test에서 `--update-goldens` 플래그의 역할과 CI에서의 검증 방식을 설명할 수 있는가?

@@ -2,6 +2,11 @@
 
 > 이 문서는 SharedPreferences, Isar Plus, SecureStorage를 사용한 로컬 저장소 패턴을 설명합니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - SharedPreferences로 간단한 키-값 데이터를 저장할 수 있다
+> - SecureStorage로 민감한 데이터를 안전하게 관리할 수 있다
+> - 용도에 맞는 로컬 저장소 솔루션을 선택하고 구현할 수 있다
+
 ## 1. 개요
 
 ### 1.1 저장소 종류 비교
@@ -1768,3 +1773,23 @@ dev_dependencies:
 - [Drift 공식 문서](https://drift.simonbinder.eu/)
 - [ObjectBox 공식 문서](https://docs.objectbox.io/getting-started)
 - [Isar 공식 문서 (레거시)](https://isar.dev/)
+
+---
+
+## 실습 과제
+
+### 과제 1: 사용자 설정 저장
+SharedPreferences로 테마 모드(라이트/다크), 언어 설정, 알림 On/Off를 저장하고 앱 재시작 시 복원하세요.
+
+### 과제 2: 보안 데이터 관리
+SecureStorage로 JWT 토큰과 리프레시 토큰을 저장하고, 토큰 만료 시 자동 갱신 로직을 구현하세요.
+
+### 과제 3: 로컬 캐시 전략
+API 응답 데이터를 로컬에 캐시하고, 네트워크 연결이 없을 때 캐시 데이터를 반환하는 Repository를 구현하세요.
+
+## Self-Check
+
+- [ ] SharedPreferences와 SecureStorage의 용도 차이를 설명할 수 있는가?
+- [ ] 민감한 데이터(토큰, 비밀번호)를 SecureStorage에 저장하고 있는가?
+- [ ] 로컬 저장소 접근을 Repository 패턴으로 추상화할 수 있는가?
+- [ ] 캐시 만료 전략(TTL)을 구현할 수 있는가?

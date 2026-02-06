@@ -2,6 +2,11 @@
 
 Dart에서 불변(immutable) 데이터 클래스를 쉽게 생성하기 위한 Freezed 패키지 사용 가이드입니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Freezed를 사용하여 불변 데이터 클래스를 자동 생성할 수 있습니다
+> - Union 타입(sealed class)으로 복잡한 상태 분기를 타입 안전하게 처리할 수 있습니다
+> - copyWith, when, map 등 Freezed가 제공하는 메서드를 활용할 수 있습니다
+
 ---
 
 ## 목차
@@ -1078,3 +1083,45 @@ class UserV2 with _$UserV2 {
 - [Freezed 공식 문서](https://pub.dev/packages/freezed)
 - [json_serializable 패키지](https://pub.dev/packages/json_serializable)
 - [Freezed GitHub](https://github.com/rrousselGit/freezed)
+
+---
+## 실습 과제
+
+### 과제 1: User Entity 구현
+Freezed로 불변 User 클래스를 구현하세요.
+
+1. User 클래스 정의 (id, email, name, profileImageUrl, isVerified, createdAt)
+2. @Default를 사용한 기본값 설정
+3. JSON 직렬화 추가 (fromJson, toJson)
+4. 커스텀 getter 추가 (hasProfileImage, displayName, accountAge)
+5. build_runner로 코드 생성 및 사용 예제 작성
+
+### 과제 2: Union 타입으로 API Response 구현
+성공/실패를 표현하는 ApiResponse를 구현하세요.
+
+1. ApiResponse<T> 정의 (success, error)
+2. genericArgumentFactories 사용
+3. when, map, maybeWhen 메서드로 분기 처리
+4. 커스텀 메서드 추가 (isSuccess, dataOrNull)
+5. User, List<Product> 등 다양한 타입으로 테스트
+
+### 과제 3: Bloc State를 Union 타입으로 구현
+ProductListState를 Union 타입으로 리팩토링하세요.
+
+1. sealed class로 initial, loading, loaded, error 정의
+2. loaded에 products, hasReachedMax 필드 포함
+3. Bloc에서 when을 사용한 상태 처리
+4. UI에서 map을 사용한 위젯 분기
+5. 기존 방식과 비교하여 장단점 분석
+
+## Self-Check
+- [ ] Freezed의 주요 기능(불변성, copyWith, Union 타입)을 설명할 수 있다
+- [ ] @freezed 어노테이션을 사용하여 데이터 클래스를 정의할 수 있다
+- [ ] @Default를 사용하여 기본값을 설정할 수 있다
+- [ ] copyWith로 일부 필드만 변경한 복사본을 생성할 수 있다
+- [ ] Union 타입(sealed class)과 일반 클래스의 차이를 설명할 수 있다
+- [ ] when, map, maybeWhen의 차이를 이해하고 적절히 사용할 수 있다
+- [ ] private 생성자(_)를 추가하여 커스텀 메서드를 구현할 수 있다
+- [ ] JSON 직렬화를 위한 설정(@JsonKey, genericArgumentFactories)을 할 수 있다
+- [ ] build_runner를 실행하여 .freezed.dart와 .g.dart 파일을 생성할 수 있다
+- [ ] Freezed vs 수동 작성의 장단점을 비교할 수 있다

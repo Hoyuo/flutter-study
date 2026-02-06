@@ -2,6 +2,16 @@
 
 > Flutter에서 Google Maps, Geolocator, Geocoding을 활용한 위치 기반 서비스 구현 가이드. Clean Architecture, Bloc 패턴, injectable DI, fpdart Either를 적용한 실전 예제로 마커 관리, 경로 탐색, Geofencing, 클러스터링까지 다룹니다.
 
+## 학습 목표
+
+이 문서를 학습하면 다음을 할 수 있습니다:
+
+1. Google Maps Flutter 플러그인을 설정하고, 카메라 제어/맵 타입 변경 등 기본 지도 기능을 구현할 수 있다
+2. 마커, 폴리라인, 폴리곤, 서클 등 오버레이를 Bloc 패턴으로 관리할 수 있다
+3. Geolocator를 활용한 실시간 위치 추적과 Geocoding(주소 <-> 좌표 변환)을 구현할 수 있다
+4. Directions API와 Polyline을 사용한 경로 탐색 기능을 구현할 수 있다
+5. Geofencing(영역 진입/이탈 감지)과 마커 클러스터링을 적용할 수 있다
+
 ## 1. 개요
 
 ### 1.1 지도 서비스 옵션
@@ -59,7 +69,7 @@ dependencies:
   json_annotation: ^4.9.0
 
   # Maps & Location
-  google_maps_flutter: ^2.9.0
+  google_maps_flutter: ^2.12.1
   google_maps_flutter_web: ^0.5.10
   google_maps_flutter_android: ^2.14.6
   google_maps_flutter_ios: ^2.11.0
@@ -2699,3 +2709,36 @@ enum TrackingMode {
 8. **테스트** - Mock Repository, Bloc Test, Widget Test
 
 Clean Architecture를 통해 도메인 로직과 UI를 분리하고, Bloc으로 상태를 명확히 관리하며, Either로 에러를 타입 안전하게 처리하는 것이 핵심입니다.
+
+## 실습 과제
+
+### 과제 1: 기본 지도 및 현재 위치 표시
+Google Maps를 표시하고, Geolocator로 현재 위치를 가져와 지도 중앙에 마커로 표시하세요. 위치 권한 요청 흐름과 위치 서비스 비활성화 시 에러 처리를 포함해야 합니다.
+
+### 과제 2: 경로 탐색 구현
+두 지점(출발지, 도착지)을 선택하면 Directions API를 호출하여 경로를 Polyline으로 표시하고, 예상 거리와 소요 시간을 화면에 출력하세요.
+
+### 과제 3: Geofencing 적용
+반경 500m의 Geofence 영역을 지도 위에 Circle로 표시하고, 실시간 위치 추적으로 영역 진입/이탈 시 알림을 표시하는 기능을 구현하세요.
+
+## Self-Check 퀴즈
+
+- [ ] Google Maps API 키를 Android(AndroidManifest.xml)와 iOS(Info.plist)에 각각 설정하는 방법을 이해하고 있는가?
+- [ ] `LocationAccuracy.best`와 `LocationAccuracy.high`의 차이점과 배터리 영향을 설명할 수 있는가?
+- [ ] `distanceFilter`를 설정하는 이유와 적절한 값을 결정하는 기준을 이해하고 있는가?
+- [ ] 마커가 100개 이상일 때 클러스터링을 적용해야 하는 이유를 성능 관점에서 설명할 수 있는가?
+- [ ] API 키를 `.gitignore`에 추가하고, Android/iOS별로 키 사용을 제한해야 하는 보안상의 이유를 설명할 수 있는가?
+
+## 체크리스트
+
+- [ ] Google Maps API 키 발급 및 플랫폼별 설정
+- [ ] google_maps_flutter, geolocator, geocoding 패키지 설치
+- [ ] Android/iOS 위치 권한 설정 (Manifest, Info.plist)
+- [ ] Location Repository 인터페이스 및 구현체 작성
+- [ ] LocationBloc으로 현재 위치 조회 및 실시간 추적 구현
+- [ ] 마커 추가/삭제/선택 관리 (MarkerBloc)
+- [ ] Geocoding (주소 <-> 좌표 변환) 구현
+- [ ] Directions API 연동 및 경로 표시
+- [ ] Geofencing 구현 (필요시)
+- [ ] 마커 클러스터링 적용 (대량 마커 시)
+- [ ] 메모리 관리 (MapController dispose)

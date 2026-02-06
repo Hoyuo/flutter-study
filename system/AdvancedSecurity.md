@@ -2,6 +2,11 @@
 
 > **대상**: 10년차+ 시니어 개발자 | Flutter 3.27+ | OWASP MASVS Level 2 준수
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Code Obfuscation과 RASP를 적용할 수 있다
+> - mTLS로 양방향 인증을 구현할 수 있다
+> - Jailbreak/Root Detection을 구현하고 대응할 수 있다
+
 ## 개요
 
 이 가이드는 Flutter 앱의 엔터프라이즈급 보안을 구현하기 위한 고급 기법을 다룹니다. 코드 난독화, Root/Jailbreak 감지, RASP, Certificate Pinning, Secure Enclave, 앱 위변조 감지, 네트워크 보안, OWASP MASVS 준수 등 실무에서 요구되는 보안 요구사항을 충족하는 방법을 제시합니다.
@@ -1465,3 +1470,20 @@ Level 4 (엔터프라이즈): + mTLS + 하드웨어 보안 + 위변조 감지
 
 금융/헬스케어 앱은 **Level 3 (OWASP MASVS L2+RASP)** 이상을 목표로 하세요.
 정기적인 보안 감사와 침투 테스트로 취약점을 사전에 발견하고 대응하는 것이 중요합니다.
+
+---
+
+## 실습 과제
+
+### 과제 1: 보안 감사 수행
+OWASP MASVS 체크리스트를 기반으로 앱의 보안 감사를 수행하고 보고서를 작성하세요.
+
+### 과제 2: Jailbreak Detection 구현
+루팅/탈옥 기기를 감지하여 민감한 기능을 제한하는 보안 레이어를 구현하세요.
+
+## Self-Check
+
+- [ ] OWASP MASVS Level 1/2의 차이를 설명할 수 있는가?
+- [ ] Code Obfuscation을 빌드 파이프라인에 통합했는가?
+- [ ] mTLS의 동작 원리와 구현 방법을 설명할 수 있는가?
+- [ ] 보안 취약점 발견 시 Incident Response 프로세스를 정의했는가?

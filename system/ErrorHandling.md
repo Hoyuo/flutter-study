@@ -1,5 +1,17 @@
 # Flutter 에러 처리 가이드
 
+## 학습 목표
+
+이 문서를 학습하면 다음을 할 수 있습니다:
+
+1. **Failure sealed class**를 설계하여 에러를 유형별로 분류할 수 있다
+2. Dio 에러를 **Exception → Failure로 변환**하는 인터셉터와 Repository 패턴을 구현할 수 있다
+3. **ErrorPresenter**를 활용하여 Failure 유형에 따라 적절한 UI(스낵바, 다이얼로그, 전체 화면)로 에러를 표시할 수 있다
+4. **Exponential Backoff**와 **Circuit Breaker** 패턴으로 재시도 및 에러 복구 전략을 구현할 수 있다
+5. **runZonedGuarded**와 **Error Boundary Widget**을 사용하여 전역 에러를 안전하게 처리할 수 있다
+
+---
+
 ## 개요
 
 일관된 에러 처리 전략은 앱의 안정성과 사용자 경험에 중요합니다. Failure 클래스 설계, 에러 분류, UI 표시 패턴, 재시도 로직을 다룹니다.
@@ -1828,3 +1840,41 @@ void main() {
 - [ ] runZonedGuarded 전역 에러 핸들링
 - [ ] Error Boundary Widget 구현
 - [ ] 글로벌 ErrorWidget 커스터마이징
+
+---
+
+## 실습 과제
+
+### 과제 1: 커스텀 Failure 클래스 설계
+기존 Failure 클래스를 참고하여, **결제(Payment)** 도메인에 맞는 PaymentFailure sealed class를 설계하세요.
+- `insufficientBalance`: 잔액 부족
+- `cardDeclined`: 카드 거절
+- `paymentTimeout`: 결제 시간 초과
+- `duplicatePayment`: 중복 결제
+- 각 유형별로 `isRetryable`, `displayMessage`를 적절히 구현하세요.
+
+### 과제 2: safeApiCall + Exponential Backoff 통합
+`safeApiCall` 헬퍼 함수와 `ExponentialBackoff` 클래스를 결합하여, 네트워크 요청 시 자동으로 재시도하는 `safeApiCallWithRetry<T>()` 함수를 구현하세요.
+- 최대 3회 재시도, 초기 지연 1초, jitter 적용
+- `NetworkFailure`와 `ServerFailure`만 재시도
+- 재시도 횟수를 로깅하세요.
+
+### 과제 3: 에러 UI 통합 페이지 구현
+`BlocConsumer`를 활용하여 다음 상태를 모두 처리하는 페이지를 구현하세요.
+- 로딩 중: `CircularProgressIndicator`
+- 데이터 없음: `EmptyView`
+- 네트워크 에러 (데이터 없음): `ErrorView` + 재시도 버튼
+- 네트워크 에러 (캐시 데이터 있음): 스낵바 표시 + 캐시 데이터 유지
+- 인증 에러: 다이얼로그 표시 후 로그인 화면으로 이동
+
+---
+
+## Self-Check 퀴즈
+
+학습한 내용을 점검해 보세요:
+
+- [ ] `Exception`과 `Failure`의 역할 차이를 설명할 수 있는가? (Exception은 데이터 레이어, Failure는 도메인 레이어)
+- [ ] `ErrorPresenter`에서 Failure 유형별로 스낵바/다이얼로그/사일런트 중 어떤 방식을 선택하는지 설명할 수 있는가?
+- [ ] Circuit Breaker 패턴의 세 가지 상태(closed, open, halfOpen)와 전환 조건을 설명할 수 있는가?
+- [ ] `runZonedGuarded`와 `FlutterError.onError`의 차이점을 설명할 수 있는가?
+- [ ] Exponential Backoff에서 jitter를 추가하는 이유(Thundering Herd 방지)를 설명할 수 있는가?

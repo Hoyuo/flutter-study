@@ -2,6 +2,11 @@
 
 > 네이티브 플랫폼과의 심층 통합을 위한 고급 패턴 및 최적화 전략
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Platform Channel과 Pigeon을 사용한 네이티브 통신을 구현할 수 있다
+> - Dart FFI를 활용한 C/C++ 라이브러리 연동을 수행할 수 있다
+> - Platform View와 네이티브 UI 통합 패턴을 적용할 수 있다
+
 ## 목차
 
 1. [플랫폼 통합 개요](#1-플랫폼-통합-개요)
@@ -3038,3 +3043,20 @@ Flutter와 네이티브 플랫폼의 심층 통합은 다음과 같은 전략으
 - [Pigeon Documentation](https://pub.dev/packages/pigeon)
 - [Platform Views](https://docs.flutter.dev/development/platform-integration/platform-views)
 - [Kotlin Multiplatform](https://kotlinlang.org/docs/multiplatform.html)
+
+---
+
+## 실습 과제
+
+### 과제 1: Pigeon 기반 네이티브 통신
+Pigeon을 사용하여 Flutter와 iOS/Android 간 타입 안전한 통신 채널을 구현하세요. 디바이스 배터리 정보, 네트워크 상태 등 네이티브 정보를 가져오는 플러그인을 만들어 보세요.
+
+### 과제 2: Dart FFI로 네이티브 라이브러리 연동
+Dart FFI를 활용하여 C 라이브러리(예: 이미지 처리, 암호화)를 Flutter에서 호출하는 바인딩을 작성하세요. 메모리 관리와 에러 처리를 포함해 주세요.
+
+## Self-Check
+
+- [ ] MethodChannel과 Pigeon의 차이를 설명하고 적절히 선택할 수 있다
+- [ ] Dart FFI로 C/C++ 함수를 호출하는 바인딩을 작성할 수 있다
+- [ ] Platform View를 사용한 네이티브 UI 임베딩을 구현할 수 있다
+- [ ] 플랫폼별 분기 처리와 에러 핸들링을 적용할 수 있다

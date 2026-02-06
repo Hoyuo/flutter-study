@@ -2,6 +2,11 @@
 
 > 이 문서는 AI 에이전트(Claude, Copilot 등)가 프로젝트를 이해하고 작업할 때 반드시 참고해야 하는 가이드입니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Flutter Clean Architecture의 3개 레이어(Presentation, Domain, Data) 구조를 이해하고 적용할 수 있습니다
+> - Feature 기반 모듈화와 의존성 방향 규칙을 준수하여 프로젝트를 구조화할 수 있습니다
+> - Repository 패턴, UseCase 패턴, Bloc 생명주기 관리 등 핵심 패턴을 실무에 적용할 수 있습니다
+
 ## 1. 프로젝트 개요
 
 - **플랫폼**: Flutter
@@ -934,3 +939,45 @@ class HomeFailure { ... }
 | [DI.md](../infrastructure/DI.md) | 의존성 주입 설정 |
 | [ErrorHandling.md](../system/ErrorHandling.md) | 에러 처리 전략 |
 | [Networking_Dio.md](../networking/Networking_Dio.md) | 네트워크 통신 |
+
+---
+## 실습 과제
+
+### 과제 1: 새로운 Feature 모듈 생성
+새로운 기능을 Clean Architecture로 구현해보세요.
+
+1. `features/product/` 폴더 구조 생성
+2. Domain 레이어: Product Entity, ProductRepository Interface, GetProductsUseCase 작성
+3. Data 레이어: ProductDto, ProductRemoteDataSource, ProductRepositoryImpl 작성
+4. Presentation 레이어: ProductBloc, ProductEvent, ProductState, ProductScreen 작성
+5. Barrel 파일(data.dart, domain.dart, presentation.dart) 작성
+6. build_runner 실행 및 analyze 통과 확인
+
+### 과제 2: Feature별 Failure 구현
+기존 공통 Failure를 Feature별로 분리하는 리팩토링 작업을 수행하세요.
+
+1. `auth` feature에 AuthFailure 정의 (invalidCredentials, userNotFound 포함)
+2. `profile` feature에 ProfileFailure 정의 (permissionDenied, dataNotFound 포함)
+3. 각 Repository에서 Feature별 Failure 사용하도록 수정
+4. Bloc에서 Failure 처리 로직 업데이트
+
+### 과제 3: Repository 패턴 구현
+API 통신을 포함한 완전한 Repository를 구현하세요.
+
+1. DataSource에서 Dio를 사용한 API 호출 구현
+2. DTO → Entity 변환을 위한 Mapper 작성
+3. DioException을 Feature Failure로 변환하는 FailureMapper 작성
+4. Repository에서 Either<Failure, Entity> 반환하도록 구현
+5. Unit 테스트 작성 (Mock을 사용한 성공/실패 케이스)
+
+## Self-Check
+- [ ] Clean Architecture의 3개 레이어(Presentation, Domain, Data)의 역할과 의존성 방향을 설명할 수 있다
+- [ ] 1 클래스 1 파일 원칙을 이해하고, 예외 케이스(Widget, Freezed)를 구분할 수 있다
+- [ ] Bloc을 GetIt에 등록하지 않는 이유와 BlocProvider로 생명주기를 관리하는 방법을 설명할 수 있다
+- [ ] Feature 모듈의 폴더 구조를 올바르게 생성할 수 있다
+- [ ] Barrel 파일의 목적과 사용 규칙을 이해하고 작성할 수 있다
+- [ ] Navigation을 App 레이어에서 중앙 관리하는 이유를 설명할 수 있다
+- [ ] Feature별 Failure를 정의하는 이유와 장점을 설명할 수 있다
+- [ ] Repository 패턴에서 Interface(Domain)와 Implementation(Data)의 분리 이유를 설명할 수 있다
+- [ ] Either<Failure, Entity> 패턴을 사용하여 에러를 처리할 수 있다
+- [ ] 새 Feature를 생성할 때 올바른 순서(Domain → Data → Presentation)로 작업할 수 있다

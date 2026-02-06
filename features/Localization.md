@@ -1,5 +1,15 @@
 # Flutter 다국어 처리 가이드 (easy_localization)
 
+## 학습 목표
+
+이 문서를 학습하면 다음을 할 수 있습니다:
+
+1. easy_localization을 사용하여 Flutter 앱에 다국어 지원을 구현할 수 있다
+2. JSON 기반 번역 파일을 구조적으로 관리하고, 복수형/매개변수 처리를 적용할 수 있다
+3. 런타임 언어 변경 기능과 Bloc 기반 언어 설정 화면을 구현할 수 있다
+4. LocaleKeys 클래스로 타입 안전한 번역 키 관리 체계를 구축할 수 있다
+5. RTL(Right-to-Left) 언어를 지원하는 방향 인식 레이아웃을 작성할 수 있다
+
 ## 개요
 
 easy_localization은 Flutter에서 다국어 처리를 간편하게 구현할 수 있는 패키지입니다. JSON, YAML, CSV 등 다양한 포맷을 지원하고, 컨텍스트 확장 메서드를 통해 직관적인 API를 제공합니다.
@@ -11,7 +21,7 @@ easy_localization은 Flutter에서 다국어 처리를 간편하게 구현할 �
 ```yaml
 # pubspec.yaml (2026년 1월 기준)
 dependencies:
-  easy_localization: ^3.0.8  # 3.x 최신 stable
+  easy_localization: ^3.0.7  # 3.x stable
 
 flutter:
   assets:
@@ -1040,6 +1050,25 @@ testWidgets('RTL layout test', (tester) async {
 | 방향성 아이콘 미러링 | ☐ |
 | 숫자/전화번호 방향 유지 | ☐ |
 | RTL 언어로 실제 테스트 | ☐ |
+
+## 실습 과제
+
+### 과제 1: 기본 다국어 설정
+한국어, 일본어, 영어 3개 언어를 지원하는 번역 파일(JSON)을 생성하고, EasyLocalization을 초기화하여 앱에 적용하세요. 최소 5개 이상의 번역 키를 포함해야 합니다.
+
+### 과제 2: 언어 변경 UI 구현
+Bloc 패턴을 사용하여 런타임 언어 변경 화면을 구현하세요. 현재 선택된 언어를 표시하고, 탭 시 즉시 전체 앱의 언어가 변경되어야 합니다.
+
+### 과제 3: 복수형 및 매개변수 처리
+`plural()` 메서드와 `namedArgs`를 활용하여 "장바구니에 상품 N개" 형태의 복수형 번역과, 사용자 이름이 포함된 환영 메시지를 3개 언어로 구현하세요.
+
+## Self-Check 퀴즈
+
+- [ ] `tr()` 확장 메서드와 `tr()` 함수의 차이점을 이해하고 있는가?
+- [ ] easy_localization의 fallback 체인(시스템 로케일 → supportedLocales 매칭 → fallbackLocale)을 설명할 수 있는가?
+- [ ] 비즈니스 로직(UseCase)에서 번역 키를 직접 사용하지 않고, UI 레이어에서만 번역하는 이유를 설명할 수 있는가?
+- [ ] RTL 레이아웃에서 `EdgeInsets` 대신 `EdgeInsetsDirectional`을 사용해야 하는 이유를 이해하고 있는가?
+- [ ] LocaleKeys 클래스를 수동 관리하는 방식과 코드 생성 방식의 장단점을 비교할 수 있는가?
 
 ## 체크리스트
 

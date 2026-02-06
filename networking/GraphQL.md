@@ -2,6 +2,11 @@
 
 > GraphQL을 활용한 효율적인 데이터 페칭과 실시간 통신 구현 가이드. Clean Architecture, Bloc 패턴, 타입 안전성을 갖춘 현대적인 Flutter GraphQL 애플리케이션 개발 방법을 다룹니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - GraphQL 쿼리, 뮤테이션, 서브스크립션을 Flutter에서 구현할 수 있다
+> - graphql_codegen을 활용한 타입 안전한 GraphQL 클라이언트를 구축할 수 있다
+> - 캐싱 전략과 에러 처리를 Clean Architecture로 설계할 수 있다
+
 ## 1. 개요
 
 ### 1.1 GraphQL이란?
@@ -2394,3 +2399,20 @@ result.fold(
 ---
 
 이 가이드는 Flutter에서 GraphQL을 활용한 현대적인 앱 개발의 모든 측면을 다룹니다. Clean Architecture, Bloc 패턴, 타입 안전성을 갖춘 확장 가능하고 유지보수 가능한 애플리케이션을 구축할 수 있습니다.
+
+---
+
+## 실습 과제
+
+### 과제 1: GraphQL CRUD 구현
+graphql_flutter를 사용하여 Query(목록 조회, 상세 조회), Mutation(생성, 수정, 삭제)을 구현하세요. 캐시 업데이트 전략과 Optimistic UI를 적용해 보세요.
+
+### 과제 2: Subscription으로 실시간 데이터 구현
+GraphQL Subscription을 활용하여 실시간 데이터 업데이트(예: 새 메시지 알림, 주문 상태 변경)를 구현하세요. WebSocket 연결 관리와 Bloc 통합을 포함해 주세요.
+
+## Self-Check
+
+- [ ] GraphQL Query, Mutation, Subscription의 차이를 설명할 수 있다
+- [ ] graphql_codegen으로 타입 안전한 쿼리 코드를 생성할 수 있다
+- [ ] Normalized Cache와 캐시 업데이트 전략을 설계할 수 있다
+- [ ] GraphQL 에러 처리와 네트워크 에러를 분리하여 처리할 수 있다

@@ -2,6 +2,11 @@
 
 > 이 문서는 Dio를 사용한 네트워크 통신 설정 및 패턴을 설명합니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Dio를 설정하고 RESTful API 통신을 구현할 수 있다
+> - Interceptor를 활용한 토큰 갱신, 로깅, 에러 처리를 구현할 수 있다
+> - SSL Pinning과 네트워크 보안 설정을 적용할 수 있다
+
 ## 1. 개요
 
 ### 1.1 Dio란?
@@ -1558,3 +1563,20 @@ _cacheOptions = CacheOptions(
 - [Connectivity Plus](https://pub.dev/packages/connectivity_plus)
 - [dio_cache_interceptor](https://pub.dev/packages/dio_cache_interceptor)
 - Part 2: [Retrofit 가이드](./Networking_Retrofit.md)
+
+---
+
+## 실습 과제
+
+### 과제 1: Dio Interceptor 체인 구현
+AuthInterceptor(토큰 자동 갱신), LogInterceptor(요청/응답 로깅), ErrorInterceptor(에러 코드별 처리)를 구현하고 체인으로 구성하세요. 토큰 만료 시 자동 갱신 후 재요청하는 로직을 포함해 주세요.
+
+### 과제 2: API 클라이언트 아키텍처 설계
+BaseOptions, 환경별 baseUrl 설정, 타임아웃 정책, SSL Pinning을 포함한 프로덕션급 Dio 클라이언트를 Clean Architecture 구조로 구현하세요.
+
+## Self-Check
+
+- [ ] Dio 인스턴스를 설정하고 GET/POST/PUT/DELETE 요청을 구현할 수 있다
+- [ ] Interceptor를 작성하고 요청/응답/에러 파이프라인을 구성할 수 있다
+- [ ] 토큰 갱신 로직과 동시성 처리(QueuedInterceptor)를 구현할 수 있다
+- [ ] SSL Pinning 설정과 네트워크 보안 기본 사항을 적용할 수 있다

@@ -1,5 +1,15 @@
 # Flutter 푸시 알림 가이드 (FCM + Local Notification)
 
+## 학습 목표
+
+이 문서를 학습하면 다음을 할 수 있습니다:
+
+1. Firebase Cloud Messaging(FCM)과 flutter_local_notifications를 연동하여 푸시 알림 시스템을 구축할 수 있다
+2. Foreground/Background/Terminated 상태별 메시지 수신 및 처리 흐름을 구현할 수 있다
+3. FCM 토큰 관리(저장, 서버 전송, 갱신)와 토픽 기반 알림 구독 시스템을 구현할 수 있다
+4. Notification Message와 Data Message의 차이를 이해하고, 용도에 맞게 선택하여 처리할 수 있다
+5. 이미지 포함 알림, 알림 그룹화, 예약 알림 등 고급 기능을 구현할 수 있다
+
 ## 개요
 
 Firebase Cloud Messaging(FCM)과 flutter_local_notifications를 조합하여 푸시 알림을 구현합니다. FCM은 서버에서 클라이언트로 메시지를 전송하고, flutter_local_notifications는 로컬에서 알림을 표시하고 커스터마이징합니다.
@@ -12,7 +22,7 @@ Firebase Cloud Messaging(FCM)과 flutter_local_notifications를 조합하여 푸
 # pubspec.yaml
 dependencies:
   firebase_core: ^4.4.0
-  firebase_messaging: ^16.0.4
+  firebase_messaging: ^15.2.4
   flutter_local_notifications: ^19.5.0
 ```
 
@@ -1261,6 +1271,25 @@ void main() {
   );
 }
 ```
+
+## 실습 과제
+
+### 과제 1: 기본 푸시 알림 구현
+Firebase 프로젝트를 설정하고, NotificationService를 구현하여 Foreground에서 로컬 알림을 표시하고, 알림 클릭 시 특정 화면으로 이동하는 전체 흐름을 완성하세요.
+
+### 과제 2: 토픽 기반 알림 설정 화면
+주문 알림, 프로모션, 공지사항 3가지 카테고리별 토픽 구독/해제가 가능한 알림 설정 화면을 Bloc 패턴으로 구현하세요. 각 항목은 SwitchListTile로 구성합니다.
+
+### 과제 3: Data Message 기반 커스텀 알림
+서버에서 `data` 필드만 전송하는 Data Message를 처리하여, Background에서도 flutter_local_notifications로 직접 알림을 표시하는 백그라운드 핸들러를 구현하세요.
+
+## Self-Check 퀴즈
+
+- [ ] Notification Message와 Data Message가 Background 상태에서 각각 어떻게 동작하는지 설명할 수 있는가?
+- [ ] `@pragma('vm:entry-point')` 어노테이션이 백그라운드 핸들러에 필요한 이유를 이해하고 있는가?
+- [ ] FCM 토큰이 갱신되는 시점과, 갱신 시 서버에 새 토큰을 등록해야 하는 이유를 설명할 수 있는가?
+- [ ] iOS에서 `setForegroundNotificationPresentationOptions`를 호출해야 하는 이유를 이해하고 있는가?
+- [ ] `getInitialMessage()`와 `onMessageOpenedApp`의 차이점을 설명할 수 있는가? (Terminated vs Background)
 
 ## 체크리스트
 

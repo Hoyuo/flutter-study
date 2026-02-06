@@ -2,6 +2,16 @@
 
 > Flutter에서 카메라, 갤러리, 비디오 재생, QR 스캔 등 미디어 관련 기능을 Clean Architecture와 Bloc 패턴으로 구현하는 종합 가이드입니다. camera, image_picker, video_player, mobile_scanner 패키지를 활용한 실전 예제를 다룹니다.
 
+## 학습 목표
+
+이 문서를 학습하면 다음을 할 수 있습니다:
+
+1. camera 패키지를 사용하여 커스텀 카메라 UI(줌, 포커스, 플래시 제어)를 구현할 수 있다
+2. image_picker로 갤러리/카메라에서 이미지/비디오를 선택하고 Bloc으로 상태 관리할 수 있다
+3. video_player를 사용한 비디오 재생 위젯(재생/일시정지, 프로그레스 바)을 구현할 수 있다
+4. mobile_scanner로 QR/바코드 스캔 기능을 구현할 수 있다
+5. 이미지 크롭, 압축, 필터 적용 등 미디어 후처리 파이프라인을 구축할 수 있다
+
 ## 목차
 1. [개요](#1-개요)
 2. [프로젝트 설정](#2-프로젝트-설정)
@@ -131,7 +141,7 @@ dependencies:
   json_annotation: ^4.9.0
 
   # Camera & Media
-  camera: ^0.11.0+2
+  camera: ^0.11.1
   image_picker: ^1.1.2
   video_player: ^2.9.1
   mobile_scanner: ^5.2.3
@@ -2599,6 +2609,39 @@ class ErrorHandler {
 - 대용량 파일은 압축 후 처리
 - Clean Architecture로 테스트 가능한 구조 유지
 - Bloc으로 상태 관리를 명확하게 분리
+
+## 실습 과제
+
+### 과제 1: 커스텀 카메라 촬영 화면
+camera 패키지를 사용하여 전/후면 카메라 전환, 줌 슬라이더, 플래시 토글, 탭 포커스 기능이 포함된 커스텀 카메라 화면을 구현하세요. 촬영된 사진은 미리보기 화면에서 확인할 수 있어야 합니다.
+
+### 과제 2: 이미지 피커 + 크롭 + 압축 파이프라인
+image_picker로 갤러리에서 여러 장을 선택하고, image_cropper로 크롭한 후, flutter_image_compress로 85% 품질로 압축하는 전체 파이프라인을 구현하세요. 원본/압축 파일 크기를 비교 표시하세요.
+
+### 과제 3: QR 코드 스캐너
+mobile_scanner를 사용하여 QR 코드를 스캔하고, 스캔 결과가 URL이면 브라우저로 열기, 텍스트면 클립보드에 복사하는 분기 처리를 구현하세요. 스캔 오버레이 UI를 포함해야 합니다.
+
+## Self-Check 퀴즈
+
+- [ ] `WidgetsBindingObserver`를 사용하여 앱이 Background로 갈 때 카메라를 dispose하고, 복귀 시 재초기화하는 이유를 설명할 수 있는가?
+- [ ] image_picker와 camera 패키지의 차이점과 각각의 적절한 사용 시점을 설명할 수 있는가?
+- [ ] 대용량 이미지를 서버에 업로드하기 전 압축이 필요한 이유와 적절한 품질(quality) 값을 결정하는 기준을 이해하고 있는가?
+- [ ] Android 13+ 에서 `READ_MEDIA_IMAGES` 권한이 `READ_EXTERNAL_STORAGE` 대신 필요한 이유를 설명할 수 있는가?
+- [ ] video_player의 Controller를 dispose하지 않을 때 발생할 수 있는 문제를 메모리와 리소스 관점에서 설명할 수 있는가?
+
+## 체크리스트
+
+- [ ] camera, image_picker, video_player, mobile_scanner 패키지 설치
+- [ ] Android/iOS 카메라, 마이크, 저장소 권한 설정
+- [ ] CameraDataSource 및 MediaDataSource 구현
+- [ ] MediaRepository 인터페이스 및 구현체 작성
+- [ ] CameraBloc / MediaBloc / VideoBloc 구현
+- [ ] 커스텀 카메라 UI (프리뷰, 컨트롤, 줌/포커스) 구현
+- [ ] 이미지 피커 (단일/복수 선택) 구현
+- [ ] 비디오 재생 위젯 (플레이어 컨트롤) 구현
+- [ ] QR/바코드 스캐너 구현 (필요시)
+- [ ] 이미지 크롭/압축 유틸리티 구현
+- [ ] 메모리 관리 (Controller dispose, AppLifecycle 처리)
 
 추가 학습 자료:
 - [camera package 공식 문서](https://pub.dev/packages/camera)

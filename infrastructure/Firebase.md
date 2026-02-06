@@ -2,6 +2,11 @@
 
 > Flutter 애플리케이션에서 Firebase의 주요 서비스(Authentication, Firestore, Storage, FCM, Crashlytics, Analytics)를 Clean Architecture와 Bloc 패턴으로 통합하는 종합 가이드입니다. 실무에서 바로 적용 가능한 코드 예제와 Best Practices를 제공합니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Firebase Auth로 이메일/소셜 로그인을 구현할 수 있다
+> - Firestore로 실시간 데이터 동기화를 구현할 수 있다
+> - Cloud Storage, FCM, Crashlytics, Analytics를 통합할 수 있다
+
 ## 목차
 1. [개요](#1-개요)
 2. [프로젝트 설정](#2-프로젝트-설정)
@@ -2332,3 +2337,24 @@ class PostsScreen extends StatelessWidget {
 ---
 
 **마지막 업데이트:** 2026-02-06
+
+---
+
+## 실습 과제
+
+### 과제 1: Firebase Auth 로그인 구현
+이메일/비밀번호와 Google 소셜 로그인을 Firebase Auth로 구현하고, 인증 상태에 따라 화면을 전환하세요.
+
+### 과제 2: Firestore 실시간 CRUD
+Firestore 컬렉션에 게시글을 CRUD하고, snapshots()으로 실시간 데이터 동기화를 구현하세요.
+
+### 과제 3: Cloud Storage 이미지 업로드
+사용자 프로필 이미지를 Firebase Cloud Storage에 업로드하고, 다운로드 URL을 Firestore에 저장하세요.
+
+## Self-Check
+
+- [ ] Firebase 프로젝트 초기화와 플랫폼별 설정(google-services.json, GoogleService-Info.plist)을 완료할 수 있는가?
+- [ ] Firebase Auth의 인증 상태 스트림을 Bloc과 연동할 수 있는가?
+- [ ] Firestore Security Rules를 작성하여 데이터 접근을 제어할 수 있는가?
+- [ ] FCM으로 포그라운드/백그라운드 푸시 알림을 처리할 수 있는가?
+- [ ] Crashlytics로 비정상 종료를 모니터링하고 분석할 수 있는가?

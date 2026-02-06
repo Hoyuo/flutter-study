@@ -2,6 +2,11 @@
 
 > 이 문서는 Retrofit을 사용한 타입 안전한 API 클라이언트 구현 방법을 설명합니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Retrofit 어노테이션으로 타입 안전한 API 클라이언트를 생성할 수 있다
+> - json_serializable과 연동한 자동 직렬화/역직렬화를 구현할 수 있다
+> - 멀티파트 업로드, 다운로드 등 고급 API 패턴을 적용할 수 있다
+
 ## 1. 개요
 
 ### 1.1 Retrofit이란?
@@ -893,3 +898,20 @@ abstract class HomeApiModule {
 - [Retrofit 공식 문서](https://pub.dev/packages/retrofit)
 - [json_serializable 공식 문서](https://pub.dev/packages/json_serializable)
 - Part 1: [Dio 가이드](./Networking_Dio.md) - SSL Pinning, 토큰 갱신 동시성 처리 포함
+
+---
+
+## 실습 과제
+
+### 과제 1: Retrofit API 클라이언트 구현
+User CRUD API를 Retrofit 어노테이션으로 정의하세요. @GET, @POST, @PUT, @DELETE 메서드와 json_serializable 모델을 조합하여 타입 안전한 API 계층을 구축하세요.
+
+### 과제 2: 멀티파트 파일 업로드
+프로필 이미지 업로드 API를 Retrofit의 @MultiPart와 @Part 어노테이션으로 구현하세요. 진행률 콜백과 에러 처리를 포함해 주세요.
+
+## Self-Check
+
+- [ ] Retrofit 어노테이션(@GET, @POST 등)으로 API 인터페이스를 정의할 수 있다
+- [ ] json_serializable과 연동하여 요청/응답 직렬화를 자동화할 수 있다
+- [ ] @Query, @Path, @Body, @Header 등 파라미터 어노테이션을 적절히 사용할 수 있다
+- [ ] build_runner를 통한 코드 생성 워크플로우를 설정할 수 있다

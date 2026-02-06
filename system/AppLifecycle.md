@@ -1,5 +1,17 @@
 # Flutter 앱 생명주기 가이드
 
+## 학습 목표
+
+이 문서를 학습하면 다음을 할 수 있습니다:
+
+1. **AppLifecycleState**의 5가지 상태(resumed, inactive, hidden, paused, detached)와 전환 흐름을 이해할 수 있다
+2. **WidgetsBindingObserver**와 **AppLifecycleListener**(Flutter 3.13+)를 사용하여 생명주기 변화를 감지할 수 있다
+3. **AppLifecycleService**를 싱글톤으로 구현하여 전역적으로 생명주기 이벤트를 관리할 수 있다
+4. 포그라운드 복귀 시 **데이터 새로고침**, 백그라운드 진입 시 **상태 저장** 패턴을 구현할 수 있다
+5. **Background Tasks**(WorkManager, Foreground Service)를 활용하여 백그라운드 작업을 처리할 수 있다
+
+---
+
 ## 개요
 
 앱 생명주기(Lifecycle) 관리는 백그라운드/포그라운드 전환, 메모리 관리, 상태 복원 등에 중요합니다. WidgetsBindingObserver, AppLifecycleListener, 그리고 Bloc과의 통합을 다룹니다.
@@ -1101,3 +1113,38 @@ Future<void> requestBatteryOptimizationExemption() async {
 | 실행 보장 | 대략적 보장 | 보장 안됨 |
 | 네트워크 제약 | 설정 가능 | 제한적 |
 | 배터리 최적화 | Doze 모드 영향 | Low Power Mode 영향 |
+
+---
+
+## 실습 과제
+
+### 과제 1: AppLifecycleService 구현 및 테스트
+`AppLifecycleService`를 싱글톤으로 구현하고, 포그라운드/백그라운드 전환 시 콘솔에 로그를 출력하세요.
+- `stateStream`으로 상태 변화를 브로드캐스트
+- `isInForeground`, `isInBackground` getter 구현
+- `lastPausedAt` 시간 기록
+- 유닛 테스트에서 `didChangeAppLifecycleState`를 호출하여 상태 전환을 검증하세요.
+
+### 과제 2: 세션 타임아웃 구현
+`SessionManager`를 구현하여 백그라운드에 30분 이상 머물면 자동 로그아웃되도록 하세요.
+- 포그라운드 복귀 시 `lastPausedAt`과 현재 시간의 차이를 계산
+- 타임아웃 시 `AuthBloc`에 `sessionExpired` 이벤트 발행
+- 타임아웃 시간을 설정에서 변경 가능하도록 구현하세요.
+
+### 과제 3: 자동 새로고침 Bloc
+`HomeBloc`에서 `AppLifecycleService`를 구독하여 포그라운드 복귀 시 자동으로 데이터를 새로고침하세요.
+- 마지막 로드 이후 5분 이상 경과한 경우에만 새로고침
+- `StreamSubscription`을 `close()`에서 정리
+- `blocTest`로 새로고침 동작을 검증하세요.
+
+---
+
+## Self-Check 퀴즈
+
+학습한 내용을 점검해 보세요:
+
+- [ ] `AppLifecycleState`의 5가지 상태와 백그라운드 이동 시 전환 순서(resumed → inactive → hidden → paused)를 설명할 수 있는가?
+- [ ] `WidgetsBindingObserver`와 `AppLifecycleListener`(Flutter 3.13+)의 차이점을 설명할 수 있는가?
+- [ ] `WidgetsBinding.instance.removeObserver(this)`를 `dispose()`에서 호출하지 않으면 어떤 문제가 발생하는지 설명할 수 있는가?
+- [ ] WorkManager의 최소 실행 주기가 Android에서 15분인 이유를 설명할 수 있는가?
+- [ ] Foreground Service와 Background Task의 사용 시나리오 차이를 설명할 수 있는가?

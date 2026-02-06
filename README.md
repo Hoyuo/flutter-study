@@ -1,6 +1,6 @@
 # Flutter Clean Architecture Reference Guide
 
-Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 52개의 문서와 실제 구현 예제를 제공합니다.
+Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 63개의 문서와 실제 구현 예제를 제공합니다.
 
 ## Overview
 
@@ -15,15 +15,17 @@ Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architect
 
 ```
 flutter-study/
+├── fundamentals/   # 기초 (5개) ← NEW
 ├── core/           # 핵심 아키텍처 (10개)
-├── infrastructure/ # 인프라 (9개)
+├── infrastructure/ # 인프라 (11개)
 ├── networking/     # 네트워킹 (4개)
 ├── features/       # 기능별 가이드 (7개)
-├── patterns/       # 필수 패턴 (9개)
-└── system/         # 시스템 (13개)
+├── patterns/       # 필수 패턴 (11개)
+├── system/         # 시스템 (14개)
+└── projects/       # 실전 프로젝트 (1개) ← NEW
 ```
 
-**총 52개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
+**총 63개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
 
 ## Quick Start
 
@@ -41,13 +43,17 @@ flutter-study/
 
 ## Documentation Categories
 
+### Fundamentals (5개) - NEW
+Dart 언어와 Flutter 기본기
+- DartAdvanced, WidgetFundamentals, LayoutSystem, FlutterInternals, DevToolsProfiling
+
 ### Core (10개)
 핵심 아키텍처 패턴
 - Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, AdvancedStateManagement, PlatformIntegration, Riverpod, Isolates
 
-### Infrastructure (9개)
+### Infrastructure (11개)
 인프라 설정
-- DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD, Firebase, FlutterMultiPlatform, PackageDevelopment
+- DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD, Firebase, FlutterMultiPlatform, PackageDevelopment, **DatabaseAdvanced**, **CachingStrategy**
 
 ### Networking (4개)
 네트워크 통신
@@ -57,13 +63,17 @@ flutter-study/
 기능별 구현
 - Navigation, Localization, Permission, PushNotification, DeepLinking, MapsGeolocation, CameraMedia
 
-### Patterns (9개)
+### Patterns (11개)
 공통 패턴
-- Analytics, ImageHandling, Pagination, FormValidation, InAppPurchase, Animation, OfflineSupport, AdvancedPatterns, CustomPainting
+- Analytics, ImageHandling, Pagination, FormValidation, InAppPurchase, Animation, OfflineSupport, AdvancedPatterns, CustomPainting, **ResponsiveDesign**, **DesignSystem**
 
-### System (13개)
+### System (14개)
 시스템 품질
-- ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring, AdvancedPerformance, AdvancedTesting, AdvancedSecurity, ProductionOperations
+- ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring, AdvancedPerformance, AdvancedTesting, AdvancedSecurity, ProductionOperations, **TeamCollaboration**
+
+### Projects (1개) - NEW
+실전 프로젝트 튜토리얼
+- FullStackProject (Clean Architecture + Bloc 패턴으로 Todo 앱 처음부터 끝까지)
 
 ### Advanced - Senior Level (9개)
 10년차+ 시니어 개발자를 위한 고급 주제

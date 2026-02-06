@@ -1,5 +1,17 @@
 # Flutter 테마 관리 가이드
 
+## 학습 목표
+
+이 문서를 학습하면 다음을 할 수 있습니다:
+
+1. **Material 3 기반 테마**(라이트/다크)를 설계하고 `ColorScheme.fromSeed`를 활용할 수 있다
+2. **ThemeExtension**으로 앱 전용 커스텀 색상을 추가하고 `BuildContext` 확장으로 편리하게 접근할 수 있다
+3. **AppTypography, AppSpacing, AppRadius** 등 디자인 토큰을 체계적으로 정의하고 사용할 수 있다
+4. **ThemeBloc + SharedPreferences**로 테마 전환 기능을 구현하고 사용자 설정을 저장할 수 있다
+5. 다크모드 대응 이미지/아이콘 처리와 컴포넌트별 스타일링 패턴을 적용할 수 있다
+
+---
+
 ## 개요
 
 일관된 디자인 시스템을 위한 테마 관리 패턴을 다룹니다. Material 3 테마, 다크모드, 커스텀 색상/타이포그래피, 테마 전환을 구현합니다.
@@ -1000,3 +1012,36 @@ testWidgets('should apply dark theme', (tester) async {
 - [ ] 컴포넌트별 스타일 (버튼, 카드 등)
 - [ ] 다크모드 대응 이미지/아이콘
 - [ ] BuildContext 확장으로 편리한 접근
+
+---
+
+## 실습 과제
+
+### 과제 1: 브랜드 컬러 기반 테마 시스템 구축
+자신만의 브랜드 색상(seed color)을 선택하여 라이트/다크 테마를 구성하세요.
+- `ColorScheme.fromSeed`로 기본 테마 생성
+- `AppColorExtension`에 success, warning, info, 배지(badge) 색상 추가
+- `BuildContext` 확장 메서드로 접근 가능하게 구현하세요.
+
+### 과제 2: 테마 전환 기능 완성
+`ThemeBloc`을 구현하여 라이트/다크/시스템 3가지 모드 전환을 완성하세요.
+- `SharedPreferences`로 사용자 선택을 저장/로드
+- 설정 화면에서 `RadioListTile`로 선택 UI 구현
+- 앱 재시작 시에도 마지막 선택이 유지되는지 확인하세요.
+
+### 과제 3: 디자인 토큰 적용 카드 컴포넌트
+`AppSpacing`, `AppRadius`, `AppShadows`, `AppTypography`를 모두 활용하여 상품 카드 위젯을 구현하세요.
+- 하드코딩된 값 없이 디자인 토큰만 사용
+- 라이트/다크 모드에서 모두 올바르게 표시되는지 확인하세요.
+
+---
+
+## Self-Check 퀴즈
+
+학습한 내용을 점검해 보세요:
+
+- [ ] `ColorScheme.fromSeed`와 직접 `ColorScheme`을 정의하는 방식의 차이를 설명할 수 있는가?
+- [ ] `ThemeExtension`의 `lerp` 메서드가 필요한 이유를 설명할 수 있는가? (테마 전환 애니메이션)
+- [ ] `Theme.of(context).colorScheme.primary`와 `context.appColors.success`의 차이(표준 vs 커스텀)를 구분할 수 있는가?
+- [ ] 다크모드에서 텍스트 색상의 opacity(70%, 50%, 38%)가 각각 어떤 용도인지 설명할 수 있는가?
+- [ ] `AppSpacing`에서 `SizedBox` 상수를 미리 정의하는 이유(const 최적화)를 설명할 수 있는가?

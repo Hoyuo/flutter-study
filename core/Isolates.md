@@ -2,6 +2,11 @@
 
 > Flutter의 Isolate를 활용한 동시성 프로그래밍 완벽 가이드. Event Loop 이해부터 백그라운드 작업, Worker Isolate, WorkManager, 그리고 실전 패턴까지 Clean Architecture와 Bloc을 활용한 실무 예제로 학습합니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Flutter의 Event Loop와 Isolate 동작 원리를 이해할 수 있다
+> - compute()와 Worker Isolate를 사용한 백그라운드 작업을 구현할 수 있다
+> - 실전 프로젝트에서 Isolate가 필요한 시나리오를 판단하고 적용할 수 있다
+
 ## 1. 개요
 
 ### 1.1 Dart 동시성 모델
@@ -2032,3 +2037,20 @@ Flutter의 Isolate를 활용하면 CPU 집약적 작업도 UI 차단 없이 부�
 5. **플랫폼별 차이 고려**: 특히 iOS 제약사항
 
 실전에서는 항상 성능 프로파일링을 통해 실제로 Isolate가 필요한지 확인하고, 과도한 최적화를 피하세요.
+
+---
+
+## 실습 과제
+
+### 과제 1: compute()를 활용한 JSON 파싱
+대용량 JSON 데이터(1MB 이상)를 compute() 함수로 백그라운드에서 파싱하는 Repository를 구현하세요. UI 스레드 블로킹 없이 데이터를 처리하고 Bloc을 통해 결과를 표시하세요.
+
+### 과제 2: Worker Isolate 패턴 구현
+장시간 실행되는 이미지 처리 작업을 위한 Worker Isolate를 구현하세요. SendPort/ReceivePort를 통한 양방향 통신, 진행률 보고, 취소 처리를 포함해 주세요.
+
+## Self-Check
+
+- [ ] Event Loop와 Isolate의 동작 원리를 설명할 수 있다
+- [ ] compute()와 Isolate.spawn()의 차이점과 사용 시나리오를 구분할 수 있다
+- [ ] SendPort/ReceivePort를 통한 Isolate 간 통신을 구현할 수 있다
+- [ ] Isolate 사용이 필요한 시나리오와 불필요한 시나리오를 판단할 수 있다

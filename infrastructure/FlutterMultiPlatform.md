@@ -2,6 +2,11 @@
 
 > Flutter를 사용하여 단일 코드베이스로 Web과 Desktop(Windows, macOS, Linux) 애플리케이션을 개발하는 완벽 가이드. Clean Architecture, Bloc 패턴, 플랫폼별 최적화 전략을 포함합니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Flutter로 Web/Desktop 앱을 빌드하고 배포할 수 있다
+> - 조건부 Import로 플랫폼별 코드를 분리할 수 있다
+> - 반응형 UI와 플랫폼 특화 기능을 구현할 수 있다
+
 ## 1. 개요
 
 ### 1.1 Flutter 멀티플랫폼 전략
@@ -2410,3 +2415,20 @@ class HomeState with _$HomeState {
 - [Flutter Desktop 공식 문서](https://docs.flutter.dev/platform-integration/desktop)
 - [Responsive Framework](https://pub.dev/packages/responsive_framework)
 - [Window Manager](https://pub.dev/packages/window_manager)
+
+---
+
+## 실습 과제
+
+### 과제 1: 반응형 레이아웃
+모바일(< 600px), 태블릿(600-1200px), 데스크톱(> 1200px)에서 다른 레이아웃을 보여주는 반응형 화면을 구현하세요.
+
+### 과제 2: 플랫폼별 조건부 Import
+Web에서는 html 렌더러, 모바일에서는 네이티브 기능을 사용하는 조건부 Import 패턴을 구현하세요.
+
+## Self-Check
+
+- [ ] Flutter Web 빌드와 배포(Firebase Hosting 등)를 수행할 수 있는가?
+- [ ] 조건부 Import(`dart:io` vs `dart:html`)를 사용할 수 있는가?
+- [ ] 반응형 UI를 LayoutBuilder와 MediaQuery로 구현할 수 있는가?
+- [ ] 데스크톱 앱에서 메뉴바, 시스템 트레이 등 플랫폼 특화 기능을 구현할 수 있는가?

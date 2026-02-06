@@ -2,6 +2,11 @@
 
 > 대규모 Flutter 애플리케이션을 위한 모듈화 전략 및 아키텍처 패턴
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Melos를 활용한 모노레포 기반 모듈화 구조를 설계할 수 있다
+> - Feature Module과 Core Module을 분리하고 의존성을 관리할 수 있다
+> - 모듈 간 통신 패턴과 빌드 최적화 전략을 적용할 수 있다
+
 ## 목차
 
 1. [모듈러 아키텍처 개요](#1-모듈러-아키텍처-개요)
@@ -1849,3 +1854,20 @@ class CustomerApp extends StatelessWidget {
 - [Flutter Modular Architecture](https://docs.flutter.dev/development/packages-and-plugins/developing-packages)
 - [Dependency Inversion Principle](https://en.wikipedia.org/wiki/Dependency_inversion_principle)
 - [Micro Frontends](https://micro-frontends.org/)
+
+---
+
+## 실습 과제
+
+### 과제 1: 모노레포 모듈화 프로젝트 구성
+기존 단일 Flutter 프로젝트를 Melos 기반 모노레포로 전환하세요. `core`, `design_system`, `feature_auth`, `feature_home` 모듈을 분리하고, 모듈 간 의존성 그래프를 설계하세요.
+
+### 과제 2: 모듈 간 통신 인터페이스 설계
+Feature Module 간 직접 의존성을 제거하고, 추상화된 인터페이스를 통한 통신 패턴을 구현하세요. Navigation과 데이터 공유를 모듈 경계 없이 처리하는 구조를 만들어 보세요.
+
+## Self-Check
+
+- [ ] Melos를 사용한 모노레포 워크스페이스를 구성할 수 있다
+- [ ] Feature Module과 Core Module의 역할과 경계를 정의할 수 있다
+- [ ] 모듈 간 의존성 방향을 올바르게 설계할 수 있다 (단방향)
+- [ ] 모듈별 독립 빌드 및 테스트 실행이 가능하다

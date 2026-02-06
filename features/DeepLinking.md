@@ -2,6 +2,16 @@
 
 > 앱 외부(웹 브라우저, 이메일, SMS 등)에서 특정 URL을 통해 Flutter 앱의 특정 화면으로 직접 이동하는 기술을 구현하는 방법을 다룹니다. URL Scheme, Universal Links(iOS), App Links(Android), Firebase Dynamic Links를 활용하여 사용자 경험을 개선하고, go_router와 Bloc을 연동하여 Clean Architecture 기반의 딥링크 처리 시스템을 구축합니다.
 
+## 학습 목표
+
+이 문서를 학습하면 다음을 할 수 있습니다:
+
+1. URL Scheme, Universal Links(iOS), App Links(Android)의 차이를 이해하고 프로젝트에 적절히 설정할 수 있다
+2. go_router와 연동하여 딥링크를 Flutter 라우트로 변환하는 파싱 시스템을 구현할 수 있다
+3. Firebase Dynamic Links를 사용한 Deferred Deep Linking(앱 미설치 시 스토어 경유 후 복귀)을 구현할 수 있다
+4. Bloc 패턴으로 딥링크 수신/처리/네비게이션을 상태 관리할 수 있다
+5. 딥링크 보안 검증(호스트 허용 목록, XSS 방지, Rate Limiting)을 적용할 수 있다
+
 ## 1. 개요
 
 ### 1.1 Deep Linking이란?
@@ -64,7 +74,7 @@ dependencies:
 
   # Deep Linking
   uni_links: ^0.5.1
-  app_links: ^6.3.2
+  app_links: ^6.4.0
 
   # Firebase (Optional)
   firebase_core: ^3.8.1
@@ -1871,3 +1881,35 @@ extension DeepLinkErrorRecovery on DeepLinkBloc {
 8. **Best Practices**: 실무에서 적용 가능한 패턴과 안티패턴
 
 딥링크는 사용자 경험을 크게 개선할 수 있는 강력한 도구이며, 적절한 보안 및 에러 핸들링과 함께 구현되어야 합니다.
+
+## 실습 과제
+
+### 과제 1: URL Scheme 딥링크 구현
+`myapp://` URL Scheme을 설정하고, `myapp://product/123?category=electronics` 형태의 딥링크를 GoRouter 라우트로 변환하여 해당 화면으로 이동하는 전체 흐름을 구현하세요.
+
+### 과제 2: Universal Links / App Links 설정
+서버에 `apple-app-site-association`(iOS)과 `assetlinks.json`(Android) 파일을 배포하고, `https://example.com/app/product/123` 형태의 웹 URL로 앱이 열리는 것을 확인하세요.
+
+### 과제 3: 딥링크 보안 검증
+DeepLinkValidator를 구현하여 허용된 호스트/스킴만 처리하고, path traversal과 XSS 공격을 차단하며, Rate Limiting으로 과도한 요청을 방지하는 보안 레이어를 적용하세요.
+
+## Self-Check 퀴즈
+
+- [ ] URL Scheme과 Universal Links/App Links의 차이점, 그리고 앱 미설치 시 각각의 동작을 설명할 수 있는가?
+- [ ] `apple-app-site-association` 파일의 필수 조건(Content-Type, HTTPS, 리디렉션 없음 등)을 이해하고 있는가?
+- [ ] Deferred Deep Linking이란 무엇이며, Firebase Dynamic Links가 이를 어떻게 지원하는지 설명할 수 있는가?
+- [ ] 딥링크 파라미터의 보안 검증이 필요한 이유와 주요 검증 항목을 나열할 수 있는가?
+- [ ] GoRouter의 redirect와 딥링크가 결합될 때, 인증이 필요한 경로를 어떻게 보호하는지 설명할 수 있는가?
+
+## 체크리스트
+
+- [ ] URL Scheme 설정 (iOS Info.plist, Android AndroidManifest.xml)
+- [ ] Universal Links 설정 (apple-app-site-association, Associated Domains)
+- [ ] App Links 설정 (assetlinks.json, autoVerify)
+- [ ] GoRouter 라우트 정의 및 딥링크 매핑
+- [ ] DeepLinkBloc 구현 (수신, 파싱, 네비게이션)
+- [ ] DeepLinkHandlerWidget으로 앱 전역 딥링크 리스닝
+- [ ] 딥링크 보안 검증 (호스트 허용 목록, 파라미터 검증)
+- [ ] Firebase Dynamic Links 설정 (필요시)
+- [ ] Deferred Deep Linking 테스트
+- [ ] 딥링크 단위 테스트 및 통합 테스트

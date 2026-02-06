@@ -2,6 +2,11 @@
 
 > 10년차+ 시니어 개발자를 위한 프로덕션 수준 CI/CD 전략과 고급 배포 기법을 다룹니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Trunk-based Development 전략으로 CI/CD를 운영할 수 있다
+> - Canary Release와 Feature Flag를 활용한 점진적 배포를 구현할 수 있다
+> - Shorebird OTA 업데이트를 설정하고 운영할 수 있다
+
 ## 목차
 
 1. [Trunk-based Development](#1-trunk-based-development)
@@ -1900,3 +1905,20 @@ resource "google_compute_instance" "github_runner" {
 - [Fastlane Documentation](https://docs.fastlane.tools/)
 - [Terraform Google Provider](https://registry.terraform.io/providers/hashicorp/google/latest/docs)
 - [GitHub Actions Self-hosted Runners](https://docs.github.com/en/actions/hosting-your-own-runners)
+
+---
+
+## 실습 과제
+
+### 과제 1: Canary Release 파이프라인
+전체 사용자의 5%에게만 새 버전을 배포하고, 크래시율이 기준 이하일 때 100%로 확대하는 Canary Release 파이프라인을 설계하세요.
+
+### 과제 2: Shorebird OTA 설정
+Shorebird를 프로젝트에 통합하고, 앱 스토어 심사 없이 Dart 코드를 업데이트하는 OTA 배포 플로우를 구성하세요.
+
+## Self-Check
+
+- [ ] Trunk-based Development와 GitFlow의 차이를 설명할 수 있는가?
+- [ ] Feature Flag를 활용한 점진적 기능 릴리스를 설계할 수 있는가?
+- [ ] Canary Release의 모니터링 기준(SLI)을 정의할 수 있는가?
+- [ ] Shorebird OTA의 제약사항(네이티브 코드 변경 불가)을 이해하는가?

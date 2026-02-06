@@ -2,6 +2,11 @@
 
 Production-ready patterns for submitting Flutter apps to Google Play Store and Apple App Store.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Google Play Store와 Apple App Store에 앱을 제출할 수 있다
+> - 스토어 심사 기준을 이해하고 리젝 사유를 방지할 수 있다
+> - Fastlane을 활용한 자동화된 스토어 배포를 설정할 수 있다
+
 ## Table of Contents
 
 1. [Overview](#overview)
@@ -1511,3 +1516,20 @@ flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
 - [App Store Connect Help](https://developer.apple.com/help/app-store-connect/)
 - [Flutter Deployment Docs](https://docs.flutter.dev/deployment)
 - [Fastlane Documentation](https://docs.fastlane.tools/)
+
+---
+
+## 실습 과제
+
+### 과제 1: 스토어 제출 체크리스트 작성
+Google Play Store와 Apple App Store 제출에 필요한 스크린샷, 설명, 개인정보처리방침 등을 준비하고 체크리스트를 완성하세요.
+
+### 과제 2: Fastlane 자동 배포
+Fastlane으로 Android는 Play Store 내부 테스트 트랙에, iOS는 TestFlight에 자동 업로드하는 lane을 작성하세요.
+
+## Self-Check
+
+- [ ] Android 키스토어 생성 및 서명 설정을 완료할 수 있는가?
+- [ ] iOS 인증서와 프로비저닝 프로파일을 관리할 수 있는가?
+- [ ] 스토어 심사 가이드라인 위반 항목을 사전에 점검할 수 있는가?
+- [ ] 앱 버전 관리(Semantic Versioning)와 빌드 넘버 전략을 설명할 수 있는가?

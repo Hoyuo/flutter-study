@@ -2,6 +2,11 @@
 
 > 이 문서는 Flutter 앱의 CI/CD 파이프라인 설정 방법을 설명합니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - GitHub Actions로 Flutter CI/CD 파이프라인을 구성할 수 있다
+> - 자동 빌드, 테스트, 배포 워크플로우를 설정할 수 있다
+> - Firebase App Distribution과 스토어 배포를 자동화할 수 있다
+
 ## 1. 개요
 
 ### 1.1 CI/CD란?
@@ -2347,3 +2352,20 @@ fastlane match nuke development --readonly
 - [codecov-action](https://github.com/codecov/codecov-action)
 - [slack-github-action](https://github.com/slackapi/slack-github-action)
 - [firebase-distribution](https://github.com/wzieba/Firebase-Distribution-Github-Action)
+
+---
+
+## 실습 과제
+
+### 과제 1: GitHub Actions CI 파이프라인
+PR이 올라오면 자동으로 `flutter analyze`, `flutter test`, `flutter build`를 실행하는 CI 워크플로우를 작성하세요.
+
+### 과제 2: Firebase App Distribution 자동 배포
+main 브랜치에 머지되면 Firebase App Distribution으로 테스트 빌드를 자동 배포하는 CD 워크플로우를 작성하세요.
+
+## Self-Check
+
+- [ ] GitHub Actions YAML 워크플로우를 작성할 수 있는가?
+- [ ] Flutter 빌드에 필요한 시크릿(키스토어, API 키)을 안전하게 관리하는가?
+- [ ] 테스트 실패 시 PR 머지를 차단하는 브랜치 보호 규칙을 설정할 수 있는가?
+- [ ] Firebase App Distribution 또는 TestFlight 자동 배포를 구성할 수 있는가?

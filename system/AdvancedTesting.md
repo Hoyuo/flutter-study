@@ -2,6 +2,11 @@
 
 > **대상**: 10년차+ 시니어 개발자 | Flutter 3.27+ | Dart 3.10+ | TDD/BDD 전문가
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Property-based Testing으로 엣지 케이스를 자동 발견할 수 있다
+> - Golden Test로 UI 회귀를 감지할 수 있다
+> - Patrol로 E2E 테스트를 작성하고 CI에서 실행할 수 있다
+
 ## 개요
 
 이 가이드는 Flutter 앱의 품질을 보장하기 위한 고급 테스트 기법을 다룹니다. Property-based Testing, Golden Test 자동화, Mutation Testing, Contract Testing, Visual Regression Testing, Fuzz Testing 등 엔터프라이즈급 테스트 전략을 제시합니다.
@@ -1408,3 +1413,20 @@ Level 5: E2E + Visual Regression → 릴리스 전 필수
 ```
 
 95% 이상의 커버리지와 함께 Mutation Score 80%+를 달성하면, 프로덕션 버그를 90% 이상 사전에 방지할 수 있습니다.
+
+---
+
+## 실습 과제
+
+### 과제 1: Golden Test 작성
+주요 화면 3개에 대해 Golden Test를 작성하고, CI에서 자동 비교되도록 설정하세요.
+
+### 과제 2: E2E 테스트 with Patrol
+로그인 → 목록 조회 → 상세 보기 → 로그아웃 시나리오를 Patrol로 E2E 테스트하세요.
+
+## Self-Check
+
+- [ ] Property-based Testing의 장점과 적용 시점을 설명할 수 있는가?
+- [ ] Golden Test 업데이트 플로우(--update-goldens)를 이해하는가?
+- [ ] Mutation Testing으로 테스트 품질을 측정할 수 있는가?
+- [ ] CI에서 E2E 테스트를 안정적으로 실행할 수 있는가?

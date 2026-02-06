@@ -1,5 +1,10 @@
 # Flutter 앱 모니터링 가이드
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - Firebase Crashlytics로 크래시를 모니터링할 수 있다
+> - Performance Monitoring으로 앱 성능을 추적할 수 있다
+> - 알림 규칙을 설정하여 장애를 조기에 감지할 수 있다
+
 ## 개요
 
 프로덕션 환경에서 앱의 안정성과 성능을 지속적으로 추적하고 개선하기 위해서는 체계적인 모니터링 전략이 필수입니다. 이 가이드는 크래시 리포팅, 성능 모니터링, 에러 트래킹, 사용자 분석, 알림 설정을 포함한 완벽한 모니터링 시스템 구축 방법을 다룹니다.
@@ -2284,3 +2289,20 @@ options.diagnosticLevel = SentryLevel.debug;
 - [Sentry Flutter SDK](https://docs.sentry.io/platforms/flutter/)
 - [DataDog Mobile SDK](https://docs.datadoghq.com/real_user_monitoring/mobile_and_tv_monitoring/flutter/)
 - [Grafana Cloud](https://grafana.com/docs/grafana-cloud/)
+
+---
+
+## 실습 과제
+
+### 과제 1: Crashlytics 통합
+Firebase Crashlytics를 설정하고, 비정상 종료와 Non-fatal 에러를 모니터링하는 대시보드를 구성하세요.
+
+### 과제 2: 커스텀 메트릭 추적
+API 응답 시간, 화면 로딩 시간을 커스텀 트레이스로 측정하고 성능 기준(SLI)을 정의하세요.
+
+## Self-Check
+
+- [ ] Crashlytics가 크래시를 정상적으로 수집하는가?
+- [ ] Crash-free rate 목표(99.5%+)를 설정했는가?
+- [ ] 주요 API의 응답 시간을 모니터링하고 있는가?
+- [ ] 장애 발생 시 알림이 자동으로 전송되는가?

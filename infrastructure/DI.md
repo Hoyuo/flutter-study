@@ -2,6 +2,11 @@
 
 > 이 문서는 GetIt과 Injectable을 사용한 의존성 주입 설정 방법을 설명합니다.
 
+> **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
+> - GetIt 컨테이너를 설정하고 서비스를 등록할 수 있다
+> - Injectable 어노테이션으로 자동 DI 코드를 생성할 수 있다
+> - 모듈별로 의존성을 분리하고 환경별 설정을 구성할 수 있다
+
 ## 1. 개요
 
 ### 1.1 의존성 주입이란?
@@ -759,3 +764,24 @@ inside GetIt.
 | [Environment.md](./Environment.md) | 환경별 DI 설정 |
 | [Bloc.md](../core/Bloc.md) | Bloc은 Injectable로 등록하지 않는 이유 |
 | [Testing.md](../system/Testing.md) | DI Mock을 활용한 테스트 |
+
+---
+
+## 실습 과제
+
+### 과제 1: Feature별 DI 모듈 구성
+새로운 Feature(예: `profile`)를 만들고, Repository, DataSource, UseCase를 각각 Injectable로 등록하세요. `@module` 어노테이션으로 Feature 전용 모듈을 분리하세요.
+
+### 과제 2: 환경별 DI 설정
+`@Environment('dev')`와 `@Environment('prod')` 어노테이션을 활용하여 개발용 MockRepository와 프로덕션용 실제 Repository를 환경에 따라 자동 전환하세요.
+
+### 과제 3: DI 기반 테스트 작성
+GetIt에 등록된 서비스를 Mock으로 교체하여 UseCase의 Unit 테스트를 작성하세요.
+
+## Self-Check
+
+- [ ] GetIt 컨테이너에 서비스를 등록하고 주입받을 수 있는가?
+- [ ] Injectable 어노테이션(@injectable, @singleton, @lazySingleton)의 차이를 설명할 수 있는가?
+- [ ] @module을 사용하여 외부 라이브러리 의존성을 등록할 수 있는가?
+- [ ] 환경별(@Environment)로 다른 구현체를 주입할 수 있는가?
+- [ ] build_runner로 DI 코드를 자동 생성할 수 있는가?
