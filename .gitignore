@@ -17,20 +17,34 @@
 .dart_tool/
 .packages
 build/
+**/build/
 *.lock
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Android build artifacts
+**/android/app/build/
+**/android/.gradle/
+*.apk
+*.aab
+
+# iOS build artifacts
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+*.ipa
 
 # Environment files with secrets
 .env
 .env.local
 .env.*.local
 
-# Generated files
-*.g.dart
-*.freezed.dart
-*.gr.dart
-*.config.dart
+# Generated files (kept in repo for build reproducibility)
+# *.g.dart
+# *.freezed.dart
+# *.gr.dart
+# *.config.dart
 
 # Firebase
 google-services.json
