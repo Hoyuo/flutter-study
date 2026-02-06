@@ -16,6 +16,7 @@
 | `LocalStorage.md` | SharedPreferences, Hive, SecureStorage를 활용한 로컬 데이터 저장 |
 | `CICD.md` | CI/CD 파이프라인 설정, GitHub Actions, Codemagic, Fastlane, 코드 서명 |
 | `StoreSubmission.md` | 앱스토어 제출 가이드, Play Store, App Store, 스크린샷, ASO |
+| `AdvancedCICD.md` | Trunk-based 개발, Canary Release, Shorebird OTA, Feature Flags |
 
 ## For AI Agents
 

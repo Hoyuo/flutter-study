@@ -18,6 +18,7 @@
 | `OfflineSupport.md` | 오프라인 우선 아키텍처, Drift ORM, sync queue, conflict resolution |
 | `InAppPurchase.md` | 인앱 결제, native in_app_purchase, RevenueCat, 서버 검증 |
 | `Animation.md` | 암시적/명시적 애니메이션, Lottie, Hero, 접근성 고려 |
+| `AdvancedPatterns.md` | DDD, Hexagonal Architecture, Saga 패턴, Specification 패턴, SOLID 심화 |
 
 ## For AI Agents
 

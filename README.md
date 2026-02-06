@@ -20,15 +20,14 @@ flutter-study/
 ├── networking/     # 네트워킹 (2개)
 ├── features/       # 기능별 가이드 (4개)
 ├── patterns/       # 필수 패턴 (8개)
-├── system/         # 시스템 (12개)
-└── examples/       # 실제 구현 예제
+└── system/         # 시스템 (13개)
 ```
 
 **총 41개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
 
 ## Quick Start
 
-### 1. 문서 탐색
+### 문서 탐색
 
 권장 학습 순서:
 
@@ -39,17 +38,6 @@ flutter-study/
 | 3 | [Bloc](./core/Bloc.md) | 상태 관리 패턴 |
 | 4 | [Freezed](./core/Freezed.md) | 불변 데이터 모델 |
 | 5 | [Networking](./networking/Networking_Dio.md) | API 통신 |
-
-### 2. 예제 앱 실행
-
-[Photo Diary](./examples/photo_diary/) 앱은 41개 문서의 모든 패턴을 구현한 완전한 예제입니다.
-
-```bash
-cd examples/photo_diary
-flutter pub get
-dart run build_runner build --delete-conflicting-outputs
-flutter run
-```
 
 ## Documentation Categories
 
@@ -73,7 +61,7 @@ flutter run
 공통 패턴
 - Analytics, ImageHandling, Pagination, FormValidation, InAppPurchase, Animation, OfflineSupport, AdvancedPatterns
 
-### System (12개)
+### System (13개)
 시스템 품질
 - ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring, AdvancedPerformance, AdvancedTesting, AdvancedSecurity, ProductionOperations
 

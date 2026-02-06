@@ -16,14 +16,14 @@ Flutter 개발팀을 위한 포괄적인 개발 가이드 문서 저장소입니
 
 | Directory | Purpose | Documents |
 |-----------|---------|-----------|
-| `core/` | 핵심 아키텍처 - Architecture, Bloc, Freezed, Fpdart, BlocUiEffect | 5개 (see `core/AGENTS.md`) |
-| `infrastructure/` | 인프라 - DI, Environment, LocalStorage, CICD, StoreSubmission | 5개 (see `infrastructure/AGENTS.md`) |
+| `core/` | 핵심 아키텍처 - Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, PlatformIntegration, AdvancedStateManagement | 8개 (see `core/AGENTS.md`) |
+| `infrastructure/` | 인프라 - DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD | 6개 (see `infrastructure/AGENTS.md`) |
 | `networking/` | 네트워킹 - Dio, Retrofit | 2개 (see `networking/AGENTS.md`) |
 | `features/` | 기능별 - Navigation, Localization, Permission, PushNotification | 4개 (see `features/AGENTS.md`) |
-| `patterns/` | 필수 패턴 - Analytics, ImageHandling, Pagination, FormValidation, OfflineSupport, InAppPurchase, Animation | 7개 (see `patterns/AGENTS.md`) |
-| `system/` | 시스템 - ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring | 9개 (see `system/AGENTS.md`) |
+| `patterns/` | 필수 패턴 - Analytics, ImageHandling, Pagination, FormValidation, OfflineSupport, InAppPurchase, Animation, AdvancedPatterns | 8개 (see `patterns/AGENTS.md`) |
+| `system/` | 시스템 - ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring, AdvancedPerformance, AdvancedTesting, ProductionOperations, AdvancedSecurity | 13개 (see `system/AGENTS.md`) |
 
-**총 32개 문서**
+**총 41개 문서**
 
 ## Directory Structure
 
@@ -36,14 +36,18 @@ flutter-study/
 │   ├── Bloc.md
 │   ├── BlocUiEffect.md
 │   ├── Freezed.md
-│   └── Fpdart.md
+│   ├── Fpdart.md
+│   ├── ModularArchitecture.md
+│   ├── PlatformIntegration.md
+│   └── AdvancedStateManagement.md
 ├── infrastructure/           ← 인프라
 │   ├── AGENTS.md
 │   ├── DI.md
 │   ├── Environment.md
 │   ├── LocalStorage.md
 │   ├── CICD.md
-│   └── StoreSubmission.md
+│   ├── StoreSubmission.md
+│   └── AdvancedCICD.md
 ├── networking/               ← 네트워킹
 │   ├── AGENTS.md
 │   ├── Networking_Dio.md
@@ -62,7 +66,8 @@ flutter-study/
 │   ├── FormValidation.md
 │   ├── OfflineSupport.md
 │   ├── InAppPurchase.md
-│   └── Animation.md
+│   ├── Animation.md
+│   └── AdvancedPatterns.md
 └── system/                   ← 시스템
     ├── AGENTS.md
     ├── ErrorHandling.md
@@ -73,7 +78,11 @@ flutter-study/
     ├── Security.md
     ├── Accessibility.md
     ├── Logging.md
-    └── Monitoring.md
+    ├── Monitoring.md
+    ├── AdvancedPerformance.md
+    ├── AdvancedTesting.md
+    ├── ProductionOperations.md
+    └── AdvancedSecurity.md
 ```
 
 ## For AI Agents
@@ -188,5 +197,17 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 29. `patterns/OfflineSupport.md` - 오프라인 지원
 30. `patterns/InAppPurchase.md` - 인앱 결제
 31. `patterns/Animation.md` - 애니메이션
+
+### 시니어 (Senior Level)
+
+32. `core/ModularArchitecture.md` - Mono-repo, Melos, Micro Frontend
+33. `core/AdvancedStateManagement.md` - CQRS, Event Sourcing, Undo/Redo
+34. `core/PlatformIntegration.md` - Platform Channel, FFI, Pigeon
+35. `system/AdvancedPerformance.md` - Custom RenderObject, Impeller, Memory Profiling
+36. `system/AdvancedTesting.md` - Property-based, Golden Test, E2E
+37. `system/AdvancedSecurity.md` - Code Obfuscation, RASP, mTLS
+38. `infrastructure/AdvancedCICD.md` - Trunk-based, Canary Release, Shorebird
+39. `system/ProductionOperations.md` - SLO/SLI, Crash-free Rate, Incident Management
+40. `patterns/AdvancedPatterns.md` - DDD, Hexagonal, Saga, Specification
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->

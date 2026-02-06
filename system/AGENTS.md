@@ -20,6 +20,10 @@
 | `Accessibility.md` | Semantics 설정, 스크린 리더 지원, 색상 대비, 모터 접근성, 테스트 |
 | `Logging.md` | 구조화된 로깅, BlocObserver, 네트워크 로깅, Crashlytics/Sentry 연동 |
 | `Monitoring.md` | 앱 모니터링, Crashlytics, Sentry, Firebase Performance, 인시던트 대응 |
+| `AdvancedPerformance.md` | Custom RenderObject, Impeller 최적화, Fragment Shader, Memory Profiling |
+| `AdvancedTesting.md` | Property-based Testing, Golden Test, E2E Patrol, Visual Regression |
+| `ProductionOperations.md` | SLO/SLI 모니터링, Crash-free Rate, Incident Management, A/B Testing |
+| `AdvancedSecurity.md` | Code Obfuscation, RASP, mTLS, Certificate Transparency, Jailbreak Detection |
 
 ## For AI Agents
 
