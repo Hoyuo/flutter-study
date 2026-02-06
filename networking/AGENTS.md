@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-01-27 | Updated: 2026-01-27 -->
+<!-- Generated: 2026-01-27 | Updated: 2026-02-06 -->
 
 # Networking
 
@@ -13,6 +13,7 @@ HTTP 통신 및 API 연동을 다루는 문서 모음입니다. Dio HTTP 클라�
 |------|-------------|
 | `Networking_Dio.md` | Dio HTTP 클라이언트 설정, Interceptor 구성, 에러 처리, 토큰 갱신 |
 | `Networking_Retrofit.md` | Retrofit 코드 생성, API 서비스 인터페이스 정의, 응답 매핑 |
+| `WebSocket.md` | WebSocket 실시간 통신, Socket.IO, 재연결 로직, 채팅 구현, Stream 처리 |
 
 ## For AI Agents
 
@@ -26,6 +27,7 @@ HTTP 통신 및 API 연동을 다루는 문서 모음입니다. Dio HTTP 클라�
 
 1. `Networking_Dio.md` → HTTP 클라이언트 기초
 2. `Networking_Retrofit.md` → API 서비스 정의
+3. `WebSocket.md` → 실시간 통신
 
 ### Common Patterns
 
@@ -61,5 +63,7 @@ abstract class UserApi {
 - `dio` - HTTP Client
 - `retrofit` / `retrofit_generator` - API Code Generation
 - `json_annotation` / `json_serializable` - JSON Serialization
+- `web_socket_channel` - WebSocket Communication
+- `socket_io_client` - Socket.IO Client
 
 <!-- MANUAL: -->

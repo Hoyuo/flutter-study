@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-01-27 | Updated: 2026-01-27 -->
+<!-- Generated: 2026-01-27 | Updated: 2026-02-06 -->
 
 # Core
 
@@ -19,6 +19,7 @@ Flutter 앱 개발의 핵심 아키텍처와 패턴을 다루는 문서 모음�
 | `ModularArchitecture.md` | Mono-repo/Multi-package 구조, Melos 워크스페이스, Micro Frontend 패턴 |
 | `PlatformIntegration.md` | Platform Channel, Method Channel, FFI, Pigeon 코드 생성 |
 | `AdvancedStateManagement.md` | CQRS, Event Sourcing, Optimistic UI, Undo/Redo, State Sync |
+| `Riverpod.md` | Riverpod 상태 관리, Provider 종류, Code Generation, Bloc 마이그레이션 |
 
 ## For AI Agents
 
@@ -66,5 +67,6 @@ Future<Either<Failure, User>> call(String id) async {
 - `flutter_bloc` - State Management
 - `freezed` / `freezed_annotation` - Code Generation
 - `fpdart` - Functional Programming
+- `riverpod` / `flutter_riverpod` - Alternative State Management
 
 <!-- MANUAL: -->

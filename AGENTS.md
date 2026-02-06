@@ -1,4 +1,4 @@
-<!-- Generated: 2026-01-27 | Updated: 2026-01-27 -->
+<!-- Generated: 2026-01-27 | Updated: 2026-02-06 -->
 
 # Flutter Study
 
@@ -16,14 +16,14 @@ Flutter 개발팀을 위한 포괄적인 개발 가이드 문서 저장소입니
 
 | Directory | Purpose | Documents |
 |-----------|---------|-----------|
-| `core/` | 핵심 아키텍처 - Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, PlatformIntegration, AdvancedStateManagement | 8개 (see `core/AGENTS.md`) |
-| `infrastructure/` | 인프라 - DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD | 6개 (see `infrastructure/AGENTS.md`) |
-| `networking/` | 네트워킹 - Dio, Retrofit | 2개 (see `networking/AGENTS.md`) |
+| `core/` | 핵심 아키텍처 - Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, PlatformIntegration, AdvancedStateManagement, Riverpod | 9개 (see `core/AGENTS.md`) |
+| `infrastructure/` | 인프라 - DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD, Firebase | 7개 (see `infrastructure/AGENTS.md`) |
+| `networking/` | 네트워킹 - Dio, Retrofit, WebSocket | 3개 (see `networking/AGENTS.md`) |
 | `features/` | 기능별 - Navigation, Localization, Permission, PushNotification | 4개 (see `features/AGENTS.md`) |
 | `patterns/` | 필수 패턴 - Analytics, ImageHandling, Pagination, FormValidation, OfflineSupport, InAppPurchase, Animation, AdvancedPatterns | 8개 (see `patterns/AGENTS.md`) |
 | `system/` | 시스템 - ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring, AdvancedPerformance, AdvancedTesting, ProductionOperations, AdvancedSecurity | 13개 (see `system/AGENTS.md`) |
 
-**총 41개 문서**
+**총 44개 문서**
 
 ## Directory Structure
 
@@ -39,7 +39,8 @@ flutter-study/
 │   ├── Fpdart.md
 │   ├── ModularArchitecture.md
 │   ├── PlatformIntegration.md
-│   └── AdvancedStateManagement.md
+│   ├── AdvancedStateManagement.md
+│   └── Riverpod.md
 ├── infrastructure/           ← 인프라
 │   ├── AGENTS.md
 │   ├── DI.md
@@ -47,11 +48,13 @@ flutter-study/
 │   ├── LocalStorage.md
 │   ├── CICD.md
 │   ├── StoreSubmission.md
-│   └── AdvancedCICD.md
+│   ├── AdvancedCICD.md
+│   └── Firebase.md
 ├── networking/               ← 네트워킹
 │   ├── AGENTS.md
 │   ├── Networking_Dio.md
-│   └── Networking_Retrofit.md
+│   ├── Networking_Retrofit.md
+│   └── WebSocket.md
 ├── features/                 ← 기능별
 │   ├── AGENTS.md
 │   ├── Navigation.md
@@ -143,6 +146,9 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 | `fpdart` | Functional Programming |
 | `get_it` + `injectable` | Dependency Injection |
 | `dio` + `retrofit` | HTTP Client |
+| `web_socket_channel` | WebSocket Communication |
+| `riverpod` | Alternative State Management |
+| `firebase_core` | Firebase Integration |
 | `go_router` | Navigation |
 | `easy_localization` | i18n |
 | `permission_handler` | Permissions |
@@ -209,5 +215,11 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 38. `infrastructure/AdvancedCICD.md` - Trunk-based, Canary Release, Shorebird
 39. `system/ProductionOperations.md` - SLO/SLI, Crash-free Rate, Incident Management
 40. `patterns/AdvancedPatterns.md` - DDD, Hexagonal, Saga, Specification
+
+### 실전 심화 (Phase 1)
+
+41. `core/Riverpod.md` - Riverpod 상태 관리, Bloc 마이그레이션
+42. `networking/WebSocket.md` - WebSocket 실시간 통신, Socket.IO, 채팅 구현
+43. `infrastructure/Firebase.md` - Firebase 통합 (Auth, Firestore, FCM, Crashlytics)
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->
