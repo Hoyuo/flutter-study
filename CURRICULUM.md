@@ -1,26 +1,26 @@
 # Flutter 팀 교육 커리큘럼
 
-> 62개 학습 문서 기반 레벨별 교육 과정
+> 56개 학습 문서 기반 레벨별 교육 과정
 
 ---
 
 ## 개요
 
-이 커리큘럼은 flutter-study 저장소의 62개 문서를 기반으로, 개발자 경력 수준에 맞춘 체계적 학습 경로를 제공합니다.
+이 커리큘럼은 flutter-study 저장소의 56개 문서를 기반으로, 개발자 경력 수준에 맞춘 체계적 학습 경로를 제공합니다.
 
 | 레벨 | 대상 | 기간 | 문서 수 | 핵심 목표 |
 |------|------|------|---------|-----------|
 | Beginner | 입문 | 4주 | 5개 | Dart 언어와 Flutter Widget 기본기 이해 |
 | Junior | 0-6개월 | 12주 | 10개 | Clean Architecture 기반 앱 구조를 이해하고 기본 CRUD 앱 구현 |
-| Mid-level | 6-12개월 | 12주 | 18개 | 실무 수준의 기능 구현과 품질 관리 역량 확보 |
-| Senior | 1년+ | 자율 | 13개 | 아키텍처 설계, 성능 최적화, 프로덕션 운영 주도 |
+| Mid-level | 6-12개월 | 12주 | 16개 | 실무 수준의 기능 구현과 품질 관리 역량 확보 |
+| Senior | 1년+ | 자율 | 10개 | 아키텍처 설계, 성능 최적화, 프로덕션 운영 주도 |
 
-**전체 문서 분류 (62개)**
+**전체 문서 분류 (56개)**
 
 ```
-Beginner 기초 (5) ──> Junior 필수 (10) ──> Mid-level 실무 (18) ──> Senior 심화 (13)
+Beginner 기초 (5) ──> Junior 필수 (10) ──> Mid-level 실무 (16) ──> Senior 심화 (10)
                                                                         │
-                                                              프로젝트별 선택 (16) + 실전 튜토리얼 (1)
+                                                              프로젝트별 선택 (8) + NEXT_ROADMAP (7)
 ```
 
 ---
@@ -66,9 +66,9 @@ Dart 언어와 Flutter의 핵심 개념을 이해합니다. 다른 플랫폼(iOS
 | 4 | `core/Freezed.md` | Core | 불변 데이터 클래스, Union Type, copyWith | 4h |
 | 5 | `networking/Networking_Dio.md` | Network | Dio 설정, Interceptor, 토큰 갱신 | 4h |
 | 6 | `networking/Networking_Retrofit.md` | Network | Retrofit API 서비스 정의, 코드 생성 | 3h |
-| 7 | `system/ErrorHandling.md` | System | Failure sealed class, Either 에러 처리 | 4h |
+| 7 | `core/ErrorHandling.md` | Core | Failure sealed class, Either 에러 처리 | 4h |
 | 8 | `features/Navigation.md` | Features | GoRouter, 인증 리다이렉트, ShellRoute | 4h |
-| 9 | `patterns/DesignSystem.md` | Patterns | Material 3 테마, 다크 모드, ThemeExtension, 디자인 토큰 | 3h |
+| 9 | `fundamentals/DesignSystem.md` | Fundamentals | Material 3 테마, 다크 모드, ThemeExtension, 디자인 토큰 | 3h |
 | 10 | `patterns/FormValidation.md` | Patterns | 폼 유효성 검사, ValidatorBuilder, Form Bloc | 3h |
 
 **총 예상 학습 시간: 38시간**
@@ -129,7 +129,7 @@ Dart 언어와 Flutter의 핵심 개념을 이해합니다. 다른 플랫폼(iOS
 
 ## 2. Mid-level 레벨 (6-12개월)
 
-### 2.1 실무 필수 문서 15개
+### 2.1 실무 필수 문서 13개
 
 Junior 과정 완료를 전제로 합니다. 실무 프로젝트에서 자주 마주치는 기능과 품질 관리 역량을 키웁니다.
 
@@ -144,14 +144,13 @@ Junior 과정 완료를 전제로 합니다. 실무 프로젝트에서 자주 �
 | 7 | `features/PushNotification.md` | Features | FCM, 로컬 알림, 토픽 구독, 백그라운드 처리 | 5h |
 | 8 | `patterns/Pagination.md` | Patterns | 무한 스크롤, 커서 기반, PaginationState | 4h |
 | 9 | `patterns/ImageHandling.md` | Patterns | 이미지 캐싱, 크롭, 압축, 서버 업로드 | 4h |
-| 10 | `patterns/Analytics.md` | Patterns | Firebase Analytics, 이벤트 추적, Crashlytics | 3h |
+| 10 | `system/Observability.md` | System | Analytics, Logging, Monitoring 통합 - 이벤트 추적, 구조화 로깅, Crashlytics | 5h |
 | 11 | `patterns/Animation.md` | Patterns | 암시적/명시적 애니메이션, Lottie, Hero | 4h |
 | 12 | `system/Testing.md` | System | Unit/Widget/Integration 테스트, Mocktail, BlocTest | 6h |
 | 13 | `system/Performance.md` | System | 렌더링 최적화, 메모리 관리, DevTools | 4h |
 | 14 | `system/Security.md` | System | 데이터 암호화, Certificate Pinning, 인증 보안 | 4h |
-| 15 | `system/Logging.md` | System | 구조화 로깅, BlocObserver, Crashlytics 연동 | 3h |
 
-**총 예상 학습 시간: 59시간**
+**총 예상 학습 시간: 57시간**
 
 ### 2.2 주차별 학습 계획 (12주)
 
@@ -164,7 +163,7 @@ Junior 과정 완료를 전제로 합니다. 실무 프로젝트에서 자주 �
 | **5주** | `Permission.md` + `PushNotification.md` (전반) | 권한 요청 플로우, FCM 기초 설정 | 카메라/위치 권한 + FCM 토큰 등록 |
 | **6주** | `PushNotification.md` (후반) | 토픽 구독, 백그라운드 알림 처리 | 알림 클릭 시 특정 화면 이동 |
 | **7주** | `Pagination.md` + `ImageHandling.md` | 무한 스크롤 + 이미지 처리 통합 | 이미지 포함 무한 스크롤 목록 구현 |
-| **8주** | `Analytics.md` + `Logging.md` | 분석 이벤트 설계, 구조화된 로깅 | Analytics 이벤트 + BlocObserver 로깅 |
+| **8주** | `Observability.md` | Analytics 이벤트 설계, 구조화된 로깅, Monitoring 설정 | Analytics 이벤트 + BlocObserver 로깅 + Crashlytics |
 | **9주** | `Animation.md` | 암시적/명시적 애니메이션, 페이지 전환 | Hero 애니메이션 + 커스텀 전환 효과 |
 | **10주** | `Testing.md` | Unit/Widget/Integration 테스트 작성 | 기존 코드에 테스트 추가 (커버리지 70% 목표) |
 | **11주** | `Performance.md` + `Security.md` | 렌더링 최적화, 보안 설정 | DevTools 프로파일링 + Certificate Pinning |
@@ -230,12 +229,13 @@ Junior 과정 완료를 전제로 합니다. 실무 프로젝트에서 자주 �
 | 1 | `core/AdvancedStateManagement.md` | Core | CQRS, Event Sourcing, Optimistic UI, Undo/Redo | ★★★ |
 | 2 | `core/ModularArchitecture.md` | Core | Mono-repo, Melos, Micro Frontend | ★★★ |
 | 3 | `patterns/AdvancedPatterns.md` | Patterns | DDD, Hexagonal, Saga, Specification | ★★★ |
-| 4 | `core/PlatformIntegration.md` | Core | Platform Channel, FFI, Pigeon | ★★★ |
-| 5 | `system/Testing.md` (심화) | System | Property-based, Golden Test, Mutation, Contract, Fuzz, E2E Patrol | ★★★ |
-| 6 | `system/Performance.md` (심화) | System | Custom RenderObject, Impeller, Memory Profiling | ★★★ |
-| 7 | `infrastructure/CICD.md` (심화) | Infra | Trunk-based, Canary Release, Shorebird OTA | ★★★ |
-| 8 | `system/ProductionOperations.md` | System | SLO/SLI, Crash-free Rate, Incident Management | ★★★ |
-| 9 | `patterns/OfflineSupport.md` | Patterns | Offline-first, Drift ORM, Sync Queue, Conflict Resolution | ★★★ |
+| 4 | `infrastructure/PlatformIntegration.md` | Infra | Platform Channel, FFI, Pigeon | ★★★ |
+| 5 | `system/Isolates.md` | System | Isolate 기반 병렬 처리, Compute, IsolateChannel | ★★★ |
+| 6 | `system/Testing.md` (심화) | System | Property-based, Golden Test, Mutation, Contract, Fuzz, E2E Patrol | ★★★ |
+| 7 | `system/Performance.md` (심화) | System | Custom RenderObject, Impeller, Memory Profiling | ★★★ |
+| 8 | `infrastructure/CICD.md` (심화) | Infra | Trunk-based, Canary Release, Shorebird OTA | ★★★ |
+| 9 | `system/ProductionOperations.md` | System | SLO/SLI, Crash-free Rate, Incident Management | ★★★ |
+| 10 | `patterns/OfflineSupport.md` | Patterns | Offline-first, Drift ORM, Sync Queue, Conflict Resolution | ★★★ |
 
 ### 3.2 아키텍처 리뷰 과제
 
@@ -261,7 +261,7 @@ Senior 개발자는 코드 작성뿐 아니라 설계 의사결정을 주도해�
 
 | 항목 | 내용 |
 |------|------|
-| 관련 문서 | Performance (기본+심화 통합), Monitoring |
+| 관련 문서 | Performance (기본+심화 통합), Observability |
 | 과제 내용 | 실제 앱의 성능 병목을 분석하고 최적화 수행 |
 | 산출물 | 성능 최적화 리포트 (Before/After 비교 데이터 포함) |
 | 평가 기준 | 프레임 드롭 감소율, 메모리 사용량 개선, 앱 시작 시간 단축 |
@@ -299,7 +299,7 @@ Senior 개발자는 코드 작성뿐 아니라 설계 의사결정을 주도해�
 
 | 항목 | 내용 |
 |------|------|
-| 관련 문서 | Performance (기본+심화 통합), Monitoring |
+| 관련 문서 | Performance (기본+심화 통합), Observability |
 | 발표 내용 | Rendering Pipeline 이해, Custom RenderObject 활용, Impeller vs Skia, 실제 프로파일링 데모 |
 | 청중 | Junior 이상 전체 |
 | 준비물 | DevTools 라이브 데모, Before/After 성능 비교 영상 |
@@ -393,7 +393,7 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
  7. system/Performance.md            ← 지도 렌더링 최적화
     │
     ▼
- 8. system/Monitoring.md             ← 주문 실패 모니터링
+ 8. system/Observability.md          ← 주문 실패 모니터링 및 로깅
 ```
 
 (*) NEXT_ROADMAP Phase 2 문서
@@ -438,7 +438,7 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
  7. system/Performance.md            ← 이미지/영상 렌더링 최적화
     │
     ▼
- 8. patterns/Analytics.md            ← 콘텐츠 소비 추적
+ 8. system/Observability.md          ← 콘텐츠 소비 추적 및 분석
 ```
 
 (*) NEXT_ROADMAP Phase 2/3 문서
@@ -454,7 +454,7 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
 
 ---
 
-## 5. 전체 문서 매핑 (62개)
+## 5. 전체 문서 매핑 (56개)
 
 모든 문서가 어느 레벨에 배정되었는지 한눈에 확인할 수 있는 표입니다.
 
@@ -463,11 +463,11 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
 | 레벨 | 문서 (카테고리) |
 |------|----------------|
 | **Beginner 기초** (5) | DartAdvanced (fund), WidgetFundamentals (fund), LayoutSystem (fund), DevToolsProfiling (fund), FlutterInternals (fund) |
-| **Junior 필수** (10) | Architecture (core), DI (infra), Bloc (core), Freezed (core), Networking_Dio (net), Networking_Retrofit (net), ErrorHandling (sys), Navigation (feat), DesignSystem (pat), FormValidation (pat) |
-| **Mid-level 필수** (18) | Fpdart (core), BlocUiEffect (core), Environment (infra), LocalStorage (infra), Localization (feat), Permission (feat), PushNotification (feat), Pagination (pat), ImageHandling (pat), Analytics (pat), Animation (pat), Testing (sys), Performance (sys), Security (sys), Logging (sys), **ResponsiveDesign (pat)**, **DesignSystem (pat)**, **CachingStrategy (infra)** |
-| **Senior 심화** (10) | AdvancedStateManagement (core), ModularArchitecture (core), AdvancedPatterns (pat), PlatformIntegration (core), Testing 심화 (sys), Performance 심화 (sys), CICD 심화 (infra), ProductionOperations (sys), OfflineSupport (pat), **TeamCollaboration (sys)**, **FullStackProject (proj)** |
-| **프로젝트별 선택** (10) | Riverpod (core), WebSocket (net), Firebase (infra), InAppPurchase (pat), AppLifecycle (sys), Accessibility (sys), Monitoring (sys), CICD (infra), StoreSubmission (infra), **ServerDrivenUI (pat)** |
-| **NEXT_ROADMAP** (8) | Isolates (core), FlutterMultiPlatform (infra), PackageDevelopment (infra), GraphQL (net), DeepLinking (feat), MapsGeolocation (feat), CameraMedia (feat), CustomPainting (pat) |
+| **Junior 필수** (10) | Architecture (core), DI (infra), Bloc (core), Freezed (core), Networking_Dio (net), Networking_Retrofit (net), ErrorHandling (core), Navigation (feat), DesignSystem (fund), FormValidation (pat) |
+| **Mid-level 필수** (16) | Fpdart (core), BlocUiEffect (core), Environment (infra), LocalStorage (infra), Localization (feat), Permission (feat), PushNotification (feat), Pagination (pat), ImageHandling (pat), Observability (sys), Animation (pat), Testing (sys), Performance (sys), Security (sys), **ResponsiveDesign (pat)**, **CachingStrategy (infra)** |
+| **Senior 심화** (10) | AdvancedStateManagement (core), ModularArchitecture (core), AdvancedPatterns (pat), PlatformIntegration (infra), Isolates (sys), Testing 심화 (sys), Performance 심화 (sys), CICD 심화 (infra), ProductionOperations (sys), OfflineSupport (pat) |
+| **프로젝트별 선택** (8) | Riverpod (core), WebSocket (net), Firebase (infra), InAppPurchase (pat), AppLifecycle (sys), Accessibility (sys), StoreSubmission (infra), **ServerDrivenUI (pat)** |
+| **NEXT_ROADMAP** (7) | FlutterMultiPlatform (infra), PackageDevelopment (infra), GraphQL (net), DeepLinking (feat), MapsGeolocation (feat), CameraMedia (feat), CustomPainting (pat) |
 
 ### 의존성 다이어그램
 
@@ -477,15 +477,15 @@ DartAdvanced ──> WidgetFundamentals ──> LayoutSystem ──> FlutterInte
                         ▼                                       ▼
 Architecture ─┬─> DI ──> Bloc ──> Freezed ──> Networking_Dio ──> Networking_Retrofit
               │                     │
-              │                     ├──> ErrorHandling ──> Fpdart
+              │                     ├──> ErrorHandling (core) ──> Fpdart
               │                     │
               │                     ├──> BlocUiEffect
               │                     │
               │                     └──> Navigation ──> DeepLinking (*)
               │
-              ├─> Environment ──> CICD (기본+심화 통합) ──> StoreSubmission
+              ├─> Environment ──> CICD 심화 (infra) ──> StoreSubmission
               │
-              ├─> DesignSystem ──> ResponsiveDesign
+              ├─> DesignSystem (fund) ──> ResponsiveDesign
               │          └──> Accessibility
               │
               ├─> Testing (기본+심화 통합)
@@ -496,11 +496,13 @@ Architecture ─┬─> DI ──> Bloc ──> Freezed ──> Networking_Dio �
               │
               ├─> LocalStorage ──> CachingStrategy
               │
-              ├─> TeamCollaboration (독립)
+              ├─> Observability (sys) [Analytics + Monitoring + Logging 통합]
               │
               ├─> ModularArchitecture ──> AdvancedPatterns
               │
-              └─> FullStackProject (전체 통합 튜토리얼)
+              ├─> PlatformIntegration (infra)
+              │
+              └─> Isolates (sys)
 ```
 
 ---
@@ -540,4 +542,4 @@ Architecture ─┬─> DI ──> Bloc ──> Freezed ──> Networking_Dio �
 ---
 
 **마지막 업데이트:** 2026-02-07
-**기반 문서 수:** 62개 (DatabaseAdvanced.md → LocalStorage.md, AdvancedTesting.md → Testing.md 통합)
+**기반 문서 수:** 56개 (Analytics + Monitoring + Logging → Observability 통합, 경로 재구성, 중복 제거)

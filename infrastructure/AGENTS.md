@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-01-27 | Updated: 2026-02-06 -->
+<!-- Generated: 2026-01-27 | Updated: 2026-02-07 -->
 
 # Infrastructure
 
@@ -19,6 +19,8 @@
 | `Firebase.md` | Firebase 통합 (Auth, Firestore, Storage, FCM, Crashlytics, Analytics, Security Rules) |
 | `FlutterMultiPlatform.md` | Web/Desktop 멀티플랫폼 확장, 플랫폼별 조건부 렌더링, Responsive Design |
 | `PackageDevelopment.md` | Dart/Flutter 패키지 개발, Pub.dev 배포, 버전 관리, API 문서화 |
+| `CachingStrategy.md` | 캐싱 전략, 메모리/디스크/네트워크 계층, HTTP 캐시, 이미지 캐싱 |
+| `PlatformIntegration.md` | Platform Channel, Method Channel, FFI, Pigeon 코드 생성, 네이티브 통합 |
 
 ## For AI Agents
 

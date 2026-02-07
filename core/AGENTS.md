@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-01-27 | Updated: 2026-02-06 -->
+<!-- Generated: 2026-01-27 | Updated: 2026-02-07 -->
 
 # Core
 
@@ -17,10 +17,9 @@ Flutter 앱 개발의 핵심 아키텍처와 패턴을 다루는 문서 모음�
 | `Freezed.md` | 불변 데이터 클래스 생성, Union Type(Sealed Class), copyWith 패턴 |
 | `Fpdart.md` | 함수형 프로그래밍, Either/Option/TaskEither를 활용한 에러 처리 |
 | `ModularArchitecture.md` | Mono-repo/Multi-package 구조, Melos 워크스페이스, Micro Frontend 패턴 |
-| `PlatformIntegration.md` | Platform Channel, Method Channel, FFI, Pigeon 코드 생성 |
 | `AdvancedStateManagement.md` | CQRS, Event Sourcing, Optimistic UI, Undo/Redo, State Sync |
 | `Riverpod.md` | Riverpod 상태 관리, Provider 종류, Code Generation, Bloc 마이그레이션 |
-| `Isolates.md` | Isolate 개념, compute() 함수, 백그라운드 처리, Worker Pool, 병렬 처리 패턴 |
+| `ErrorHandling.md` | Failure sealed class 설계, Dio 에러 인터셉터, ErrorView 위젯, 재시도 패턴 |
 
 ## For AI Agents
 
@@ -61,7 +60,7 @@ Future<Either<Failure, User>> call(String id) async {
 ### Internal
 
 - `../infrastructure/` - DI 설정 참조
-- `../system/ErrorHandling.md` - Failure 클래스 정의 참조
+- `ErrorHandling.md` - Failure 클래스 정의 (core 내부 참조)
 
 ### External
 

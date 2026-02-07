@@ -1,17 +1,16 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-01-27 | Updated: 2026-01-27 -->
+<!-- Generated: 2026-01-27 | Updated: 2026-02-07 -->
 
 # Patterns
 
 ## Purpose
 
-앱 개발에서 자주 사용되는 필수 패턴과 구현 가이드 문서 모음입니다. 분석/추적, 이미지 처리, 페이지네이션, 폼 유효성 검사 등 실무에서 반복적으로 필요한 패턴을 설명합니다.
+앱 개발에서 자주 사용되는 필수 패턴과 구현 가이드 문서 모음입니다. 이미지 처리, 페이지네이션, 폼 유효성 검사 등 실무에서 반복적으로 필요한 패턴을 설명합니다.
 
 ## Key Files
 
 | File | Description |
 |------|-------------|
-| `Analytics.md` | Firebase Analytics/Crashlytics, 이벤트 추적, 사용자 속성, 크래시 리포팅 |
 | `ImageHandling.md` | 이미지 캐싱, 갤러리/카메라 선택, 크롭, 압축, 서버 업로드 |
 | `Pagination.md` | 무한 스크롤, 커서 기반 페이지네이션, PaginationState 설계 |
 | `FormValidation.md` | 폼 유효성 검사 패턴, ValidatorBuilder, Form Bloc 통합, 실시간 검증 |
@@ -21,7 +20,6 @@
 | `AdvancedPatterns.md` | DDD, Hexagonal Architecture, Saga 패턴, Specification 패턴, SOLID 심화 |
 | `CustomPainting.md` | Canvas API, CustomPainter, 커스텀 그래픽, Path 드로잉, 성능 최적화 |
 | `ResponsiveDesign.md` | 반응형 디자인, 적응형 레이아웃, 다중 화면 크기 대응 |
-| `DesignSystem.md` | 디자인 시스템, 디자인 토큰, 컴포넌트 라이브러리 |
 | `ServerDrivenUI.md` | Server-Driven UI, JSON 스키마 렌더링, Widget Registry, A/B 테스트 |
 
 ## For AI Agents
@@ -37,7 +35,7 @@
 1. `FormValidation.md` → 폼 처리 기초
 2. `Pagination.md` → 리스트 처리
 3. `ImageHandling.md` → 미디어 처리
-4. `Analytics.md` → 분석/추적
+4. `../system/Observability.md` → 분석/추적 (통합됨)
 5. `Animation.md` → 애니메이션 패턴
 6. `OfflineSupport.md` → 오프라인 아키텍처
 7. `InAppPurchase.md` → 인앱 결제
@@ -79,8 +77,6 @@ class Validators {
 
 ### External
 
-- `firebase_analytics` - Analytics
-- `firebase_crashlytics` - Crash Reporting
 - `cached_network_image` - Image Caching
 - `image_picker` - Gallery/Camera
 - `image_cropper` - Image Cropping

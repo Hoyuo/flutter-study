@@ -1,6 +1,6 @@
 # Flutter Clean Architecture Reference Guide
 
-Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 63개의 문서와 실제 구현 예제를 제공합니다.
+Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 56개의 문서와 실제 구현 예제를 제공합니다.
 
 ## Overview
 
@@ -15,17 +15,17 @@ Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architect
 
 ```
 flutter-study/
-├── fundamentals/   # 기초 (5개) ← NEW
-├── core/           # 핵심 아키텍처 (10개)
-├── infrastructure/ # 인프라 (11개)
+├── fundamentals/   # 기초 (6개)
+├── core/           # 핵심 아키텍처 (9개)
+├── infrastructure/ # 인프라 (10개)
 ├── networking/     # 네트워킹 (4개)
 ├── features/       # 기능별 가이드 (7개)
-├── patterns/       # 필수 패턴 (12개)
-├── system/         # 시스템 (13개)
-└── projects/       # 실전 프로젝트 (1개) ← NEW
+├── patterns/       # 필수 패턴 (10개)
+├── system/         # 시스템 (9개)
+└── projects/       # 실전 프로젝트 (1개)
 ```
 
-**총 63개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
+**총 56개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
 
 ## Quick Start
 
@@ -43,17 +43,17 @@ flutter-study/
 
 ## Documentation Categories
 
-### Fundamentals (5개) - NEW
+### Fundamentals (6개)
 Dart 언어와 Flutter 기본기
-- DartAdvanced, WidgetFundamentals, LayoutSystem, FlutterInternals, DevToolsProfiling
+- DartAdvanced, WidgetFundamentals, LayoutSystem, FlutterInternals, DevToolsProfiling, DesignSystem
 
-### Core (10개)
+### Core (9개)
 핵심 아키텍처 패턴
-- Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, AdvancedStateManagement, PlatformIntegration, Riverpod, Isolates
+- Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, AdvancedStateManagement, Riverpod, ErrorHandling
 
 ### Infrastructure (10개)
 인프라 설정
-- DI, Environment, LocalStorage, CICD (기본+심화 통합), StoreSubmission, Firebase, FlutterMultiPlatform, PackageDevelopment, **CachingStrategy**
+- DI, Environment, LocalStorage, CICD, StoreSubmission, Firebase, FlutterMultiPlatform, PackageDevelopment, CachingStrategy, PlatformIntegration
 
 ### Networking (4개)
 네트워크 통신
@@ -63,15 +63,15 @@ Dart 언어와 Flutter 기본기
 기능별 구현
 - Navigation, Localization, Permission, PushNotification, DeepLinking, MapsGeolocation, CameraMedia
 
-### Patterns (11개)
+### Patterns (10개)
 공통 패턴
-- Analytics, ImageHandling, Pagination, FormValidation, InAppPurchase, Animation, OfflineSupport, AdvancedPatterns, CustomPainting, **ResponsiveDesign**, **DesignSystem**, **ServerDrivenUI**
+- ImageHandling, Pagination, FormValidation, InAppPurchase, Animation, OfflineSupport, AdvancedPatterns, CustomPainting, ResponsiveDesign, ServerDrivenUI
 
-### System (13개)
+### System (9개)
 시스템 품질
-- ErrorHandling, AppLifecycle, Testing (기본+심화 통합), Performance (기본+심화 통합), Security, Accessibility, Logging, Monitoring, ProductionOperations, **TeamCollaboration**
+- AppLifecycle, Testing, Performance, Security, Accessibility, ProductionOperations, TeamCollaboration, Isolates, Observability
 
-### Projects (1개) - NEW
+### Projects (1개)
 실전 프로젝트 튜토리얼
 - FullStackProject (Clean Architecture + Bloc 패턴으로 Todo 앱 처음부터 끝까지)
 
@@ -79,10 +79,10 @@ Dart 언어와 Flutter 기본기
 10년차+ 시니어 개발자를 위한 고급 주제
 - [ModularArchitecture](./core/ModularArchitecture.md) - Mono-repo, Melos, Micro Frontend
 - [AdvancedStateManagement](./core/AdvancedStateManagement.md) - CQRS, Event Sourcing, Undo/Redo
-- [PlatformIntegration](./core/PlatformIntegration.md) - Platform Channel, FFI, Pigeon
-- [Performance](./system/Performance.md) - 기본+심화 통합 (Custom RenderObject, Impeller, Memory Profiling 포함)
-- [Testing](./system/Testing.md) - 기본+심화 통합 (Property-based, Golden Test, Mutation, Contract, Fuzz Testing 포함)
-- [CICD](./infrastructure/CICD.md) - 기본+심화 통합 (Trunk-based, Canary Release, Shorebird 포함)
+- [PlatformIntegration](./infrastructure/PlatformIntegration.md) - Platform Channel, FFI, Pigeon
+- [Performance](./system/Performance.md) - Custom RenderObject, Impeller, Memory Profiling
+- [Testing](./system/Testing.md) - Property-based, Golden Test, Mutation, Contract, Fuzz Testing
+- [CICD](./infrastructure/CICD.md) - Trunk-based, Canary Release, Shorebird
 - [ProductionOperations](./system/ProductionOperations.md) - SLO/SLI, Crash-free Rate, Incident Management
 - [AdvancedPatterns](./patterns/AdvancedPatterns.md) - DDD, Hexagonal, Saga, Specification
 
