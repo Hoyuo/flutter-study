@@ -68,7 +68,7 @@ Dart 언어와 Flutter의 핵심 개념을 이해합니다. 다른 플랫폼(iOS
 | 6 | `networking/Networking_Retrofit.md` | Network | Retrofit API 서비스 정의, 코드 생성 | 3h |
 | 7 | `system/ErrorHandling.md` | System | Failure sealed class, Either 에러 처리 | 4h |
 | 8 | `features/Navigation.md` | Features | GoRouter, 인증 리다이렉트, ShellRoute | 4h |
-| 9 | `system/Theming.md` | System | Material 3 테마, 다크 모드, ThemeExtension | 3h |
+| 9 | `patterns/DesignSystem.md` | Patterns | Material 3 테마, 다크 모드, ThemeExtension, 디자인 토큰 | 3h |
 | 10 | `patterns/FormValidation.md` | Patterns | 폼 유효성 검사, ValidatorBuilder, Form Bloc | 3h |
 
 **총 예상 학습 시간: 38시간**
@@ -86,7 +86,7 @@ Dart 언어와 Flutter의 핵심 개념을 이해합니다. 다른 플랫폼(iOS
 | **7주** | `Networking_Retrofit.md` | API 인터페이스 정의, 코드 생성, 응답 매핑 | Retrofit으로 CRUD API 서비스 작성 |
 | **8주** | `ErrorHandling.md` | Failure 패턴, Dio 에러 매핑, ErrorView 위젯, 재시도 로직 | 네트워크 에러 처리 구현 |
 | **9주** | `Navigation.md` | GoRouter 설정, 딥링크, 인증 가드, ShellRoute | 멀티 탭 네비게이션 구현 |
-| **10주** | `Theming.md` | Material 3 테마 구성, 다크 모드 토글, 디자인 토큰 적용 | 라이트/다크 테마 전환 구현 |
+| **10주** | `DesignSystem.md` | Material 3 테마 구성, 다크 모드 토글, 디자인 토큰 적용 | 라이트/다크 테마 전환 구현 |
 | **11주** | `FormValidation.md` | 실시간 유효성 검사, Form Bloc 통합, ValidatorBuilder | 회원가입 폼 구현 |
 | **12주** | **종합 실습** | 1-11주 내용 통합 | 실습 과제 수행 (아래 참조) |
 
@@ -233,10 +233,9 @@ Junior 과정 완료를 전제로 합니다. 실무 프로젝트에서 자주 �
 | 4 | `core/PlatformIntegration.md` | Core | Platform Channel, FFI, Pigeon | ★★★ |
 | 5 | `system/AdvancedTesting.md` | System | Property-based, Golden Test, E2E Patrol | ★★★ |
 | 6 | `system/AdvancedPerformance.md` | System | Custom RenderObject, Impeller, Memory Profiling | ★★★ |
-| 7 | `system/AdvancedSecurity.md` | System | Code Obfuscation, RASP, mTLS, Jailbreak Detection | ★★★ |
-| 8 | `infrastructure/AdvancedCICD.md` | Infra | Trunk-based, Canary Release, Shorebird OTA | ★★★ |
-| 9 | `system/ProductionOperations.md` | System | SLO/SLI, Crash-free Rate, Incident Management | ★★★ |
-| 10 | `patterns/OfflineSupport.md` | Patterns | Offline-first, Drift ORM, Sync Queue, Conflict Resolution | ★★★ |
+| 7 | `infrastructure/AdvancedCICD.md` | Infra | Trunk-based, Canary Release, Shorebird OTA | ★★★ |
+| 8 | `system/ProductionOperations.md` | System | SLO/SLI, Crash-free Rate, Incident Management | ★★★ |
+| 9 | `patterns/OfflineSupport.md` | Patterns | Offline-first, Drift ORM, Sync Queue, Conflict Resolution | ★★★ |
 
 ### 3.2 아키텍처 리뷰 과제
 
@@ -278,7 +277,7 @@ Senior 개발자는 코드 작성뿐 아니라 설계 의사결정을 주도해�
 
 | 항목 | 내용 |
 |------|------|
-| 관련 문서 | AdvancedSecurity, AdvancedCICD, ProductionOperations |
+| 관련 문서 | Security, AdvancedCICD, ProductionOperations |
 | 과제 내용 | 보안 체크리스트 기반 감사 + CI/CD 파이프라인 전체 설계 |
 | 산출물 | 보안 감사 보고서 + CI/CD 파이프라인 설계 문서 |
 | 평가 기준 | OWASP Mobile Top 10 대응, Canary Release 전략, SLO 정의 |
@@ -309,7 +308,7 @@ Senior 개발자는 코드 작성뿐 아니라 설계 의사결정을 주도해�
 
 | 항목 | 내용 |
 |------|------|
-| 관련 문서 | Security, AdvancedSecurity, ProductionOperations |
+| 관련 문서 | Security, ProductionOperations |
 | 발표 내용 | OWASP Mobile Top 10 대응, Certificate Pinning/mTLS 구현, RASP, Jailbreak Detection, 실제 취약점 사례와 대응 방법 |
 | 청중 | Mid-level 이상 개발자 |
 | 준비물 | 취약점 시연 (안전한 환경), 보안 체크리스트 배포 |
@@ -464,9 +463,9 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
 | 레벨 | 문서 (카테고리) |
 |------|----------------|
 | **Beginner 기초** (5) | DartAdvanced (fund), WidgetFundamentals (fund), LayoutSystem (fund), DevToolsProfiling (fund), FlutterInternals (fund) |
-| **Junior 필수** (10) | Architecture (core), DI (infra), Bloc (core), Freezed (core), Networking_Dio (net), Networking_Retrofit (net), ErrorHandling (sys), Navigation (feat), Theming (sys), FormValidation (pat) |
+| **Junior 필수** (10) | Architecture (core), DI (infra), Bloc (core), Freezed (core), Networking_Dio (net), Networking_Retrofit (net), ErrorHandling (sys), Navigation (feat), DesignSystem (pat), FormValidation (pat) |
 | **Mid-level 필수** (18) | Fpdart (core), BlocUiEffect (core), Environment (infra), LocalStorage (infra), Localization (feat), Permission (feat), PushNotification (feat), Pagination (pat), ImageHandling (pat), Analytics (pat), Animation (pat), Testing (sys), Performance (sys), Security (sys), Logging (sys), **ResponsiveDesign (pat)**, **DesignSystem (pat)**, **CachingStrategy (infra)** |
-| **Senior 심화** (13) | AdvancedStateManagement (core), ModularArchitecture (core), AdvancedPatterns (pat), PlatformIntegration (core), AdvancedTesting (sys), AdvancedPerformance (sys), AdvancedSecurity (sys), AdvancedCICD (infra), ProductionOperations (sys), OfflineSupport (pat), **DatabaseAdvanced (infra)**, **TeamCollaboration (sys)**, **FullStackProject (proj)** |
+| **Senior 심화** (11) | AdvancedStateManagement (core), ModularArchitecture (core), AdvancedPatterns (pat), PlatformIntegration (core), AdvancedTesting (sys), AdvancedPerformance (sys), AdvancedCICD (infra), ProductionOperations (sys), OfflineSupport (pat), **TeamCollaboration (sys)**, **FullStackProject (proj)** |
 | **프로젝트별 선택** (10) | Riverpod (core), WebSocket (net), Firebase (infra), InAppPurchase (pat), AppLifecycle (sys), Accessibility (sys), Monitoring (sys), CICD (infra), StoreSubmission (infra), **ServerDrivenUI (pat)** |
 | **NEXT_ROADMAP** (8) | Isolates (core), FlutterMultiPlatform (infra), PackageDevelopment (infra), GraphQL (net), DeepLinking (feat), MapsGeolocation (feat), CameraMedia (feat), CustomPainting (pat) |
 
@@ -486,16 +485,16 @@ Architecture ─┬─> DI ──> Bloc ──> Freezed ──> Networking_Dio �
               │
               ├─> Environment ──> CICD ──> AdvancedCICD ──> StoreSubmission
               │
-              ├─> Theming ──> DesignSystem ──> ResponsiveDesign
+              ├─> DesignSystem ──> ResponsiveDesign
               │          └──> Accessibility
               │
               ├─> Testing ──> AdvancedTesting
               │
               ├─> Performance ──> AdvancedPerformance ──> DevToolsProfiling
               │
-              ├─> Security ──> AdvancedSecurity
+              ├─> Security (통합: 기본 + 고급 보안)
               │
-              ├─> LocalStorage ──> DatabaseAdvanced ──> CachingStrategy
+              ├─> LocalStorage ──> CachingStrategy
               │
               ├─> TeamCollaboration (독립)
               │
@@ -540,5 +539,5 @@ Architecture ─┬─> DI ──> Bloc ──> Freezed ──> Networking_Dio �
 
 ---
 
-**마지막 업데이트:** 2026-02-06
-**기반 문서 수:** 64개 (기존 52 + 신규 12)
+**마지막 업데이트:** 2026-02-07
+**기반 문서 수:** 63개 (DatabaseAdvanced.md → LocalStorage.md 통합)

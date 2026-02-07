@@ -57,7 +57,7 @@
 | **에러 처리** | `core/Fpdart.md` |
 | **Bloc 상태 관리** | `core/Bloc.md` |
 | **API 통신** | `networking/Networking_Dio.md` |
-| **로컬 DB** | `infrastructure/DatabaseAdvanced.md` |
+| **로컬 DB** | `infrastructure/LocalStorage.md` |
 | **DI 설정** | `infrastructure/DI.md` |
 | **라우팅** | `features/Navigation.md` |
 | **테스트** | `system/Testing.md` |
@@ -205,7 +205,7 @@ UseCase 패턴에 대한 자세한 설명은 `core/Architecture.md`를 참조하
 
 ## 5. 데이터 레이어 구현
 
-> 💡 **참고 문서**: `networking/Networking_Dio.md`, `infrastructure/DatabaseAdvanced.md`
+> 💡 **참고 문서**: `networking/Networking_Dio.md`, `infrastructure/LocalStorage.md`
 
 ### 5.1 DTO 정의
 
@@ -272,7 +272,7 @@ class TodoLocalDataSource extends DatabaseAccessor<AppDatabase> {
 }
 ```
 
-Drift 사용법은 `infrastructure/DatabaseAdvanced.md`를 참조하세요.
+Drift 사용법은 `infrastructure/LocalStorage.md`를 참조하세요.
 
 ### 5.4 Repository Implementation
 

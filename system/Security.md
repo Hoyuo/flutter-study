@@ -2,10 +2,15 @@
 
 > **최신 업데이트**: Flutter 3.27 및 flutter_secure_storage 10.0.0 기준으로 작성되었습니다.
 
+> **대상**: Mid-level ~ Senior 개발자 | Flutter 3.27+ | OWASP MASVS Level 2 준수
+
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - 민감한 데이터를 SecureStorage로 안전하게 저장할 수 있다
 > - Certificate Pinning으로 네트워크 통신을 보호할 수 있다
 > - OWASP Mobile Top 10 취약점을 이해하고 대응할 수 있다
+> - Code Obfuscation과 RASP를 적용할 수 있다
+> - mTLS로 양방향 인증을 구현할 수 있다
+> - Jailbreak/Root Detection을 구현하고 대응할 수 있다
 
 ## 개요
 
@@ -51,6 +56,42 @@ Flutter 앱 개발 시 주의해야 할 보안 취약점:
 | M8 | 부적절한 API 구현 | API 보안, 레이트 제한 |
 | M9 | 부적절한 암호 저장 | 단방향 해싱, salt 사용 |
 | M10 | 역공학 | 코드 난독화, 타이밍 공격 방지 |
+
+### OWASP MASVS (Mobile Application Security Verification Standard)
+
+| 레벨 | 설명 | 적용 대상 |
+|------|------|----------|
+| **L1** | 기본 보안 (표준 라이브러리 사용) | 모든 앱 |
+| **L2** | 심화 보안 (난독화, 루트 감지) | 금융, 헬스케어 |
+| **L3** | 최고 수준 (RASP, 하드웨어 보안) | 은행, 결제 앱 |
+
+### 보안 위협 모델링
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 위협 계층                                                     │
+├─────────────────────────────────────────────────────────────┤
+│ 1. 네트워크 계층                                              │
+│    - MITM (중간자 공격)                                       │
+│    - SSL Stripping                                           │
+│    - Certificate Spoofing                                    │
+│                                                              │
+│ 2. 앱 계층                                                   │
+│    - 코드 역공학 (Reverse Engineering)                        │
+│    - 재패키징 (Repackaging)                                  │
+│    - 동적 분석 (Dynamic Analysis)                            │
+│                                                              │
+│ 3. 데이터 계층                                               │
+│    - 로컬 저장소 접근                                         │
+│    - 메모리 덤프                                              │
+│    - 백업 파일 노출                                           │
+│                                                              │
+│ 4. 플랫폼 계층                                               │
+│    - Root/Jailbreak                                          │
+│    - 디버거 연결                                              │
+│    - 스크린샷/화면 녹화                                        │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -548,6 +589,118 @@ class RSAKeyPair {
 }
 ```
 
+### Secure Enclave / Android Keystore 활용
+
+하드웨어 수준의 보안 저장소를 활용하여 암호화 키를 보호합니다.
+
+#### 하드웨어 지원 암호화
+
+```dart
+// lib/core/security/hardware_security.dart
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+class HardwareSecurityManager {
+  // ⚠️ **주의:** `AndroidOptions`의 일부 파라미터는 실제 `flutter_secure_storage` 패키지에서 지원하지 않을 수 있습니다. 최신 문서를 확인하세요.
+  static final _storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+      // Android Keystore 사용 (하드웨어 지원)
+      keyCipherAlgorithm: KeyCipherAlgorithm.RSA_ECB_OAEPwithSHA_256andMGF1Padding,
+      storageCipherAlgorithm: StorageCipherAlgorithm.AES_GCM_NoPadding,
+    ),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+      // Secure Enclave 사용 (가능한 경우)
+    ),
+  );
+
+  /// 민감한 데이터 저장 (하드웨어 암호화)
+  static Future<void> storeSecure(String key, String value) async {
+    await _storage.write(key: key, value: value);
+  }
+
+  /// 민감한 데이터 읽기
+  static Future<String?> readSecure(String key) async {
+    return await _storage.read(key: key);
+  }
+
+  /// Biometric 인증과 함께 사용
+  static Future<void> storeWithBiometric(String key, String value) async {
+    // iOS: Secure Enclave + Face ID/Touch ID
+    // Android: Keystore + Fingerprint/Face Unlock
+    await _storage.write(
+      key: key,
+      value: value,
+      iOptions: IOSOptions(
+        accessibility: KeychainAccessibility.when_passcode_set_this_device_only,
+      ),
+    );
+  }
+}
+```
+
+#### Android Keystore 직접 사용
+
+```kotlin
+// android/app/src/main/kotlin/com/example/myapp/KeystoreManager.kt
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import java.security.KeyStore
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
+
+object KeystoreManager {
+    private const val KEYSTORE_PROVIDER = "AndroidKeyStore"
+    private const val KEY_ALIAS = "MyAppSecureKey"
+
+    fun generateKey() {
+        val keyGenerator = KeyGenerator.getInstance(
+            KeyProperties.KEY_ALGORITHM_AES,
+            KEYSTORE_PROVIDER
+        )
+
+        val spec = KeyGenParameterSpec.Builder(
+            KEY_ALIAS,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        )
+            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+            .setKeySize(256)
+            .setUserAuthenticationRequired(true) // Biometric 필요
+            .setUserAuthenticationValidityDurationSeconds(30)
+            .build()
+
+        keyGenerator.init(spec)
+        keyGenerator.generateKey()
+    }
+
+    fun encrypt(plaintext: ByteArray): Pair<ByteArray, ByteArray> {
+        val keyStore = KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) }
+        val secretKey = keyStore.getKey(KEY_ALIAS, null) as SecretKey
+
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+
+        val iv = cipher.iv
+        val ciphertext = cipher.doFinal(plaintext)
+
+        return Pair(ciphertext, iv)
+    }
+
+    fun decrypt(ciphertext: ByteArray, iv: ByteArray): ByteArray {
+        val keyStore = KeyStore.getInstance(KEYSTORE_PROVIDER).apply { load(null) }
+        val secretKey = keyStore.getKey(KEY_ALIAS, null) as SecretKey
+
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(128, iv))
+
+        return cipher.doFinal(ciphertext)
+    }
+}
+```
+
 ---
 
 ## 네트워크 보안
@@ -695,6 +848,123 @@ class DioClient {
 }
 ```
 
+### 동적 핀 업데이트
+
+인증서 갱신에 대비하여 핀을 서버에서 동적으로 업데이트하는 전략입니다.
+
+```dart
+// lib/core/security/certificate_pinning_manager.dart
+import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
+import 'dart:io';
+
+class CertificatePinningManager {
+  static final Map<String, List<String>> _pinnedCertificates = {};
+  static DateTime? _lastUpdate;
+
+  /// 서버에서 최신 인증서 핀 가져오기
+  static Future<void> updatePins() async {
+    try {
+      // 안전한 채널로 핀 목록 가져오기 (자체 서명된 요청)
+      final response = await _secureClient.get('/api/security/pins');
+
+      final pins = Map<String, List<String>>.from(response.data['pins']);
+      _pinnedCertificates.addAll(pins);
+      _lastUpdate = DateTime.now();
+
+      // 로컬에 캐시
+      await _savePinsToLocal(pins);
+    } catch (e) {
+      // 실패 시 로컬 캐시 사용
+      await _loadPinsFromLocal();
+    }
+  }
+
+  /// Certificate Pinning이 적용된 Dio 클라이언트 생성
+  static Dio createSecureClient(String baseUrl) {
+    final dio = Dio(BaseOptions(baseUrl: baseUrl));
+
+    (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+      final client = HttpClient();
+
+      client.badCertificateCallback = (cert, host, port) {
+        // 핀 검증
+        final pins = _pinnedCertificates[host] ?? [];
+        if (pins.isEmpty) {
+          return false; // 핀이 없으면 거부
+        }
+
+        // SHA-256 해시 계산
+        final certHash = sha256.convert(cert.der).toString();
+        return pins.contains(certHash);
+      };
+
+      return client;
+    };
+
+    return dio;
+  }
+
+  /// 핀 만료 확인
+  static bool isPinsExpired() {
+    if (_lastUpdate == null) return true;
+
+    final daysSinceUpdate = DateTime.now().difference(_lastUpdate!).inDays;
+    return daysSinceUpdate > 7; // 7일마다 갱신
+  }
+
+  static Future<void> _savePinsToLocal(Map<String, List<String>> pins) async {
+    final secureStorage = FlutterSecureStorage();
+    await secureStorage.write(
+      key: 'certificate_pins',
+      value: jsonEncode(pins),
+    );
+  }
+
+  static Future<void> _loadPinsFromLocal() async {
+    final secureStorage = FlutterSecureStorage();
+    final stored = await secureStorage.read(key: 'certificate_pins');
+    if (stored != null) {
+      _pinnedCertificates.addAll(
+        Map<String, List<String>>.from(jsonDecode(stored)),
+      );
+    }
+  }
+}
+```
+
+### 다중 핀 전략 (Backup Pins)
+
+인증서 갱신 시 서비스 중단을 방지하기 위해 백업 핀을 유지합니다.
+
+```dart
+// lib/core/security/multi_pin_strategy.dart
+class MultiPinStrategy {
+  // 현재 인증서 핀
+  static const primaryPins = [
+    'sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+  ];
+
+  // 백업 인증서 핀 (인증서 갱신 대비)
+  static const backupPins = [
+    'sha256/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=',
+  ];
+
+  /// 핀 검증 (primary 또는 backup)
+  static bool verify(String certHash) {
+    return primaryPins.contains(certHash) || backupPins.contains(certHash);
+  }
+
+  /// 핀 회전 (rotation)
+  static Future<void> rotatePins() async {
+    // 새 인증서로 전환
+    // 1. 서버에서 새 핀 가져오기
+    // 2. backupPins를 primaryPins로 승격
+    // 3. 새 백업 핀 설정
+  }
+}
+```
+
 ### API 키 보호
 
 API 키는 환경 변수나 보안 저장소에 저장해야 합니다.
@@ -803,6 +1073,131 @@ class SecurityHeadersInterceptor extends Interceptor {
 }
 ```
 
+### mTLS (Mutual TLS)
+
+서버와 클라이언트 양방향 인증서 검증으로 더 강력한 통신 보안을 구현합니다.
+
+```dart
+// lib/core/network/mtls_client.dart
+import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
+import 'dart:io';
+import 'package:flutter/services.dart';
+
+class MTLSClient {
+  static Future<Dio> create(String baseUrl) async {
+    final dio = Dio(BaseOptions(baseUrl: baseUrl));
+
+    // 클라이언트 인증서 로드
+    final certBytes = await rootBundle.load('assets/certs/client-cert.pem');
+    final keyBytes = await rootBundle.load('assets/certs/client-key.pem');
+
+    (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+      final client = HttpClient(
+        context: SecurityContext()
+          ..useCertificateChainBytes(certBytes.buffer.asUint8List())
+          ..usePrivateKeyBytes(keyBytes.buffer.asUint8List()),
+      );
+
+      return client;
+    };
+
+    return dio;
+  }
+}
+```
+
+### API Key Rotation
+
+API 키를 주기적으로 갱신하여 키 유출 위험을 최소화합니다.
+
+```dart
+// lib/core/security/api_key_manager.dart
+class ApiKeyManager {
+  static String? _currentApiKey;
+  static DateTime? _keyExpiry;
+
+  /// API 키 가져오기 (자동 회전)
+  static Future<String> getApiKey() async {
+    if (_currentApiKey == null || _isKeyExpired()) {
+      await _rotateKey();
+    }
+    return _currentApiKey!;
+  }
+
+  static bool _isKeyExpired() {
+    if (_keyExpiry == null) return true;
+    return DateTime.now().isAfter(_keyExpiry!);
+  }
+
+  static Future<void> _rotateKey() async {
+    // 서버에서 새 API 키 요청
+    final response = await _authClient.post('/api/keys/rotate', {
+      'deviceId': await DeviceInfo.getDeviceId(),
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+
+    _currentApiKey = response.data['apiKey'];
+    _keyExpiry = DateTime.parse(response.data['expiresAt']);
+
+    // 로컬에 암호화 저장
+    await HardwareSecurityManager.storeSecure('api_key', _currentApiKey!);
+    await HardwareSecurityManager.storeSecure('key_expiry', _keyExpiry!.toIso8601String());
+  }
+
+  /// 앱 시작 시 키 복원
+  static Future<void> restore() async {
+    _currentApiKey = await HardwareSecurityManager.readSecure('api_key');
+    final expiryStr = await HardwareSecurityManager.readSecure('key_expiry');
+    if (expiryStr != null) {
+      _keyExpiry = DateTime.parse(expiryStr);
+    }
+  }
+}
+```
+
+### Request Signing
+
+HMAC-SHA256 기반 요청 서명으로 API 요청의 무결성을 보장합니다.
+
+```dart
+// lib/core/network/request_signer.dart
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
+
+class RequestSigner {
+  static const _secret = 'YOUR_SECRET_KEY'; // 난독화 필요
+
+  /// HMAC-SHA256 서명 생성
+  static String sign(String method, String path, Map<String, dynamic>? body) {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final bodyStr = body != null ? jsonEncode(body) : '';
+
+    final message = '$method|$path|$timestamp|$bodyStr';
+    final hmac = Hmac(sha256, utf8.encode(_secret));
+    final digest = hmac.convert(utf8.encode(message));
+
+    return '$digest|$timestamp';
+  }
+
+  /// Dio Interceptor로 자동 서명
+  static InterceptorsWrapper createInterceptor() {
+    return InterceptorsWrapper(
+      onRequest: (options, handler) {
+        final signature = sign(
+          options.method,
+          options.path,
+          options.data,
+        );
+
+        options.headers['X-Signature'] = signature;
+        handler.next(options);
+      },
+    );
+  }
+}
+```
+
 ---
 
 ## 코드 보안
@@ -889,6 +1284,42 @@ android {
   <true/>
 </dict>
 </plist>
+```
+
+### String 암호화
+
+민감한 문자열은 하드코딩하지 않고 XOR 기반 난독화를 적용합니다.
+
+```dart
+// lib/core/security/string_obfuscator.dart
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
+
+class StringObfuscator {
+  // XOR 기반 간단한 난독화 (컴파일 타임)
+  static String encode(String value) {
+    final key = 0x5A; // 난독화 키
+    final encoded = value.codeUnits.map((c) => c ^ key).toList();
+    return base64Encode(encoded);
+  }
+
+  static String decode(String encoded) {
+    final key = 0x5A;
+    final decoded = base64Decode(encoded).map((c) => c ^ key).toList();
+    return String.fromCharCodes(decoded);
+  }
+}
+
+// 사용 예제
+class ApiConfig {
+  // 하드코딩 (위험)
+  // static const apiKey = 'sk_live_1234567890abcdef';
+
+  // 난독화
+  static const _obfuscatedApiKey = 'BgcEBwQHBAc='; // encode() 결과
+
+  static String get apiKey => StringObfuscator.decode(_obfuscatedApiKey);
+}
 ```
 
 ### 리버스 엔지니어링 방지
@@ -1101,6 +1532,631 @@ class TimingSafeComparison {
     final computed = hmac.convert(bytes).toString();
 
     return constantTimeEqual(signature, computed);
+  }
+}
+```
+
+### Root/Jailbreak 감지 심화
+
+`flutter_jailbreak_detection`과 `safe_device` 패키지를 조합하여 다층적으로 감지합니다.
+
+```yaml
+# pubspec.yaml
+dependencies:
+  flutter_jailbreak_detection: ^1.10.0
+  safe_device: ^2.0.0  # 추가 보안 검사
+```
+
+```dart
+// lib/core/security/device_security_checker.dart
+import 'package:flutter_jailbreak_detection/flutter_jailbreak_detection.dart';
+import 'package:safe_device/safe_device.dart';
+
+class DeviceSecurityChecker {
+  /// Root/Jailbreak 여부 확인
+  static Future<DeviceSecurityStatus> check() async {
+    final isJailBroken = await FlutterJailbreakDetection.jailbroken;
+    final isDeveloperMode = await FlutterJailbreakDetection.developerMode;
+
+    // safe_device로 추가 검증
+    final isRealDevice = await SafeDevice.isRealDevice;
+    final isSafeDevice = await SafeDevice.isSafeDevice;
+    final canMockLocation = await SafeDevice.canMockLocation;
+
+    return DeviceSecurityStatus(
+      isJailBroken: isJailBroken,
+      isDeveloperMode: isDeveloperMode,
+      isRealDevice: isRealDevice,
+      isSafeDevice: isSafeDevice,
+      canMockLocation: canMockLocation,
+    );
+  }
+
+  /// 보안 위험 여부
+  static Future<bool> isSecure() async {
+    final status = await check();
+    return !status.isJailBroken &&
+           !status.isDeveloperMode &&
+           status.isRealDevice &&
+           status.isSafeDevice &&
+           !status.canMockLocation;
+  }
+}
+
+class DeviceSecurityStatus {
+  const DeviceSecurityStatus({
+    required this.isJailBroken,
+    required this.isDeveloperMode,
+    required this.isRealDevice,
+    required this.isSafeDevice,
+    required this.canMockLocation,
+  });
+
+  final bool isJailBroken;
+  final bool isDeveloperMode;
+  final bool isRealDevice;
+  final bool isSafeDevice;
+  final bool canMockLocation;
+
+  bool get hasSecurityRisk =>
+      isJailBroken || isDeveloperMode || !isRealDevice || !isSafeDevice || canMockLocation;
+}
+```
+
+#### 고급 Root 감지 (Native 통합)
+
+**Android:**
+
+```kotlin
+// android/app/src/main/kotlin/com/example/myapp/RootDetector.kt
+package com.example.myapp
+
+import android.content.Context
+import java.io.File
+
+object RootDetector {
+    private val knownRootFiles = listOf(
+        "/system/app/Superuser.apk",
+        "/system/xbin/su",
+        "/system/bin/su",
+        "/sbin/su",
+        "/system/su",
+        "/system/bin/.ext/.su",
+        "/data/local/xbin/su",
+        "/data/local/bin/su",
+        "/system/sd/xbin/su",
+        "/system/bin/failsafe/su",
+        "/data/local/su",
+        "/su/bin/su"
+    )
+
+    private val knownRootPackages = listOf(
+        "com.noshufou.android.su",
+        "com.thirdparty.superuser",
+        "eu.chainfire.supersu",
+        "com.koushikdutta.superuser",
+        "com.zachspong.temprootremovejb",
+        "com.ramdroid.appquarantine",
+        "com.topjohnwu.magisk"
+    )
+
+    fun isRooted(context: Context): Boolean {
+        return checkRootFiles() ||
+               checkRootPackages(context) ||
+               checkSuCommand() ||
+               checkRWPaths()
+    }
+
+    private fun checkRootFiles(): Boolean {
+        return knownRootFiles.any { File(it).exists() }
+    }
+
+    private fun checkRootPackages(context: Context): Boolean {
+        val pm = context.packageManager
+        return knownRootPackages.any { packageName ->
+            try {
+                pm.getPackageInfo(packageName, 0)
+                true
+            } catch (e: Exception) {
+                false
+            }
+        }
+    }
+
+    private fun checkSuCommand(): Boolean {
+        return try {
+            Runtime.getRuntime().exec("which su")
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private fun checkRWPaths(): Boolean {
+        val paths = arrayOf("/system", "/system/bin", "/system/sbin", "/system/xbin", "/vendor/bin", "/sbin", "/etc")
+        return paths.any { path ->
+            val file = File(path)
+            file.exists() && file.canWrite()
+        }
+    }
+}
+```
+
+**iOS:**
+
+```swift
+// ios/Runner/JailbreakDetector.swift
+import Foundation
+import UIKit
+
+class JailbreakDetector {
+    static func isJailbroken() -> Bool {
+        return checkSuspiciousFiles() ||
+               checkSuspiciousApps() ||
+               checkWriteAccess() ||
+               checkCydiaURL() ||
+               checkFork()
+    }
+
+    private static func checkSuspiciousFiles() -> Bool {
+        let paths = [
+            "/Applications/Cydia.app",
+            "/Library/MobileSubstrate/MobileSubstrate.dylib",
+            "/bin/bash",
+            "/usr/sbin/sshd",
+            "/etc/apt",
+            "/private/var/lib/apt/",
+            "/private/var/lib/cydia",
+            "/private/var/mobile/Library/SBSettings/Themes",
+            "/private/var/tmp/cydia.log",
+            "/System/Library/LaunchDaemons/com.ikey.bbot.plist",
+            "/System/Library/LaunchDaemons/com.saurik.Cydia.Startup.plist"
+        ]
+
+        return paths.contains { FileManager.default.fileExists(atPath: $0) }
+    }
+
+    private static func checkSuspiciousApps() -> Bool {
+        let schemes = ["cydia://", "sileo://", "zbra://", "filza://"]
+        return schemes.contains { UIApplication.shared.canOpenURL(URL(string: $0)!) }
+    }
+
+    private static func checkWriteAccess() -> Bool {
+        let testPath = "/private/jailbreak.txt"
+        do {
+            try "test".write(toFile: testPath, atomically: true, encoding: .utf8)
+            try FileManager.default.removeItem(atPath: testPath)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    private static func checkCydiaURL() -> Bool {
+        return UIApplication.shared.canOpenURL(URL(string: "cydia://package/com.example.package")!)
+    }
+
+    private static func checkFork() -> Bool {
+        let result = fork()
+        if result >= 0 {
+            if result > 0 {
+                kill(result, SIGKILL)
+            }
+            return true
+        }
+        return false
+    }
+}
+```
+
+#### 보안 위반 시 대응
+
+```dart
+// lib/core/security/security_policy.dart
+enum SecurityAction {
+  allow,          // 허용 (경고만)
+  restrictFeatures, // 민감한 기능 제한
+  block,          // 앱 차단
+  reportAndBlock, // 서버 리포트 후 차단
+}
+
+class SecurityPolicy {
+  static SecurityAction getAction(DeviceSecurityStatus status) {
+    if (status.isJailBroken) {
+      return SecurityAction.block; // 루팅/탈옥 시 무조건 차단
+    }
+
+    if (status.isDeveloperMode) {
+      return SecurityAction.restrictFeatures; // 개발자 모드 시 기능 제한
+    }
+
+    if (!status.isRealDevice) {
+      return SecurityAction.allow; // 에뮬레이터는 개발용으로 허용
+    }
+
+    if (status.canMockLocation) {
+      return SecurityAction.restrictFeatures; // 위치 위조 가능 시 위치 기반 기능 제한
+    }
+
+    return SecurityAction.allow;
+  }
+
+  static Future<void> enforce(DeviceSecurityStatus status) async {
+    final action = getAction(status);
+
+    switch (action) {
+      case SecurityAction.allow:
+        // 정상 진행
+        break;
+
+      case SecurityAction.restrictFeatures:
+        // 민감한 기능 비활성화
+        FeatureFlags.disablePayment = true;
+        FeatureFlags.disableLocationServices = true;
+        _showWarningDialog('일부 기능이 제한됩니다.');
+        break;
+
+      case SecurityAction.block:
+        _showBlockDialog('보안상의 이유로 이 기기에서는 앱을 사용할 수 없습니다.');
+        // ⚠️ **주의:** `exit(0)`은 Flutter 앱에서 권장되지 않는 안티패턴입니다.
+        // iOS에서는 앱이 거부될 수 있으며, Android에서는 `SystemNavigator.pop()`을 대신 사용하세요.
+        exit(0);
+
+      case SecurityAction.reportAndBlock:
+        await _reportToServer(status);
+        _showBlockDialog('보안 위반이 감지되었습니다.');
+        exit(0);
+    }
+  }
+
+  static Future<void> _reportToServer(DeviceSecurityStatus status) async {
+    // 서버에 보안 위반 리포트
+    await api.post('/security/report', {
+      'deviceInfo': await DeviceInfo.collect(),
+      'securityStatus': status.toJson(),
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+  }
+}
+```
+
+### RASP (Runtime Application Self-Protection)
+
+RASP는 런타임에 앱을 보호하는 기술입니다. 디버거 감지, 코드 무결성 검증, 메모리 덤프 방지 등을 포함합니다.
+
+#### 디버거 감지
+
+```dart
+// lib/core/security/debugger_detector.dart
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+
+class DebuggerDetector {
+  static bool isDebuggerAttached() {
+    // Flutter Debug 모드 확인
+    if (kDebugMode) {
+      return true;
+    }
+
+    // Android: TracerPid 확인
+    if (Platform.isAndroid) {
+      return _checkAndroidDebugger();
+    }
+
+    // iOS: sysctl 확인
+    if (Platform.isIOS) {
+      return _checkIOSDebugger();
+    }
+
+    return false;
+  }
+
+  static bool _checkAndroidDebugger() {
+    try {
+      final status = File('/proc/self/status').readAsStringSync();
+      final tracerPid = RegExp(r'TracerPid:\s+(\d+)').firstMatch(status);
+      if (tracerPid != null) {
+        final pid = int.parse(tracerPid.group(1)!);
+        return pid != 0; // TracerPid가 0이 아니면 디버거 연결
+      }
+    } catch (e) {
+      // 파일 읽기 실패 시 의심
+      return true;
+    }
+    return false;
+  }
+
+  static bool _checkIOSDebugger() {
+    // Native 코드 필요 (Method Channel)
+    return false;
+  }
+
+  /// 주기적 디버거 감지
+  static void startMonitoring({
+    Duration interval = const Duration(seconds: 5),
+    VoidCallback? onDebuggerDetected,
+  }) {
+    Timer.periodic(interval, (timer) {
+      if (isDebuggerAttached()) {
+        timer.cancel();
+        onDebuggerDetected?.call();
+      }
+    });
+  }
+}
+```
+
+#### 코드 무결성 검증
+
+```dart
+// lib/core/security/integrity_checker.dart
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
+import 'dart:io';
+
+class IntegrityChecker {
+  // 빌드 타임에 계산된 해시 (난독화된 형태로 저장)
+  static const _expectedHash = 'abc123...'; // 실제로는 긴 해시
+
+  /// APK/IPA 서명 확인
+  static Future<bool> verifySignature() async {
+    if (Platform.isAndroid) {
+      return _verifyAndroidSignature();
+    } else if (Platform.isIOS) {
+      return _verifyIOSSignature();
+    }
+    return false;
+  }
+
+  static Future<bool> _verifyAndroidSignature() async {
+    // Method Channel로 Native 코드 호출
+    try {
+      final result = await platform.invokeMethod('verifySignature');
+      return result == true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<bool> _verifyIOSSignature() async {
+    try {
+      final result = await platform.invokeMethod('verifyCodeSignature');
+      return result == true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// 중요 파일 체크섬 검증
+  static Future<bool> verifyFileIntegrity(String filePath) async {
+    try {
+      final file = File(filePath);
+      final bytes = await file.readAsBytes();
+      final hash = sha256.convert(bytes).toString();
+
+      // 예상 해시와 비교
+      return hash == _getExpectedHash(filePath);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static String _getExpectedHash(String filePath) {
+    // 파일별 예상 해시 (빌드 타임에 생성)
+    final hashes = {
+      'lib/core/api/api_client.dart': 'hash1...',
+      'lib/core/security/crypto_service.dart': 'hash2...',
+    };
+    return hashes[filePath] ?? '';
+  }
+}
+```
+
+**Android Native 서명 검증 (Kotlin):**
+
+```kotlin
+// android/app/src/main/kotlin/com/example/myapp/IntegrityChecker.kt
+import android.content.Context
+import android.content.pm.PackageManager
+import android.content.pm.Signature
+import java.security.MessageDigest
+
+object IntegrityChecker {
+    // 빌드 타임에 계산된 예상 서명 해시
+    private const val EXPECTED_SIGNATURE = "ABC123..." // 실제 서명 해시
+
+    fun verifySignature(context: Context): Boolean {
+        try {
+            val packageInfo = context.packageManager.getPackageInfo(
+                context.packageName,
+                PackageManager.GET_SIGNATURES
+            )
+
+            val signatures: Array<Signature> = packageInfo.signatures
+            val signature = signatures[0]
+
+            val md = MessageDigest.getInstance("SHA-256")
+            md.update(signature.toByteArray())
+            val currentSignature = md.digest().joinToString("") { "%02x".format(it) }
+
+            return currentSignature == EXPECTED_SIGNATURE
+        } catch (e: Exception) {
+            return false
+        }
+    }
+}
+```
+
+#### 메모리 덤프 방지 및 스크린샷 방지
+
+```dart
+// lib/core/security/anti_tampering.dart
+import 'package:flutter/services.dart';
+
+class AntiTampering {
+  static const platform = MethodChannel('com.example.app/security');
+
+  /// 스크린샷 방지
+  static Future<void> preventScreenshot() async {
+    if (Platform.isAndroid) {
+      await platform.invokeMethod('setSecureFlag');
+    }
+    // iOS는 별도 처리 필요 (화면 캡처 감지)
+  }
+
+  /// 화면 녹화 감지 (iOS)
+  static Future<bool> isScreenRecording() async {
+    if (Platform.isIOS) {
+      return await platform.invokeMethod('isScreenBeingCaptured') ?? false;
+    }
+    return false;
+  }
+}
+```
+
+**Android Native 구현:**
+
+```kotlin
+// android/app/src/main/kotlin/com/example/myapp/MainActivity.kt
+import android.view.WindowManager
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
+
+class MainActivity: FlutterActivity() {
+    private val CHANNEL = "com.example.app/security"
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "setSecureFlag" -> {
+                        window.setFlags(
+                            WindowManager.LayoutParams.FLAG_SECURE,
+                            WindowManager.LayoutParams.FLAG_SECURE
+                        )
+                        result.success(true)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+    }
+}
+```
+
+### 앱 위변조 감지
+
+#### 패키지 무결성 확인
+
+```dart
+// lib/core/security/package_integrity.dart
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+
+class PackageIntegrityChecker {
+  // 빌드 타임에 설정된 예상 값
+  static const _expectedPackageName = 'com.example.myapp';
+  static const _expectedVersionCode = 123;
+  static const _expectedSignature = 'ABC123...';
+
+  /// 패키지 정보 검증
+  static Future<bool> verify() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+
+    // 패키지명 확인
+    if (packageInfo.packageName != _expectedPackageName) {
+      await _reportTampering('Package name mismatch');
+      return false;
+    }
+
+    // 버전 코드 확인
+    final versionCode = int.tryParse(packageInfo.buildNumber) ?? 0;
+    if (versionCode < _expectedVersionCode) {
+      await _reportTampering('Version downgrade detected');
+      return false;
+    }
+
+    // 서명 확인 (Native)
+    final isSignatureValid = await IntegrityChecker.verifySignature();
+    if (!isSignatureValid) {
+      await _reportTampering('Invalid signature');
+      return false;
+    }
+
+    return true;
+  }
+
+  /// 설치 경로 확인 (Android)
+  static Future<bool> verifyInstallSource() async {
+    if (!Platform.isAndroid) return true;
+
+    try {
+      final result = await platform.invokeMethod('getInstallerPackageName');
+      final installer = result as String?;
+
+      // Google Play에서만 설치 허용
+      final allowedInstallers = [
+        'com.android.vending', // Google Play
+        'com.google.android.feedback', // Google Play (debug)
+      ];
+
+      return installer != null && allowedInstallers.contains(installer);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<void> _reportTampering(String reason) async {
+    await api.post('/security/tampering', {
+      'reason': reason,
+      'deviceInfo': await DeviceInfo.collect(),
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+  }
+}
+```
+
+#### 런타임 코드 체크섬
+
+```dart
+// lib/core/security/runtime_integrity.dart
+class RuntimeIntegrityChecker {
+  /// 중요 함수의 체크섬 검증
+  static bool verifyFunctionIntegrity() {
+    // 중요 함수의 바이트코드 해시 검증
+    final functions = [
+      _hashFunction(_criticalFunction1),
+      _hashFunction(_criticalFunction2),
+    ];
+
+    final expectedHashes = [
+      'hash1...',
+      'hash2...',
+    ];
+
+    for (int i = 0; i < functions.length; i++) {
+      if (functions[i] != expectedHashes[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  static String _hashFunction(Function fn) {
+    // 함수 바이트코드 해시 계산 (Native 지원 필요)
+    // 실제 구현은 플랫폼별로 다름
+    return '';
+  }
+
+  static void _criticalFunction1() {
+    // 결제 로직 등 중요한 함수
+  }
+
+  static void _criticalFunction2() {
+    // 인증 로직 등 중요한 함수
   }
 }
 ```
@@ -1429,6 +2485,121 @@ class _BiometricAuthPageState extends State<BiometricAuthPage> {
       ),
     );
   }
+}
+```
+
+#### Biometric 인증 + 서버 검증 (심화)
+
+로컬 Biometric 인증 이후 서버 챌린지-응답 방식으로 이중 검증을 수행합니다.
+
+> ⚠️ **경고:** `static` 메서드에서 인스턴스 필드 `_auth`에 접근하고 있습니다. `static` 메서드는 인스턴스 멤버에 접근할 수 없으므로, `_auth`를 `static`으로 선언하거나 메서드를 인스턴스 메서드로 변경해야 합니다.
+
+```dart
+// lib/core/auth/biometric_auth_service.dart
+import 'package:local_auth/local_auth.dart';
+import 'package:local_auth_android/local_auth_android.dart';
+import 'package:local_auth_ios/local_auth_ios.dart';
+
+class BiometricAuthService {
+  final LocalAuthentication _auth = LocalAuthentication();
+
+  /// Biometric 인증 + 서버 검증
+  static Future<AuthResult> authenticate() async {
+    // 1단계: 로컬 Biometric 인증
+    final localAuth = await _authenticateLocally();
+    if (!localAuth.success) {
+      return AuthResult.failure('Local authentication failed');
+    }
+
+    // 2단계: 서버에 챌린지 요청
+    final challenge = await _requestChallenge();
+
+    // 3단계: 챌린지에 서명
+    final signature = await _signChallenge(challenge);
+
+    // 4단계: 서버 검증
+    final serverAuth = await _verifyWithServer(challenge, signature);
+
+    return serverAuth;
+  }
+
+  static Future<LocalAuthResult> _authenticateLocally() async {
+    try {
+      final canAuthenticate = await _auth.canCheckBiometrics &&
+                              await _auth.isDeviceSupported();
+
+      if (!canAuthenticate) {
+        return LocalAuthResult.failure('Biometric not available');
+      }
+
+      final authenticated = await _auth.authenticate(
+        localizedReason: '본인 확인이 필요합니다',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
+        authMessages: const <AuthMessages>[
+          AndroidAuthMessages(
+            signInTitle: 'Biometric 인증',
+            cancelButton: '취소',
+          ),
+          IOSAuthMessages(
+            cancelButton: '취소',
+          ),
+        ],
+      );
+
+      return authenticated
+          ? LocalAuthResult.success()
+          : LocalAuthResult.failure('Authentication failed');
+    } catch (e) {
+      return LocalAuthResult.failure(e.toString());
+    }
+  }
+
+  static Future<String> _requestChallenge() async {
+    final response = await api.post('/auth/biometric/challenge', {
+      'deviceId': await DeviceInfo.getDeviceId(),
+    });
+    return response.data['challenge'];
+  }
+
+  static Future<String> _signChallenge(String challenge) async {
+    // 하드웨어 키로 챌린지 서명
+    final signature = await HardwareSecurityManager.sign(challenge);
+    return signature;
+  }
+
+  static Future<AuthResult> _verifyWithServer(String challenge, String signature) async {
+    final response = await api.post('/auth/biometric/verify', {
+      'challenge': challenge,
+      'signature': signature,
+      'deviceId': await DeviceInfo.getDeviceId(),
+    });
+
+    if (response.data['verified'] == true) {
+      return AuthResult.success(response.data['token']);
+    } else {
+      return AuthResult.failure('Server verification failed');
+    }
+  }
+}
+
+class LocalAuthResult {
+  final bool success;
+  final String? error;
+
+  LocalAuthResult.success() : success = true, error = null;
+  LocalAuthResult.failure(this.error) : success = false;
+}
+
+class AuthResult {
+  final bool success;
+  final String? token;
+  final String? error;
+
+  AuthResult.success(this.token) : success = true, error = null;
+  AuthResult.failure(this.error) : success = false, token = null;
 }
 ```
 
@@ -2238,6 +3409,29 @@ const breachNotificationTemplate = '''
 - [ ] 정기적인 보안 업데이트 계획
 - [ ] 응급 대응 계획 수립
 
+## 보안 성숙도 로드맵
+
+엔터프라이즈급 모바일 앱 보안은 **다층 방어 전략**이 필수입니다.
+
+```
+Level 1 (기본): HTTPS + 데이터 암호화
+Level 2 (표준): + 코드 난독화 + Root 감지
+Level 3 (고급): + Certificate Pinning + RASP
+Level 4 (엔터프라이즈): + mTLS + 하드웨어 보안 + 위변조 감지
+```
+
+**OWASP MASVS Level 2 달성 체크리스트:**
+- 데이터 저장 보안 (V2)
+- 암호화 (V3)
+- 인증 및 세션 관리 (V4)
+- 네트워크 통신 (V5)
+- 플랫폼 상호작용 (V6)
+- 코드 품질 및 빌드 설정 (V7)
+- 복원력 (V8)
+
+금융/헬스케어 앱은 **Level 3 (OWASP MASVS L2+RASP)** 이상을 목표로 하세요.
+정기적인 보안 감사와 침투 테스트로 취약점을 사전에 발견하고 대응하는 것이 중요합니다.
+
 ---
 
 ## 실습 과제
@@ -2248,9 +3442,19 @@ JWT 토큰과 리프레시 토큰을 SecureStorage에 저장하고, 토큰 만�
 ### 과제 2: Certificate Pinning 적용
 Dio Interceptor에 Certificate Pinning을 적용하여 MITM 공격을 방지하세요.
 
+### 과제 3: 보안 감사 수행
+OWASP MASVS 체크리스트를 기반으로 앱의 보안 감사를 수행하고 보고서를 작성하세요.
+
+### 과제 4: Jailbreak Detection 구현
+루팅/탈옥 기기를 감지하여 민감한 기능을 제한하는 보안 레이어를 구현하세요.
+
 ## Self-Check
 
 - [ ] SecureStorage에 민감 데이터를 저장하고 있는가?
 - [ ] API 통신에 Certificate Pinning이 적용되어 있는가?
 - [ ] 로그에 민감 정보(토큰, 비밀번호)가 노출되지 않는가?
 - [ ] ProGuard/R8으로 코드 난독화를 적용했는가?
+- [ ] OWASP MASVS Level 1/2의 차이를 설명할 수 있는가?
+- [ ] Code Obfuscation을 빌드 파이프라인에 통합했는가?
+- [ ] mTLS의 동작 원리와 구현 방법을 설명할 수 있는가?
+- [ ] 보안 취약점 발견 시 Incident Response 프로세스를 정의했는가?

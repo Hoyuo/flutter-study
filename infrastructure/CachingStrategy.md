@@ -1439,190 +1439,49 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
 
 ## 9. 오프라인 캐시
 
-### 9.1 오프라인 감지
+> 📖 **오프라인 우선 아키텍처, 동기화 큐, 충돌 해결 전략은 [../patterns/OfflineSupport.md](../patterns/OfflineSupport.md)를 참조하세요.** 이 섹션에서는 캐시 전략 관점의 오프라인 처리만 다룹니다.
+
+### 9.1 오프라인 캐시 전략 개요
+
+오프라인 환경에서는 다음과 같은 캐시 전략을 적용합니다:
+
+**핵심 원칙:**
+1. **로컬 우선**: 네트워크 상태와 무관하게 캐시된 데이터를 먼저 반환
+2. **백그라운드 동기화**: 온라인 복귀 시 자동으로 서버와 동기화
+3. **낙관적 업데이트**: 사용자 액션을 즉시 로컬에 반영하고 나중에 서버 전송
+
+**캐시 계층 활용:**
+```
+오프라인 상태:
+  Memory Cache → Disk Cache → 오류 (캐시 없음)
+
+온라인 복귀:
+  Memory Cache → Disk Cache → Network (백그라운드 갱신)
+```
+
+### 9.2 간단한 오프라인 감지 예제
 
 ```dart
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ConnectivityService {
   final Connectivity _connectivity = Connectivity();
-  StreamSubscription? _subscription;
-
-  final _controller = StreamController<bool>.broadcast();
-  Stream<bool> get onlineStream => _controller.stream;
 
   bool _isOnline = true;
   bool get isOnline => _isOnline;
 
   Future<void> init() async {
     final results = await _connectivity.checkConnectivity();
-    _updateStatus(results);
-
-    _subscription = _connectivity.onConnectivityChanged.listen(_updateStatus);
-  }
-
-  void _updateStatus(List<ConnectivityResult> results) {
     _isOnline = !results.contains(ConnectivityResult.none);
-    _controller.add(_isOnline);
-  }
 
-  void dispose() {
-    _subscription?.cancel();
-    _controller.close();
+    _connectivity.onConnectivityChanged.listen((results) {
+      _isOnline = !results.contains(ConnectivityResult.none);
+    });
   }
 }
 ```
 
-### 9.2 오프라인 우선 Repository
-
-```dart
-import 'dart:async';
-
-class OfflineFirstRepository extends CachedRepository<Product> {
-  final ConnectivityService connectivityService;
-
-  OfflineFirstRepository({
-    required super.apiClient,
-    required super.diskCache,
-    required super.memoryCache,
-    required this.connectivityService,
-  });
-
-  @override
-  String getCacheKey(String id) => 'product_$id';
-
-  @override
-  Future<Product> fetchFromNetwork(String id) async {
-    final response = await apiClient.dio.get<Map<String, dynamic>>('/products/$id');
-    return Product.fromJson(response.data!);
-  }
-
-  Future<Product> getProduct(String id) async {
-    final cacheKey = getCacheKey(id);
-
-    // 캐시 확인
-    final cached = memoryCache.get<Product>(cacheKey) ??
-        await diskCache.get<Product>(cacheKey);
-
-    if (!connectivityService.isOnline) {
-      // 오프라인: 캐시 반환 (없으면 오류)
-      if (cached == null) {
-        throw OfflineException('No cached data available');
-      }
-      return cached;
-    }
-
-    // 온라인: Stale-While-Revalidate
-    if (cached != null) {
-      // 캐시 즉시 반환
-      unawaited(_refreshCache(id));
-      return cached;
-    }
-
-    // 캐시 없음: 네트워크 요청
-    return getNetworkFirst(id);
-  }
-}
-
-class OfflineException implements Exception {
-  final String message;
-  OfflineException(this.message);
-}
-```
-
-### 9.3 오프라인 큐
-
-```dart
-import 'dart:collection';
-
-class OfflineQueue {
-  final DiskCache diskCache;
-  final Queue<PendingAction> _queue = Queue();
-  static const String _queueKey = 'offline_queue';
-
-  OfflineQueue(this.diskCache);
-
-  Future<void> init() async {
-    final saved = await diskCache.get<List>(_queueKey);
-    if (saved != null) {
-      _queue.addAll(saved.map((e) => PendingAction.fromJson(e)));
-    }
-  }
-
-  Future<void> enqueue(PendingAction action) async {
-    _queue.add(action);
-    await _save();
-  }
-
-  Future<void> processQueue(ApiClient apiClient) async {
-    while (_queue.isNotEmpty) {
-      final action = _queue.first;
-
-      try {
-        await _executeAction(apiClient, action);
-        _queue.removeFirst();
-        await _save();
-      } catch (e) {
-        // 실패 시 큐 유지
-        break;
-      }
-    }
-  }
-
-  Future<void> _executeAction(ApiClient apiClient, PendingAction action) async {
-    switch (action.method) {
-      case 'POST':
-        await apiClient.dio.post(action.path, data: action.data);
-        break;
-      case 'PUT':
-        await apiClient.dio.put(action.path, data: action.data);
-        break;
-      case 'DELETE':
-        await apiClient.dio.delete(action.path);
-        break;
-    }
-  }
-
-  Future<void> _save() async {
-    await diskCache.set(
-      _queueKey,
-      _queue.map((e) => e.toJson()).toList(),
-    );
-  }
-
-  int get length => _queue.length;
-}
-
-class PendingAction {
-  final String method;
-  final String path;
-  final Map<String, dynamic>? data;
-  final DateTime createdAt;
-
-  PendingAction({
-    required this.method,
-    required this.path,
-    this.data,
-    required this.createdAt,
-  });
-
-  Map<String, dynamic> toJson() => {
-    'method': method,
-    'path': path,
-    'data': data,
-    'createdAt': createdAt.toIso8601String(),
-  };
-
-  factory PendingAction.fromJson(Map<String, dynamic> json) {
-    return PendingAction(
-      method: json['method'],
-      path: json['path'],
-      data: json['data'],
-      createdAt: DateTime.parse(json['createdAt']),
-    );
-  }
-}
-```
+**상세 구현**: ConnectivityService, OfflineFirstRepository, 동기화 큐 구현은 [../patterns/OfflineSupport.md](../patterns/OfflineSupport.md)를 참조하세요
 
 ---
 

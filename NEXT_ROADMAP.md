@@ -506,7 +506,6 @@ flutter-study/
 │
 ├── system/
 │   ├── ErrorHandling.md
-│   ├── Theming.md
 │   ├── AppLifecycle.md
 │   ├── Testing.md
 │   ├── Performance.md
@@ -516,7 +515,7 @@ flutter-study/
 │   ├── Monitoring.md
 │   ├── AdvancedPerformance.md
 │   ├── AdvancedTesting.md
-│   ├── AdvancedSecurity.md
+│   ├── Security.md (통합)
 │   └── ProductionOperations.md
 │
 ├── README.md

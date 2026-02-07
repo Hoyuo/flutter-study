@@ -270,7 +270,7 @@ Glados<int>().test('모든 정수는 100보다 작다 (의도적 실패)', (n) {
 
 ## 2. Golden Test 자동화
 
-Golden Test는 UI의 스냅샷을 저장하고 변경사항을 감지합니다.
+> 📖 **Golden Test 기본 설정 및 사용법은 [Testing.md](Testing.md)의 13절을 참조하세요.** 이 섹션에서는 고급 자동화 기법만 다룹니다.
 
 ### 2.1 의존성 설치
 
@@ -280,118 +280,6 @@ dev_dependencies:
     sdk: flutter
   golden_toolkit: ^0.15.0
   alchemist: ^0.7.0  # 고급 Golden Test
-```
-
-### 2.2 기본 Golden Test
-
-```dart
-// test/widgets/product_card_golden_test.dart
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:golden_toolkit/golden_toolkit.dart';
-import 'package:my_app/widgets/product_card.dart';
-
-void main() {
-  setUpAll(() async {
-    // 커스텀 폰트 로드
-    await loadAppFonts();
-  });
-
-  group('ProductCard Golden Tests', () {
-    testGoldens('기본 상태', (tester) async {
-      final builder = GoldenBuilder.grid(
-        columns: 2,
-        widthToHeightRatio: 1,
-      )
-        ..addScenario(
-          '일반 상품',
-          ProductCard(
-            title: '아이폰 15 Pro',
-            price: '1,550,000원',
-            imageUrl: 'https://example.com/image.png',
-          ),
-        )
-        ..addScenario(
-          '할인 상품',
-          ProductCard(
-            title: '갤럭시 S24',
-            price: '999,000원',
-            originalPrice: '1,200,000원',
-            discountRate: 17,
-            imageUrl: 'https://example.com/image.png',
-          ),
-        )
-        ..addScenario(
-          '품절 상품',
-          ProductCard(
-            title: '에어팟 Pro',
-            price: '359,000원',
-            isSoldOut: true,
-            imageUrl: 'https://example.com/image.png',
-          ),
-        )
-        ..addScenario(
-          '긴 제목',
-          ProductCard(
-            title: '매우 긴 상품명을 가진 제품으로 텍스트 오버플로우를 테스트합니다',
-            price: '50,000원',
-            imageUrl: 'https://example.com/image.png',
-          ),
-        );
-
-      await tester.pumpWidgetBuilder(
-        builder.build(),
-        surfaceSize: const Size(800, 600),
-      );
-
-      await screenMatchesGolden(tester, 'product_card_grid');
-    });
-
-    testGoldens('다크 모드', (tester) async {
-      await tester.pumpWidgetBuilder(
-        ProductCard(
-          title: '아이폰 15 Pro',
-          price: '1,550,000원',
-          imageUrl: 'https://example.com/image.png',
-        ),
-        wrapper: materialAppWrapper(
-          theme: ThemeData.light(),
-          darkTheme: ThemeData.dark(),
-        ),
-        surfaceSize: const Size(400, 200),
-      );
-
-      await screenMatchesGolden(tester, 'product_card_dark');
-    });
-
-    testGoldens('반응형 레이아웃', (tester) async {
-      final builder = GoldenBuilder.column()
-        ..addScenario(
-          'Mobile (375x667)',
-          ProductCard(
-            title: '아이폰 15 Pro',
-            price: '1,550,000원',
-            imageUrl: 'https://example.com/image.png',
-          ),
-        );
-
-      await tester.pumpWidgetBuilder(
-        builder.build(),
-        surfaceSize: const Size(375, 667),
-      );
-
-      await screenMatchesGolden(tester, 'product_card_mobile');
-
-      // Tablet
-      await tester.pumpWidgetBuilder(
-        builder.build(),
-        surfaceSize: const Size(768, 1024),
-      );
-
-      await screenMatchesGolden(tester, 'product_card_tablet');
-    });
-  });
-}
 ```
 
 ### 2.3 Alchemist로 고급 Golden Test
@@ -1195,91 +1083,58 @@ String _generateLargeJson(int size) {
 
 ## 8. E2E 테스트 (Patrol)
 
-patrol 패키지로 네이티브 기능까지 테스트합니다.
+> 📖 **Patrol 기본 설정, 네이티브 권한 처리, 실행 방법, CI/CD 통합은 [Testing.md](Testing.md)의 14절을 참조하세요.** 이 섹션에서는 고급 E2E 테스트 패턴을 다룹니다.
 
-### 8.1 의존성 설치
-
-```yaml
-dev_dependencies:
-  patrol: ^3.0.0
-```
-
-### 8.2 기본 E2E 테스트
+### 8.1 복잡한 E2E 시나리오 예제
 
 ```dart
-// integration_test/app_test.dart
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
+// integration_test/advanced_patrol_test.dart
 import 'package:patrol/patrol.dart';
 import 'package:my_app/main.dart' as app;
 
 void main() {
   patrolTest(
-    '로그인 플로우 E2E 테스트',
+    '복합 플로우 E2E 테스트 - 로그인부터 결제까지',
     ($) async {
       await app.main();
       await $.pumpAndSettle();
 
-      // 로그인 화면 확인
-      expect($(#emailField), findsOneWidget);
-      expect($(#passwordField), findsOneWidget);
-
-      // 입력
+      // 1. 로그인
       await $(#emailField).enterText('user@example.com');
       await $(#passwordField).enterText('password123');
-
-      // 로그인 버튼 탭
       await $(#loginButton).tap();
       await $.pumpAndSettle();
 
-      // 홈 화면 확인
-      expect($(HomeScreen), findsOneWidget);
-      expect($('Welcome, User'), findsOneWidget);
-
-      // 네이티브 권한 요청 처리
+      // 2. 네이티브 권한 처리
       await $.native.grantPermissionWhenInUse();
 
-      // 네이티브 알림 확인
-      await $.native.openNotifications();
-      expect($('New Message'), findsOneWidget);
-      await $.native.pressBack();
-    },
-  );
-
-  patrolTest(
-    '결제 플로우 E2E 테스트',
-    ($) async {
-      await app.main();
-
-      // 상품 선택
+      // 3. 상품 검색 및 선택
+      await $(#searchField).enterText('아이폰');
+      await $.pumpAndSettle();
       await $(ProductCard).at(0).tap();
       await $.pumpAndSettle();
 
-      // 장바구니 추가
+      // 4. 장바구니 추가
       await $(#addToCartButton).tap();
       await $.pumpAndSettle();
 
-      // 장바구니 이동
+      // 5. 결제 플로우
       await $(Icons.shopping_cart).tap();
       await $.pumpAndSettle();
-
-      // 결제 진행
       await $(#checkoutButton).tap();
       await $.pumpAndSettle();
 
-      // 배송 정보 입력
+      // 6. 배송 정보 입력
       await $(#addressField).enterText('서울시 강남구');
       await $(#phoneField).enterText('010-1234-5678');
-
-      // 결제 수단 선택
       await $(#creditCardOption).tap();
       await $.pumpAndSettle();
 
-      // 주문 완료
+      // 7. 주문 완료
       await $(#confirmOrderButton).tap();
       await $.pumpAndSettle(timeout: const Duration(seconds: 10));
 
-      // 성공 메시지 확인
+      // 8. 검증
       expect($('주문이 완료되었습니다'), findsOneWidget);
     },
   );

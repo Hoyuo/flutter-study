@@ -1736,147 +1736,21 @@ class _ManagedNativeViewState extends State<ManagedNativeView>
 
 ### 6.1 플랫폼별 구현 분기
 
-```dart
-// ============= 플랫폼 감지 =============
-import 'dart:io' show Platform;
+> 📖 **조건부 import 패턴과 플랫폼별 구현 분기**는 [FlutterMultiPlatform.md](../infrastructure/FlutterMultiPlatform.md#5-conditional-import)를 참조하세요.
 
-class PlatformService {
-  static bool get isAndroid => Platform.isAndroid;
-  static bool get isIOS => Platform.isIOS;
-  static bool get isWeb => kIsWeb;
-  static bool get isMobile => isAndroid || isIOS;
-  static bool get isDesktop => Platform.isWindows || Platform.isMacOS || Platform.isLinux;
-}
-
-// ============= 플랫폼별 구현 =============
-abstract class CameraService {
-  Future<XFile?> takePicture();
-  Future<List<XFile>> pickMultipleImages();
-}
-
-class CameraServiceImpl implements CameraService {
-  final CameraService _delegate;
-
-  factory CameraServiceImpl() {
-    if (Platform.isAndroid) {
-      return CameraServiceImpl._(AndroidCameraService());
-    } else if (Platform.isIOS) {
-      return CameraServiceImpl._(IOSCameraService());
-    } else {
-      throw UnsupportedError('Platform not supported');
-    }
-  }
-
-  CameraServiceImpl._(this._delegate);
-
-  @override
-  Future<XFile?> takePicture() => _delegate.takePicture();
-
-  @override
-  Future<List<XFile>> pickMultipleImages() => _delegate.pickMultipleImages();
-}
-
-// Android 구현
-class AndroidCameraService implements CameraService {
-  @override
-  Future<XFile?> takePicture() async {
-    // Android specific implementation
-    // CameraX API 사용
-  }
-
-  @override
-  Future<List<XFile>> pickMultipleImages() async {
-    // Android Photo Picker API (Android 13+)
-  }
-}
-
-// iOS 구현
-class IOSCameraService implements CameraService {
-  @override
-  Future<XFile?> takePicture() async {
-    // iOS specific implementation
-    // AVFoundation 사용
-  }
-
-  @override
-  Future<List<XFile>> pickMultipleImages() async {
-    // PHPickerViewController 사용
-  }
-}
-```
+**핵심 개념:**
+- `dart:io`의 `Platform` 클래스로 런타임 플랫폼 감지
+- Factory 패턴으로 플랫폼별 구현체 주입
+- 추상 인터페이스로 플랫폼 독립적인 API 제공
 
 ### 6.2 조건부 import
 
-```dart
-// ============= 플랫폼별 파일 분리 =============
-// lib/src/services/storage_service.dart
-export 'storage_service_stub.dart'
-    if (dart.library.io) 'storage_service_mobile.dart'
-    if (dart.library.html) 'storage_service_web.dart';
+> 📖 **Conditional Import 상세 패턴 및 구현 예제**는 [FlutterMultiPlatform.md](../infrastructure/FlutterMultiPlatform.md#52-conditional-import-패턴)를 참조하세요.
 
-// lib/src/services/storage_service_stub.dart
-abstract class StorageService {
-  Future<void> save(String key, String value);
-  Future<String?> read(String key);
-}
-
-class StorageServiceImpl implements StorageService {
-  StorageServiceImpl() {
-    throw UnsupportedError('Platform not supported');
-  }
-
-  @override
-  Future<void> save(String key, String value) => throw UnimplementedError();
-
-  @override
-  Future<String?> read(String key) => throw UnimplementedError();
-}
-
-// lib/src/services/storage_service_mobile.dart
-import 'package:shared_preferences/shared_preferences.dart';
-
-class StorageServiceImpl implements StorageService {
-  late final SharedPreferences _prefs;
-
-  StorageServiceImpl() {
-    _init();
-  }
-
-  Future<void> _init() async {
-    _prefs = await SharedPreferences.getInstance();
-  }
-
-  @override
-  Future<void> save(String key, String value) async {
-    await _prefs.setString(key, value);
-  }
-
-  @override
-  Future<String?> read(String key) async {
-    return _prefs.getString(key);
-  }
-}
-
-// lib/src/services/storage_service_web.dart
-import 'package:web/web.dart' as web;
-
-class StorageServiceImpl implements StorageService {
-  @override
-  Future<void> save(String key, String value) async {
-    web.window.localStorage.setItem(key, value);
-  }
-
-  @override
-  Future<String?> read(String key) async {
-    return web.window.localStorage.getItem(key);
-  }
-}
-
-// 사용
-import 'services/storage_service.dart';
-
-final storage = StorageServiceImpl(); // 자동으로 플랫폼별 구현 선택
-```
+**핵심 개념:**
+- `export ... if (dart.library.io) ... if (dart.library.html)` 문법 사용
+- Stub 파일로 공통 인터페이스 정의
+- 컴파일 타임에 플랫폼별 파일 자동 선택
 
 ### 6.3 플랫폼별 UI 최적화
 

@@ -1,9 +1,12 @@
 # Flutter Local Storage Guide
 
-> 이 문서는 SharedPreferences, Isar Plus, SecureStorage를 사용한 로컬 저장소 패턴을 설명합니다.
+> 이 문서는 SharedPreferences, Drift, Isar Plus, SecureStorage를 사용한 로컬 저장소 패턴을 설명합니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - SharedPreferences로 간단한 키-값 데이터를 저장할 수 있다
+> - Drift를 사용하여 복잡한 쿼리(JOIN, 서브쿼리, 집계)를 작성하고 실시간 Stream으로 UI를 갱신할 수 있다
+> - 스키마 마이그레이션과 인덱싱 전략으로 프로덕션급 데이터베이스를 안전하게 관리할 수 있다
+> - FTS(Full-Text Search), 암호화, 대용량 데이터 처리 등 실전 시나리오를 구현할 수 있다
 > - SecureStorage로 민감한 데이터를 안전하게 관리할 수 있다
 > - 용도에 맞는 로컬 저장소 솔루션을 선택하고 구현할 수 있다
 
@@ -14,6 +17,7 @@
 | 저장소 | 용도 | 데이터 유형 | 보안 | 상태 |
 |--------|------|------------|------|------|
 | **SharedPreferences** | 간단한 설정값 | Key-Value (primitive) | 낮음 | ✅ 활발 (새 async API) |
+| **Drift** | 복잡한 관계형 데이터 | SQL (테이블/관계) | 중간 (SQLCipher 지원) | ✅ 활발 (권장) |
 | **Isar Plus** | 복잡한 구조화 데이터 | 객체/컬렉션 | 중간 | ✅ 커뮤니티 포크 (원본 Isar 대체) |
 | **SecureStorage** | 민감한 정보 | Key-Value | 높음 (암호화) | ✅ 활발 (v10+) |
 
@@ -25,6 +29,13 @@ SharedPreferences
 ├── 온보딩 완료 여부
 ├── 마지막 로그인 시간
 └── 캐시 만료 시간
+
+Drift (SQLite)
+├── 복잡한 관계형 데이터 (사용자-게시글-댓글)
+├── 오프라인 캐시 데이터
+├── 전문 검색 (FTS)
+├── 대용량 데이터 처리
+└── 실시간 쿼리 (Stream)
 
 Isar
 ├── 오프라인 캐시 데이터
@@ -51,7 +62,15 @@ core/
             │   ├── app_preferences.dart
             │   └── preference_keys.dart
             ├── database/
-            │   ├── isar_database.dart
+            │   ├── app_database.dart          # Drift Database
+            │   ├── app_database.g.dart        # Drift 코드 생성
+            │   ├── tables/
+            │   │   ├── users.dart
+            │   │   └── posts.dart
+            │   ├── daos/
+            │   │   ├── user_dao.dart
+            │   │   └── post_dao.dart
+            │   ├── isar_database.dart          # Isar (레거시)
             │   └── collections/
             ├── secure/
             │   └── secure_storage.dart
@@ -71,17 +90,21 @@ dependencies:
   # SecureStorage - v10+ 새로운 초기화 API
   flutter_secure_storage: ^10.0.0
 
-  # ⚠️ 경고: Isar Plus는 커뮤니티 포크로 장기 유지보수 불확실
-  # 새 프로젝트는 Drift 사용 권장 (섹션 4.0.3 참조)
-  # isar_plus: ^1.2.1  # 개발 중단된 Isar의 포크
+  # Drift - 타입 안전한 SQL 데이터베이스 (권장)
+  drift: ^2.22.0
+  drift_flutter: ^0.2.0            # 간편한 DB 연결
+  sqlite3_flutter_libs: ^0.5.0     # SQLite 네이티브 라이브러리
+  path: ^1.9.0
 
-  # 권장 대안: Drift (타입 안전, 활발한 개발)
-  drift: ^2.14.0
+  # ⚠️ 경고: Isar Plus는 커뮤니티 포크로 장기 유지보수 불확실
+  # 새 프로젝트는 Drift 사용 권장 (섹션 4 참조)
+  # isar_plus: ^1.2.1  # 개발 중단된 Isar의 포크
 
   injectable: ^2.5.0
   path_provider: ^2.1.2
 
 dev_dependencies:
+  drift_dev: ^2.22.0               # Drift 코드 생성기
   isar_plus_generator: ^1.2.1
   build_runner: ^2.4.15
   injectable_generator: ^2.7.0
@@ -509,16 +532,1430 @@ abstract class PreferencesModule {
 }
 ```
 
-## 4. Isar Plus Database
+## 4. Drift (SQLite)
 
-### 4.0 Isar Plus 소개
+Drift는 타입 안전한 SQL 쿼리를 제공하는 Flutter용 데이터베이스 라이브러리입니다. 복잡한 관계형 데이터, 실시간 Stream, 마이그레이션 등 프로덕션급 데이터베이스 기능을 지원합니다.
+
+### 4.1 Drift 개요
+
+**장점:**
+- ✅ 컴파일 타임 타입 체크
+- ✅ 자동 완성과 리팩토링 지원
+- ✅ 강력한 마이그레이션 시스템
+- ✅ Stream 기반 실시간 업데이트
+- ✅ 복잡한 SQL 쿼리 지원
+
+### 4.2 의존성 추가
+
+```yaml
+# pubspec.yaml
+dependencies:
+  drift: ^2.22.0
+  sqlite3_flutter_libs: ^0.5.0
+  path_provider: ^2.1.2
+  path: ^1.9.0
+
+dev_dependencies:
+  drift_dev: ^2.22.0
+  build_runner: ^2.4.15
+```
+
+### 4.3 Database 클래스 생성 / 코드 생성
+
+#### 4.3.1 Database 클래스 생성
+
+```dart
+// lib/data/local/app_database.dart
+import 'dart:io';
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+
+part 'app_database.g.dart';
+
+@DriftDatabase(tables: [])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase() : super(_openConnection());
+
+  @override
+  int get schemaVersion => 1;
+
+  static LazyDatabase _openConnection() {
+    return LazyDatabase(() async {
+      final dbFolder = await getApplicationDocumentsDirectory();
+      final file = File(p.join(dbFolder.path, 'app.db'));
+      return NativeDatabase(file);
+    });
+  }
+}
+```
+
+#### 4.3.2 코드 생성
+
+```bash
+# 코드 생성
+dart run build_runner build --delete-conflicting-outputs
+
+# Watch 모드 (파일 변경 시 자동 생성)
+dart run build_runner watch
+```
+
+### 4.4 테이블 정의와 DAO 패턴
+
+#### 4.4.1 기본 테이블 정의
+
+```dart
+// lib/data/local/tables/users.dart
+import 'dart:convert';
+
+import 'package:drift/drift.dart';
+
+class Users extends Table {
+  // Primary Key (자동 증가)
+  IntColumn get id => integer().autoIncrement()();
+
+  // Not Null 컬럼
+  TextColumn get userId => text().unique()();
+  TextColumn get name => text()();
+  TextColumn get email => text()();
+
+  // Nullable 컬럼
+  TextColumn get avatarUrl => text().nullable()();
+  TextColumn get bio => text().nullable()();
+
+  // DateTime 컬럼
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  // Boolean 컬럼 (SQLite는 정수로 저장)
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+
+  // JSON 컬럼 (TEXT로 저장)
+  TextColumn get metadata => text().map(const JsonConverter()).nullable()();
+}
+
+// JSON Converter
+class JsonConverter extends TypeConverter<Map<String, dynamic>, String> {
+  const JsonConverter();
+
+  @override
+  Map<String, dynamic> fromSql(String fromDb) {
+    return jsonDecode(fromDb) as Map<String, dynamic>;
+  }
+
+  @override
+  String toSql(Map<String, dynamic> value) {
+    return jsonEncode(value);
+  }
+}
+```
+
+#### 4.4.2 복합 테이블 예시
+
+```dart
+// lib/data/local/tables/posts.dart
+class Posts extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get postId => text().unique()();
+  TextColumn get title => text().withLength(min: 1, max: 200)();
+  TextColumn get content => text()();
+
+  // Foreign Key
+  IntColumn get authorId => integer().references(Users, #id)();
+
+  // Enum 컬럼
+  IntColumn get status => intEnum<PostStatus>()();
+
+  DateTimeColumn get publishedAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  // Computed Column (가상 컬럼)
+  TextColumn get searchText => text().generatedAs(
+    title + const Constant(' ') + content,
+  )();
+}
+
+enum PostStatus {
+  draft,
+  published,
+  archived,
+}
+```
+
+#### 4.4.3 DAO (Data Access Object) 패턴
+
+```dart
+// lib/data/local/daos/user_dao.dart
+import 'package:drift/drift.dart';
+import '../app_database.dart';
+import '../tables/users.dart';
+
+part 'user_dao.g.dart';
+
+@DriftAccessor(tables: [Users])
+class UserDao extends DatabaseAccessor<AppDatabase> with _$UserDaoMixin {
+  UserDao(AppDatabase db) : super(db);
+
+  // 전체 조회
+  Future<List<User>> getAllUsers() => select(users).get();
+
+  // ID로 조회
+  Future<User?> getUserById(int id) {
+    return (select(users)..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+  }
+
+  // userId로 조회
+  Future<User?> getUserByUserId(String userId) {
+    return (select(users)..where((tbl) => tbl.userId.equals(userId)))
+        .getSingleOrNull();
+  }
+
+  // 생성
+  Future<int> createUser(UsersCompanion user) {
+    return into(users).insert(user);
+  }
+
+  // 업데이트
+  Future<bool> updateUser(User user) {
+    return update(users).replace(user);
+  }
+
+  // 삭제
+  Future<int> deleteUser(int id) {
+    return (delete(users)..where((tbl) => tbl.id.equals(id))).go();
+  }
+
+  // Stream으로 실시간 조회
+  Stream<List<User>> watchAllUsers() => select(users).watch();
+
+  Stream<User?> watchUserById(int id) {
+    return (select(users)..where((tbl) => tbl.id.equals(id))).watchSingleOrNull();
+  }
+}
+```
+
+#### 4.4.4 Database에 DAO 등록
+
+```dart
+// lib/data/local/app_database.dart
+@DriftDatabase(
+  tables: [Users, Posts],
+  daos: [UserDao, PostDao],
+)
+class AppDatabase extends _$AppDatabase {
+  // ...
+}
+```
+
+### 4.5 기본 CRUD 연산
+
+#### 4.5.1 Create (삽입)
+
+```dart
+// 단일 삽입
+final userId = await db.userDao.createUser(
+  UsersCompanion.insert(
+    userId: 'user123',
+    name: '홍길동',
+    email: 'hong@example.com',
+    createdAt: DateTime.now(),
+    updatedAt: DateTime.now(),
+  ),
+);
+
+// Companion을 사용한 삽입 (일부 필드만)
+await into(users).insert(
+  UsersCompanion(
+    userId: const Value('user456'),
+    name: const Value('김철수'),
+    email: const Value('kim@example.com'),
+    createdAt: Value(DateTime.now()),
+    updatedAt: Value(DateTime.now()),
+  ),
+);
+
+// insertReturning: 삽입 후 생성된 행 반환
+final user = await into(users).insertReturning(
+  UsersCompanion.insert(
+    userId: 'user789',
+    name: '이영희',
+    email: 'lee@example.com',
+    createdAt: DateTime.now(),
+    updatedAt: DateTime.now(),
+  ),
+);
+
+print('Created user with ID: ${user.id}');
+```
+
+#### 4.5.2 Read (조회)
+
+```dart
+// 전체 조회
+final allUsers = await select(users).get();
+
+// 조건부 조회
+final activeUsers = await (select(users)
+      ..where((tbl) => tbl.isActive.equals(true)))
+    .get();
+
+// 단일 조회 (없으면 null)
+final user = await (select(users)
+      ..where((tbl) => tbl.userId.equals('user123')))
+    .getSingleOrNull();
+
+// 단일 조회 (없으면 예외)
+try {
+  final user = await (select(users)
+        ..where((tbl) => tbl.userId.equals('user123')))
+      .getSingle();
+} on StateError {
+  print('User not found');
+}
+
+// Limit, Offset
+final firstTen = await (select(users)..limit(10)).get();
+final nextTen = await (select(users)
+      ..limit(10, offset: 10))
+    .get();
+
+// 정렬
+final sortedUsers = await (select(users)
+      ..orderBy([(tbl) => OrderingTerm.desc(tbl.createdAt)]))
+    .get();
+```
+
+#### 4.5.3 Update (수정)
+
+```dart
+// 객체로 업데이트 (모든 필드)
+final user = await db.userDao.getUserById(1);
+if (user != null) {
+  await update(users).replace(
+    user.copyWith(
+      name: '수정된 이름',
+      updatedAt: DateTime.now(),
+    ),
+  );
+}
+
+// Companion으로 부분 업데이트
+await (update(users)..where((tbl) => tbl.id.equals(1))).write(
+  UsersCompanion(
+    name: const Value('새 이름'),
+    updatedAt: Value(DateTime.now()),
+  ),
+);
+
+// 조건부 일괄 업데이트
+await (update(users)..where((tbl) => tbl.isActive.equals(false))).write(
+  const UsersCompanion(
+    isActive: Value(true),
+  ),
+);
+
+// Custom Expression 사용
+await (update(users)..where((tbl) => tbl.id.equals(1))).write(
+  UsersCompanion(
+    // 값 증가
+    // loginCount: Value(users.loginCount + const Constant(1)),
+  ),
+);
+```
+
+#### 4.5.4 Delete (삭제)
+
+```dart
+// ID로 삭제
+final deletedCount = await (delete(users)..where((tbl) => tbl.id.equals(1))).go();
+
+// 조건부 삭제
+await (delete(users)..where((tbl) => tbl.isActive.equals(false))).go();
+
+// 전체 삭제 (주의!)
+await delete(users).go();
+
+// 삭제 후 확인
+if (deletedCount > 0) {
+  print('$deletedCount users deleted');
+}
+```
+
+### 4.6 복잡한 쿼리 작성
+
+#### 4.6.1 WHERE 조건
+
+```dart
+// AND 조건
+final results = await (select(users)
+      ..where((tbl) =>
+          tbl.isActive.equals(true) & tbl.email.isNotNull()))
+    .get();
+
+// OR 조건
+final results2 = await (select(users)
+      ..where((tbl) =>
+          tbl.name.like('%김%') | tbl.email.like('%kim%')))
+    .get();
+
+// BETWEEN
+final results3 = await (select(users)
+      ..where((tbl) =>
+          tbl.createdAt.isBetweenValues(
+            DateTime(2024, 1, 1),
+            DateTime(2024, 12, 31),
+          )))
+    .get();
+
+// IN
+final userIds = ['user1', 'user2', 'user3'];
+final results4 = await (select(users)
+      ..where((tbl) => tbl.userId.isIn(userIds)))
+    .get();
+
+// IS NULL / IS NOT NULL
+final usersWithoutAvatar = await (select(users)
+      ..where((tbl) => tbl.avatarUrl.isNull()))
+    .get();
+
+// LIKE
+final usersNamedKim = await (select(users)
+      ..where((tbl) => tbl.name.like('김%')))
+    .get();
+
+// ⚠️ 주의: Expression에 static .and() 메서드가 없습니다.
+// 실제로는 & 연산자를 사용하세요: (condition1) & (condition2)
+// Custom Expression
+final results5 = await (select(users)
+      ..where((tbl) =>
+          Expression<bool>.and([
+            tbl.isActive.equals(true),
+            tbl.createdAt.isBiggerOrEqualValue(DateTime(2024)),
+            tbl.email.like('%@gmail.com'),
+          ])))
+    .get();
+```
+
+#### 4.6.2 집계 함수
+
+```dart
+// COUNT
+final userCount = await (selectOnly(users)
+      ..addColumns([users.id.count()]))
+    .getSingle()
+    .then((row) => row.read(users.id.count()));
+
+// COUNT with condition
+final activeUserCount = await (selectOnly(users)
+      ..addColumns([users.id.count()])
+      ..where(users.isActive.equals(true)))
+    .getSingle()
+    .then((row) => row.read(users.id.count()));
+
+// SUM, AVG, MIN, MAX (예: Posts 테이블에 viewCount가 있다고 가정)
+// final stats = await (selectOnly(posts)
+//       ..addColumns([
+//         posts.viewCount.sum(),
+//         posts.viewCount.avg(),
+//         posts.viewCount.min(),
+//         posts.viewCount.max(),
+//       ]))
+//     .getSingle();
+```
+
+#### 4.6.3 GROUP BY와 HAVING
+
+```dart
+// GROUP BY (예: 작성자별 게시글 수)
+final postCountByAuthor = await (selectOnly(posts)
+      ..addColumns([posts.authorId, posts.id.count()])
+      ..groupBy([posts.authorId]))
+    .get();
+
+for (final row in postCountByAuthor) {
+  final authorId = row.read(posts.authorId);
+  final count = row.read(posts.id.count());
+  print('Author $authorId has $count posts');
+}
+
+// HAVING (게시글 10개 이상인 작성자만)
+final prolificAuthors = await (selectOnly(posts)
+      ..addColumns([posts.authorId, posts.id.count()])
+      ..groupBy([posts.authorId])
+      ..having(posts.id.count().isBiggerOrEqualValue(10)))
+    .get();
+```
+
+#### 4.6.4 서브쿼리
+
+```dart
+// EXISTS 서브쿼리 (게시글이 있는 사용자만)
+final usersWithPosts = await (select(users)
+      ..where((u) =>
+          existsQuery(
+            select(posts)..where((p) => p.authorId.equalsExp(u.id)),
+          )))
+    .get();
+
+// IN 서브쿼리
+final activeAuthorIds = selectOnly(posts)
+  ..addColumns([posts.authorId])
+  ..where(posts.status.equalsValue(PostStatus.published))
+  ..groupBy([posts.authorId]);
+
+final activeAuthors = await (select(users)
+      ..where((u) => u.id.isInQuery(activeAuthorIds)))
+    .get();
+```
+
+### 4.7 JOIN과 관계형 데이터
+
+#### 4.7.1 INNER JOIN
+
+```dart
+// 사용자와 게시글 JOIN
+final query = select(users).join([
+  innerJoin(posts, posts.authorId.equalsExp(users.id)),
+]);
+
+final results = await query.get();
+
+for (final row in results) {
+  final user = row.readTable(users);
+  final post = row.readTable(posts);
+
+  print('${user.name} wrote: ${post.title}');
+}
+```
+
+#### 4.7.2 LEFT OUTER JOIN
+
+```dart
+// 모든 사용자와 그들의 게시글 (게시글 없어도 포함)
+final query = select(users).join([
+  leftOuterJoin(posts, posts.authorId.equalsExp(users.id)),
+]);
+
+final results = await query.get();
+
+for (final row in results) {
+  final user = row.readTable(users);
+  final post = row.readTableOrNull(posts);  // null 가능
+
+  if (post != null) {
+    print('${user.name}: ${post.title}');
+  } else {
+    print('${user.name}: No posts');
+  }
+}
+```
+
+#### 4.7.3 다중 JOIN
+
+```dart
+// Comments 테이블이 있다고 가정
+// class Comments extends Table {
+//   IntColumn get id => integer().autoIncrement()();
+//   IntColumn get postId => integer().references(Posts, #id)();
+//   IntColumn get authorId => integer().references(Users, #id)();
+//   TextColumn get content => text()();
+// }
+
+// 사용자 -> 게시글 -> 댓글
+final query = select(users).join([
+  innerJoin(posts, posts.authorId.equalsExp(users.id)),
+  // innerJoin(comments, comments.postId.equalsExp(posts.id)),
+]);
+```
+
+#### 4.7.4 JOIN 결과를 DTO로 매핑
+
+```dart
+class UserWithPosts {
+  final User user;
+  final List<Post> posts;
+
+  UserWithPosts(this.user, this.posts);
+}
+
+Future<List<UserWithPosts>> getUsersWithPosts() async {
+  final query = select(users).join([
+    leftOuterJoin(posts, posts.authorId.equalsExp(users.id)),
+  ]);
+
+  final results = await query.get();
+
+  // 사용자별로 게시글 그룹화
+  final Map<int, UserWithPosts> userMap = {};
+
+  for (final row in results) {
+    final user = row.readTable(users);
+    final post = row.readTableOrNull(posts);
+
+    if (!userMap.containsKey(user.id)) {
+      userMap[user.id] = UserWithPosts(user, []);
+    }
+
+    if (post != null) {
+      userMap[user.id]!.posts.add(post);
+    }
+  }
+
+  return userMap.values.toList();
+}
+```
+
+### 4.8 트랜잭션 관리
+
+#### 4.8.1 기본 트랜잭션
+
+```dart
+// 트랜잭션: 모두 성공하거나 모두 실패
+await db.transaction(() async {
+  // 사용자 생성
+  final userId = await into(users).insert(
+    UsersCompanion.insert(
+      userId: 'user123',
+      name: '홍길동',
+      email: 'hong@example.com',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    ),
+  );
+
+  // 게시글 생성
+  await into(posts).insert(
+    PostsCompanion.insert(
+      postId: 'post123',
+      title: '첫 게시글',
+      content: '내용',
+      authorId: userId,
+      status: PostStatus.published,
+      createdAt: DateTime.now(),
+    ),
+  );
+
+  // 하나라도 실패하면 모두 롤백
+});
+```
+
+#### 4.8.2 예외 처리와 롤백
+
+```dart
+try {
+  await db.transaction(() async {
+    // 작업 1
+    await into(users).insert(user1);
+
+    // 작업 2 (실패 가능)
+    await into(users).insert(user2);
+
+    // 의도적으로 롤백하려면 예외 throw
+    if (someCondition) {
+      throw Exception('Transaction aborted');
+    }
+  });
+
+  print('Transaction committed');
+} catch (e) {
+  print('Transaction rolled back: $e');
+}
+```
+
+#### 4.8.3 중첩 트랜잭션 (Savepoint)
+
+```dart
+await db.transaction(() async {
+  // 외부 트랜잭션
+  await into(users).insert(user1);
+
+  try {
+    await db.transaction(() async {
+      // 내부 트랜잭션 (Savepoint)
+      await into(posts).insert(post1);
+      await into(posts).insert(post2);
+    });
+  } catch (e) {
+    // 내부 트랜잭션만 롤백, 외부는 계속
+    print('Inner transaction failed: $e');
+  }
+
+  // user1은 여전히 커밋됨
+});
+```
+
+### 4.9 실시간 쿼리와 Stream
+
+#### 4.9.1 watch() - 실시간 데이터 감지
+
+```dart
+// 전체 사용자 감지
+Stream<List<User>> watchUsers() {
+  return select(users).watch();
+}
+
+// UI에서 사용
+class UserListScreen extends StatelessWidget {
+  final AppDatabase db;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<User>>(
+      stream: db.userDao.watchAllUsers(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return CircularProgressIndicator();
+        }
+
+        final users = snapshot.data!;
+        return ListView.builder(
+          itemCount: users.length,
+          itemBuilder: (context, index) {
+            return ListTile(
+              title: Text(users[index].name),
+              subtitle: Text(users[index].email),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+```
+
+#### 4.9.2 조건부 Stream
+
+```dart
+// 활성 사용자만 감지
+Stream<List<User>> watchActiveUsers() {
+  return (select(users)..where((tbl) => tbl.isActive.equals(true))).watch();
+}
+
+// 특정 사용자 감지
+Stream<User?> watchUserById(int id) {
+  return (select(users)..where((tbl) => tbl.id.equals(id))).watchSingleOrNull();
+}
+```
+
+#### 4.9.3 JOIN Stream
+
+```dart
+Stream<List<TypedResult>> watchUsersWithPostCount() {
+  final query = select(users).join([
+    leftOuterJoin(posts, posts.authorId.equalsExp(users.id)),
+  ]);
+
+  return query.watch();
+}
+```
+
+#### 4.9.4 Stream 변환
+
+```dart
+// Stream 매핑
+Stream<List<String>> watchUserNames() {
+  return select(users)
+      .watch()
+      .map((users) => users.map((u) => u.name).toList());
+}
+
+// Stream 필터링
+Stream<List<User>> watchUsersCreatedToday() {
+  return select(users).watch().map((users) {
+    final today = DateTime.now();
+    return users.where((u) =>
+        u.createdAt.year == today.year &&
+        u.createdAt.month == today.month &&
+        u.createdAt.day == today.day).toList();
+  });
+}
+```
+
+### 4.10 마이그레이션 전략
+
+#### 4.10.1 스키마 버전 관리
+
+```dart
+@DriftDatabase(tables: [Users, Posts])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase() : super(_openConnection());
+
+  // 현재 스키마 버전
+  @override
+  int get schemaVersion => 3;  // 버전 변경 시 증가
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (Migrator m) async {
+        // 앱 최초 설치 시 모든 테이블 생성
+        await m.createAll();
+      },
+      onUpgrade: (Migrator m, int from, int to) async {
+        // 버전별 마이그레이션
+        if (from < 2) {
+          await _migrateV1ToV2(m);
+        }
+        if (from < 3) {
+          await _migrateV2ToV3(m);
+        }
+      },
+    );
+  }
+
+  Future<void> _migrateV1ToV2(Migrator m) async {
+    // 컬럼 추가
+    await m.addColumn(users, users.bio);
+    await m.addColumn(users, users.avatarUrl);
+  }
+
+  Future<void> _migrateV2ToV3(Migrator m) async {
+    // 테이블 생성
+    await m.createTable(posts);
+  }
+}
+```
+
+#### 4.10.2 컬럼 추가/삭제
+
+```dart
+// 컬럼 추가 (nullable 또는 default 필요)
+await m.addColumn(users, users.phoneNumber);
+
+// 컬럼 삭제 (SQLite는 직접 지원 안 함 → 재생성)
+await m.deleteTable('users');
+await m.createTable(users);
+
+// 데이터 보존하며 컬럼 삭제
+await customStatement('ALTER TABLE users RENAME TO users_old');
+await m.createTable(users);
+await customStatement('''
+  INSERT INTO users (id, name, email)
+  SELECT id, name, email FROM users_old
+''');
+await customStatement('DROP TABLE users_old');
+```
+
+#### 4.10.3 테이블 이름 변경
+
+```dart
+await m.renameTable(users, 'app_users');
+```
+
+#### 4.10.4 데이터 마이그레이션
+
+```dart
+Future<void> _migrateV2ToV3(Migrator m) async {
+  // 1. 새 테이블 생성
+  await m.createTable(posts);
+
+  // 2. 데이터 변환
+  final oldUsers = await customSelect('SELECT * FROM legacy_users').get();
+
+  for (final row in oldUsers) {
+    await into(users).insert(
+      UsersCompanion.insert(
+        userId: row.read<String>('user_id'),
+        name: row.read<String>('full_name'),
+        email: row.read<String>('email_address'),
+        createdAt: DateTime.parse(row.read<String>('created')),
+        updatedAt: DateTime.now(),
+      ),
+    );
+  }
+
+  // 3. 구 테이블 삭제
+  await customStatement('DROP TABLE legacy_users');
+}
+```
+
+#### 4.10.5 마이그레이션 검증
+
+```dart
+@override
+MigrationStrategy get migration {
+  return MigrationStrategy(
+    beforeOpen: (details) async {
+      // 마이그레이션 후 검증
+      if (details.hadUpgrade) {
+        // Foreign Key 체크 활성화
+        await customStatement('PRAGMA foreign_keys = ON');
+
+        // 데이터 무결성 검증
+        final result = await customSelect('PRAGMA integrity_check').getSingle();
+        if (result.read<String>('integrity_check') != 'ok') {
+          throw Exception('Database integrity check failed');
+        }
+      }
+    },
+  );
+}
+```
+
+### 4.11 인덱싱과 성능 최적화
+
+#### 4.11.1 인덱스 정의
+
+```dart
+class Users extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get userId => text().unique()();  // 자동으로 인덱스 생성
+  TextColumn get email => text()();
+  TextColumn get name => text()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+    {email},  // email에 UNIQUE 인덱스
+  ];
+}
+
+// ⚠️ 주의: Drift의 Table 클래스에는 indexes getter가 없습니다.
+// 실제로는 @TableIndex 어노테이션을 사용하거나
+// customStatement()로 인덱스를 생성하세요.
+// 복합 인덱스 (Custom Index)
+@override
+List<Index> get indexes => [
+  Index('user_email_name_idx', [email, name]),
+  Index('user_created_idx', [createdAt]),
+];
+```
+
+#### 4.11.2 쿼리 성능 분석 (EXPLAIN)
+
+```dart
+Future<void> analyzeQuery() async {
+  final query = select(users)..where((tbl) => tbl.email.equals('test@test.com'));
+
+  // EXPLAIN QUERY PLAN
+  final explanation = await customSelect(
+    'EXPLAIN QUERY PLAN ${query.constructQuery().sql}',
+    readsFrom: {users},
+  ).get();
+
+  for (final row in explanation) {
+    print(row.data);
+  }
+}
+
+// 결과 예시:
+// SCAN TABLE users  ← 인덱스 없음 (느림)
+// SEARCH TABLE users USING INDEX users_email_idx  ← 인덱스 사용 (빠름)
+```
+
+#### 4.11.3 인덱스 전략
+
+| 시나리오 | 인덱스 타입 | 예시 |
+|---------|-----------|------|
+| **Primary Key** | 자동 인덱스 | `autoIncrement()` |
+| **Unique 컬럼** | Unique 인덱스 | `unique()` |
+| **WHERE 절** | 단일 인덱스 | `Index('idx_email', [email])` |
+| **WHERE + ORDER BY** | 복합 인덱스 | `Index('idx_email_created', [email, createdAt])` |
+| **Foreign Key** | 인덱스 권장 | `Index('idx_author', [authorId])` |
+
+#### 4.11.4 성능 최적화 팁
+
+```dart
+// ❌ N+1 쿼리 (느림)
+final users = await select(users).get();
+for (final user in users) {
+  final posts = await (select(posts)
+        ..where((tbl) => tbl.authorId.equals(user.id)))
+      .get();
+}
+
+// ✅ JOIN 사용 (빠름)
+final query = select(users).join([
+  leftOuterJoin(posts, posts.authorId.equalsExp(users.id)),
+]);
+final results = await query.get();
+
+// ✅ Batch 삽입
+await batch((batch) {
+  for (final user in userList) {
+    batch.insert(users, user);
+  }
+});
+
+// ✅ 페이지네이션
+Future<List<User>> getUsers({int page = 0, int pageSize = 20}) {
+  return (select(users)
+        ..limit(pageSize, offset: page * pageSize))
+      .get();
+}
+```
+
+### 4.12 Full-Text Search (FTS)
+
+#### 4.12.1 FTS5 테이블 생성
+
+```dart
+// ⚠️ 주의: @UseDriftFts 어노테이션은 Drift에 존재하지 않습니다.
+// 실제 FTS 구현은 customStatement('CREATE VIRTUAL TABLE ... USING fts5(...)')을
+// 마이그레이션에서 사용하세요.
+// FTS 전용 가상 테이블
+@UseDriftFts(tokenizer: TokenizerType.porter)
+class ArticlesFts extends Table {
+  TextColumn get title => text()();
+  TextColumn get content => text()();
+}
+
+@DriftDatabase(tables: [Articles, ArticlesFts])
+class AppDatabase extends _$AppDatabase {
+  // ...
+}
+```
+
+#### 4.12.2 데이터 동기화
+
+```dart
+// 원본 테이블에 데이터 삽입 시 FTS 테이블에도 삽입
+Future<void> createArticle(ArticlesCompanion article) async {
+  await transaction(() async {
+    final id = await into(articles).insert(article);
+
+    // FTS 테이블에 동기화
+    await into(articlesFts).insert(
+      ArticlesFtsCompanion.insert(
+        rowid: Value(id),
+        title: article.title.value,
+        content: article.content.value,
+      ),
+    );
+  });
+}
+```
+
+#### 4.12.3 전문 검색 쿼리
+
+```dart
+// MATCH 쿼리
+Future<List<Article>> searchArticles(String query) async {
+  final ftsResults = await (select(articlesFts)
+        ..where((tbl) => tbl.match(query)))
+      .get();
+
+  final ids = ftsResults.map((row) => row.rowid).toList();
+
+  return (select(articles)..where((tbl) => tbl.id.isIn(ids))).get();
+}
+
+// 검색어 하이라이팅
+Future<List<Map<String, String>>> searchWithHighlight(String query) async {
+  final results = await customSelect(
+    '''
+    SELECT
+      snippet(articles_fts, 0, '<mark>', '</mark>', '...', 20) as title_snippet,
+      snippet(articles_fts, 1, '<mark>', '</mark>', '...', 40) as content_snippet
+    FROM articles_fts
+    WHERE articles_fts MATCH ?
+    ''',
+    variables: [Variable(query)],
+  ).get();
+
+  return results.map((row) => {
+    'title': row.read<String>('title_snippet'),
+    'content': row.read<String>('content_snippet'),
+  }).toList();
+}
+```
+
+### 4.13 대용량 데이터 처리
+
+#### 4.13.1 배치 삽입
+
+```dart
+import 'dart:math'; // min() 사용을 위해 필요
+
+// ❌ 비효율적 (각 삽입마다 트랜잭션)
+for (final user in users) {
+  await into(users).insert(user);
+}
+
+// ✅ 효율적 (단일 트랜잭션)
+await batch((batch) {
+  for (final user in users) {
+    batch.insert(users, user, mode: InsertMode.insertOrReplace);
+  }
+});
+
+// 대용량 데이터 청크 처리
+Future<void> insertLargeDataset(List<UsersCompanion> users) async {
+  const chunkSize = 500;
+
+  for (var i = 0; i < users.length; i += chunkSize) {
+    final chunk = users.sublist(
+      i,
+      min(i + chunkSize, users.length),
+    );
+
+    await batch((batch) {
+      for (final user in chunk) {
+        batch.insert(users, user);
+      }
+    });
+
+    // UI 업데이트를 위한 작은 딜레이
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+}
+```
+
+#### 4.13.2 페이지네이션
+
+```dart
+class PaginatedQuery<T> {
+  final int pageSize;
+  int _currentPage = 0;
+  bool _hasMore = true;
+
+  PaginatedQuery({this.pageSize = 20});
+
+  Future<List<T>> loadNextPage(
+    SimpleSelectStatement<$Table, T> Function() queryBuilder,
+  ) async {
+    if (!_hasMore) return [];
+
+    final query = queryBuilder()
+      ..limit(pageSize, offset: _currentPage * pageSize);
+
+    final results = await query.get();
+
+    if (results.length < pageSize) {
+      _hasMore = false;
+    }
+
+    _currentPage++;
+    return results;
+  }
+
+  void reset() {
+    _currentPage = 0;
+    _hasMore = true;
+  }
+}
+
+// 사용
+final pagination = PaginatedQuery<User>(pageSize: 50);
+
+final firstPage = await pagination.loadNextPage(() => select(users));
+final secondPage = await pagination.loadNextPage(() => select(users));
+```
+
+#### 4.13.3 백그라운드 처리
+
+```dart
+import 'dart:isolate';
+
+// ⚠️ 주의: background isolate에서는 path_provider (Flutter 플러그인)를 사용할 수 없습니다.
+// 메인 isolate에서 먼저 경로를 해석한 후, String path를 background isolate에 전달하세요.
+Future<void> processLargeDataInBackground(List<Map<String, dynamic>> data) async {
+  final result = await Isolate.run(() async {
+    // Isolate 내에서 새 데이터베이스 연결 필요
+    final db = AppDatabase();
+
+    await db.batch((batch) {
+      for (final item in data) {
+        batch.insert(
+          db.users,
+          UsersCompanion.insert(
+            userId: item['userId'],
+            name: item['name'],
+            email: item['email'],
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        );
+      }
+    });
+
+    await db.close();
+    return 'Success';
+  });
+
+  print(result);
+}
+```
+
+### 4.14 Clean Architecture 통합
+
+#### 4.14.1 DataSource Layer
+
+```dart
+// lib/features/user/data/datasources/user_local_datasource.dart
+abstract class UserLocalDataSource {
+  Future<UserDto?> getUserById(String userId);
+  Future<void> saveUser(UserDto user);
+  Future<void> deleteUser(String userId);
+  Stream<List<UserDto>> watchUsers();
+}
+
+class UserLocalDataSourceImpl implements UserLocalDataSource {
+  final AppDatabase _db;
+
+  UserLocalDataSourceImpl(this._db);
+
+  @override
+  Future<UserDto?> getUserById(String userId) async {
+    final user = await _db.userDao.getUserByUserId(userId);
+    return user != null ? _mapToDto(user) : null;
+  }
+
+  @override
+  Future<void> saveUser(UserDto dto) async {
+    await _db.userDao.createUser(
+      UsersCompanion.insert(
+        userId: dto.userId,
+        name: dto.name,
+        email: dto.email,
+        avatarUrl: Value(dto.avatarUrl),
+        createdAt: dto.createdAt,
+        updatedAt: dto.updatedAt,
+      ),
+    );
+  }
+
+  @override
+  Stream<List<UserDto>> watchUsers() {
+    return _db.userDao
+        .watchAllUsers()
+        .map((users) => users.map(_mapToDto).toList());
+  }
+
+  UserDto _mapToDto(User user) {
+    return UserDto(
+      id: user.id.toString(),
+      userId: user.userId,
+      name: user.name,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    );
+  }
+}
+```
+
+#### 4.14.2 Repository Layer
+
+```dart
+// lib/features/user/data/repositories/user_repository_impl.dart
+class UserRepositoryImpl implements UserRepository {
+  final UserRemoteDataSource _remoteDataSource;
+  final UserLocalDataSource _localDataSource;
+
+  UserRepositoryImpl(this._remoteDataSource, this._localDataSource);
+
+  @override
+  Future<Either<Failure, User>> getUser(String userId) async {
+    try {
+      // 1. 로컬 캐시 확인
+      final cached = await _localDataSource.getUserById(userId);
+      if (cached != null && !_isCacheExpired(cached)) {
+        return Right(cached.toEntity());
+      }
+
+      // 2. 네트워크에서 가져오기
+      final dto = await _remoteDataSource.getUser(userId);
+
+      // 3. 로컬에 저장
+      await _localDataSource.saveUser(dto);
+
+      return Right(dto.toEntity());
+    } on DioException catch (e) {
+      // 4. 네트워크 실패 시 만료된 캐시라도 반환
+      final cached = await _localDataSource.getUserById(userId);
+      if (cached != null) {
+        return Right(cached.toEntity());
+      }
+
+      return Left(NetworkFailure(e.message));
+    }
+  }
+
+  bool _isCacheExpired(UserDto dto) {
+    final now = DateTime.now();
+    final age = now.difference(dto.updatedAt);
+    return age.inHours > 1;  // 1시간 캐시
+  }
+}
+```
+
+#### 4.14.3 Dependency Injection
+
+```dart
+// lib/core/di/injection.dart
+@module
+abstract class DatabaseModule {
+  @lazySingleton
+  AppDatabase get database => AppDatabase();
+
+  @lazySingleton
+  UserDao userDao(AppDatabase db) => db.userDao;
+
+  @lazySingleton
+  PostDao postDao(AppDatabase db) => db.postDao;
+}
+
+@injectable
+class UserLocalDataSourceImpl implements UserLocalDataSource {
+  final AppDatabase _db;
+
+  UserLocalDataSourceImpl(this._db);
+  // ...
+}
+```
+
+### 4.15 Drift 테스트 전략
+
+#### 4.15.1 Database Mock
+
+```dart
+// test/mocks/mock_database.dart
+class MockAppDatabase extends Mock implements AppDatabase {}
+class MockUserDao extends Mock implements UserDao {}
+
+void main() {
+  late MockUserDao mockDao;
+  late UserLocalDataSourceImpl dataSource;
+
+  setUp(() {
+    mockDao = MockUserDao();
+    final mockDb = MockAppDatabase();
+    when(() => mockDb.userDao).thenReturn(mockDao);
+
+    dataSource = UserLocalDataSourceImpl(mockDb);
+  });
+
+  test('getUserById returns user when found', () async {
+    // Arrange
+    final user = User(
+      id: 1,
+      userId: 'user123',
+      name: 'Test User',
+      email: 'test@test.com',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      isActive: true,
+    );
+
+    when(() => mockDao.getUserByUserId('user123'))
+        .thenAnswer((_) async => user);
+
+    // Act
+    final result = await dataSource.getUserById('user123');
+
+    // Assert
+    expect(result, isNotNull);
+    expect(result!.userId, 'user123');
+  });
+}
+```
+
+#### 4.15.2 In-Memory Database 테스트
+
+```dart
+// test/database/user_dao_test.dart
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
+import 'package:test/test.dart';
+
+void main() {
+  late AppDatabase database;
+
+  setUp(() {
+    // ⚠️ 주의: 아래 .connect() 생성자를 사용하려면 AppDatabase 클래스에
+    // AppDatabase.connect(DatabaseConnection connection) : super(connection)
+    // 명명된 생성자를 추가해야 합니다.
+    // 메모리 데이터베이스 생성
+    database = AppDatabase.connect(
+      DatabaseConnection(NativeDatabase.memory()),
+    );
+  });
+
+  tearDown(() async {
+    await database.close();
+  });
+
+  group('UserDao', () {
+    test('createUser inserts user', () async {
+      // Arrange
+      final user = UsersCompanion.insert(
+        userId: 'user123',
+        name: 'Test User',
+        email: 'test@test.com',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      // Act
+      final id = await database.userDao.createUser(user);
+
+      // Assert
+      expect(id, greaterThan(0));
+
+      final inserted = await database.userDao.getUserById(id);
+      expect(inserted, isNotNull);
+      expect(inserted!.userId, 'user123');
+    });
+
+    test('updateUser modifies existing user', () async {
+      // Create
+      final id = await database.userDao.createUser(
+        UsersCompanion.insert(
+          userId: 'user123',
+          name: 'Original Name',
+          email: 'test@test.com',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+
+      // Update
+      final user = (await database.userDao.getUserById(id))!;
+      await database.userDao.updateUser(
+        user.copyWith(name: 'Updated Name'),
+      );
+
+      // Verify
+      final updated = await database.userDao.getUserById(id);
+      expect(updated!.name, 'Updated Name');
+    });
+
+    test('deleteUser removes user', () async {
+      // Create
+      final id = await database.userDao.createUser(
+        UsersCompanion.insert(
+          userId: 'user123',
+          name: 'Test',
+          email: 'test@test.com',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+
+      // Delete
+      await database.userDao.deleteUser(id);
+
+      // Verify
+      final deleted = await database.userDao.getUserById(id);
+      expect(deleted, isNull);
+    });
+  });
+}
+```
+
+## 5. Isar Plus Database
+
+### 5.0 Isar Plus 소개
 
 > **ℹ️ Isar Plus (2026년 1월 기준)**:
 > - 원본 Isar가 2024년 이후 개발 중단됨에 따라 커뮤니티에서 **Isar Plus**를 포크하여 유지보수하고 있습니다.
 > - `isar_plus: ^1.2.1` 사용을 권장합니다.
 > - 기존 Isar API와 호환되며, 버그 수정 및 Flutter 최신 버전 지원이 이루어지고 있습니다.
 
-#### 4.0.1 권장 대안
+#### 5.0.1 권장 대안
 
 | 대안 | 유형 | 장점 | 단점 | 마이그레이션 난이도 |
 |------|------|------|------|-----------------|
@@ -527,13 +1964,13 @@ abstract class PreferencesModule {
 | **Hive** | Key-Value | ✅ 가볍고 빠름<br>✅ 간단한 API<br>✅ 코드 생성 선택적 | ❌ 관계형 쿼리 약함<br>❌ 인덱싱 제한적 | 높음 (구조 단순화) |
 | **SQFlite** | SQL | ✅ 성숙한 생태계<br>✅ Raw SQL 지원<br>✅ 가볍고 안정적 | ❌ 타입 안전 없음<br>❌ 수동 쿼리 작성 | 중간 |
 
-#### 4.0.2 대안 선택 가이드
+#### 5.0.2 대안 선택 가이드
 
 ```
 새 프로젝트 선택 기준:
 
 복잡한 관계형 데이터 + SQL 가능
-  → Drift (추천!)
+  → Drift (추천!) → 섹션 4 참조
 
 Isar 같은 NoSQL + 고성능 필수
   → ObjectBox
@@ -545,71 +1982,10 @@ Raw SQL 제어 원함
   → SQFlite
 ```
 
-#### 4.0.3 Drift 예제 (Isar 대체)
+#### 5.0.3 Drift 마이그레이션 안내
 
-```dart
-// drift_database.dart
-import 'package:drift/drift.dart';
-import 'package:drift_flutter/drift_flutter.dart';
-
-part 'drift_database.g.dart';
-
-// 테이블 정의 (Isar Collection 대신)
-class Users extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get userId => text().unique()();
-  TextColumn get name => text()();
-  TextColumn get email => text().nullable()();
-  DateTimeColumn get cachedAt => dateTime()();
-}
-
-class SearchHistories extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get query => text()();
-  DateTimeColumn get searchedAt => dateTime()();
-  IntColumn get searchCount => integer().withDefault(const Constant(1))();
-}
-
-// Database 클래스
-@DriftDatabase(tables: [Users, SearchHistories])
-class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
-
-  @override
-  int get schemaVersion => 1;
-
-  static QueryExecutor _openConnection() {
-    return driftDatabase(name: 'app_database');
-  }
-
-  // 쿼리 예시 (Isar와 유사하지만 타입 안전)
-  Future<List<SearchHistory>> getSearchHistory({int limit = 10}) {
-    return (select(searchHistories)
-          ..orderBy([(t) => OrderingTerm.desc(t.searchedAt)])
-          ..limit(limit))
-        .get();
-  }
-
-  Future<void> saveSearchQuery(String query) async {
-    final existing = await (select(searchHistories)
-          ..where((tbl) => tbl.query.equals(query)))
-        .getSingleOrNull();
-
-    if (existing != null) {
-      await (update(searchHistories)..where((t) => t.id.equals(existing.id)))
-          .write(SearchHistoriesCompanion(
-        searchCount: Value(existing.searchCount + 1),
-        searchedAt: Value(DateTime.now()),
-      ));
-    } else {
-      await into(searchHistories).insert(SearchHistoriesCompanion.insert(
-        query: query,
-        searchedAt: DateTime.now(),
-      ));
-    }
-  }
-}
-```
+> Drift에 대한 상세한 가이드는 **섹션 4. Drift (SQLite)**를 참조하세요.
+> 테이블 정의, DAO 패턴, 복잡한 쿼리, JOIN, Stream, 마이그레이션 등을 포괄적으로 다루고 있습니다.
 
 **왜 Drift를 추천하나?**
 - ✅ 타입 안전한 쿼리 빌더
@@ -620,10 +1996,10 @@ class AppDatabase extends _$AppDatabase {
 
 ---
 
-> **아래 섹션 (4.1-4.4)은 기존 Isar 프로젝트 유지보수용입니다.**
-> 새 프로젝트는 위의 대안을 사용하세요.
+> **아래 섹션 (5.1-5.4)은 기존 Isar 프로젝트 유지보수용입니다.**
+> 새 프로젝트는 섹션 4의 Drift를 사용하세요.
 
-### 4.1 Collection 정의
+### 5.1 Collection 정의
 
 ```dart
 // core/core_storage/lib/src/database/collections/cached_user.dart
@@ -694,7 +2070,7 @@ class CartItem {
 }
 ```
 
-### 4.2 Isar Database 설정
+### 5.2 Isar Database 설정
 
 ```dart
 // core/core_storage/lib/src/database/isar_database.dart
@@ -760,7 +2136,7 @@ class IsarDatabaseImpl implements IsarDatabase {
 }
 ```
 
-### 4.3 Repository 패턴으로 Isar 사용
+### 5.3 Repository 패턴으로 Isar 사용
 
 ```dart
 // features/search/lib/data/datasources/search_local_datasource.dart
@@ -832,7 +2208,7 @@ class SearchLocalDataSourceImpl implements SearchLocalDataSource {
 }
 ```
 
-### 4.4 Cart DataSource 예시
+### 5.4 Cart DataSource 예시
 
 ```dart
 // features/cart/lib/data/datasources/cart_local_datasource.dart
@@ -926,11 +2302,11 @@ class CartLocalDataSourceImpl implements CartLocalDataSource {
 }
 ```
 
-## 5. Secure Storage
+## 6. Secure Storage
 
 > **✅ 업데이트 (2026년 1월)**: flutter_secure_storage v10.0.0 새로운 API 적용
 
-### 5.0 v10.0.0 Breaking Changes
+### 6.0 v10.0.0 Breaking Changes
 
 flutter_secure_storage v10.0.0에서 초기화 API가 변경되었습니다.
 
@@ -939,7 +2315,7 @@ flutter_secure_storage v10.0.0에서 초기화 API가 변경되었습니다.
 - Android/iOS 옵션 객체 변경
 - 더 명확한 네이밍과 타입 안전성
 
-### 5.1 SecureStorage 클래스 (v10.0.0)
+### 6.1 SecureStorage 클래스 (v10.0.0)
 
 ```dart
 // core/core_storage/lib/src/secure/secure_storage.dart
@@ -1014,7 +2390,7 @@ class TokenStorageImpl implements TokenStorage {
 }
 ```
 
-### 5.2 SecureStorage DI 설정 (v10.0.0)
+### 6.2 SecureStorage DI 설정 (v10.0.0)
 
 ```dart
 // core/core_storage/lib/src/modules/secure_storage_module.dart
@@ -1062,7 +2438,7 @@ abstract class SecureStorageModule {
 }
 ```
 
-#### 5.2.1 v9 → v10 마이그레이션
+#### 6.2.1 v9 → v10 마이그레이션
 
 **Before (v9.x):**
 ```dart
@@ -1103,7 +2479,7 @@ final storage = FlutterSecureStorage.standard(
 6. 더 세밀한 암호화 알고리즘 제어 가능
 7. Linux, macOS, Web, Windows 옵션 추가
 
-#### 5.2.2 Android 암호화 알고리즘 선택 (v10+)
+#### 6.2.2 Android 암호화 알고리즘 선택 (v10+)
 
 ```dart
 // 강력한 보안 (API 23+)
@@ -1121,7 +2497,7 @@ androidOptions: const AndroidSecureStorageOptions(
 ),
 ```
 
-### 5.3 플랫폼별 설정
+### 6.3 플랫폼별 설정
 
 ```xml
 <!-- android/app/src/main/AndroidManifest.xml -->
@@ -1134,9 +2510,9 @@ androidOptions: const AndroidSecureStorageOptions(
 </manifest>
 ```
 
-## 6. 통합 Storage Service
+## 7. 통합 Storage Service
 
-### 6.1 통합 인터페이스
+### 7.1 통합 인터페이스
 
 ```dart
 // core/core_storage/lib/src/storage_service.dart
@@ -1193,9 +2569,9 @@ class StorageServiceImpl implements StorageService {
 }
 ```
 
-## 7. Feature에서 사용
+## 8. Feature에서 사용
 
-### 7.1 Auth Feature - 토큰 저장
+### 8.1 Auth Feature - 토큰 저장
 
 ```dart
 // features/auth/lib/data/repositories/auth_repository_impl.dart
@@ -1263,7 +2639,7 @@ class AuthRepositoryImpl implements AuthRepository {
 }
 ```
 
-### 7.2 Settings Feature - 설정 관리
+### 8.2 Settings Feature - 설정 관리
 
 ```dart
 // features/settings/lib/data/repositories/settings_repository_impl.dart
@@ -1331,9 +2707,9 @@ class SettingsRepositoryImpl implements SettingsRepository {
 }
 ```
 
-## 8. 캐시 전략
+## 9. 캐시 전략
 
-### 8.1 캐시 만료 처리
+### 9.1 캐시 만료 처리
 
 ```dart
 // core/core_storage/lib/src/cache/cache_manager.dart
@@ -1409,9 +2785,9 @@ class CacheEntry {
 }
 ```
 
-## 9. 테스트
+## 10. 테스트
 
-### 9.1 SharedPreferences Mock
+### 10.1 SharedPreferences Mock
 
 ```dart
 // test/mocks/mock_shared_preferences.dart
@@ -1439,7 +2815,7 @@ void main() {
 }
 ```
 
-### 9.2 SecureStorage Mock
+### 10.2 SecureStorage Mock
 
 ```dart
 // test/mocks/mock_secure_storage.dart
@@ -1479,14 +2855,14 @@ void main() {
 }
 ```
 
-## 10. 데이터베이스 암호화
+## 11. 데이터베이스 암호화
 
-### 10.1 SQLCipher (Drift 암호화)
+### 11.1 SQLCipher (Drift 암호화)
 
 ```yaml
 # pubspec.yaml
 dependencies:
-  drift: ^2.15.0
+  drift: ^2.22.0
   sqlite3_flutter_libs: ^0.5.0
   sqlcipher_flutter_libs: ^0.6.0  # SQLCipher 지원
 ```
@@ -1521,7 +2897,7 @@ LazyDatabase openEncryptedDatabase(String name, String password) {
 }
 ```
 
-### 10.2 암호화 키 관리
+### 11.2 암호화 키 관리
 
 ```dart
 // import 'dart:math';
@@ -1556,7 +2932,7 @@ class DatabaseKeyManager {
 }
 ```
 
-### 10.3 ObjectBox 암호화
+### 11.3 ObjectBox 암호화
 
 ```dart
 // ObjectBox 암호화 설정
@@ -1572,7 +2948,7 @@ Future<Uint8List> _getEncryptionKey() async {
 }
 ```
 
-### 10.4 마이그레이션 시 암호화 유지
+### 11.4 마이그레이션 시 암호화 유지
 
 ```dart
 @override
@@ -1593,7 +2969,7 @@ MigrationStrategy get migration => MigrationStrategy(
 );
 ```
 
-### 10.5 주의사항
+### 11.5 주의사항
 
 | 항목 | 설명 |
 |-----|------|
@@ -1602,30 +2978,31 @@ MigrationStrategy get migration => MigrationStrategy(
 | 백업 | 암호화된 DB 백업 시 키도 함께 관리 필요 |
 | 디버깅 | DB Browser에서 암호화된 DB 열람 불가 |
 
-## 11. Best Practices
+## 12. Best Practices
 
-### 11.1 저장소 선택 가이드 (2026년 기준)
+### 12.1 저장소 선택 가이드 (2026년 기준)
 
 | 데이터 유형 | 저장소 | 이유 |
 |------------|--------|------|
 | 앱 설정 | SharedPreferencesAsync/WithCache | 간단한 Key-Value (새 async API) |
 | 토큰/비밀번호 | SecureStorage v10+ | 암호화 필요 (플랫폼별 강화) |
-| 복잡한 객체 | Drift 또는 ObjectBox | 쿼리/관계 필요 (⚠️ Isar 개발 중단) |
+| 복잡한 관계형 데이터 | Drift | 타입 안전 쿼리, JOIN, Stream (권장) |
+| 복잡한 객체 (NoSQL) | ObjectBox | 고성능 NoSQL (⚠️ Isar 개발 중단) |
 | 임시 캐시 | 메모리 + Drift/ObjectBox | 빠른 접근 + 영속성 |
 
-### 11.2 DO (이렇게 하세요) - 2026 업데이트
+### 12.2 DO (이렇게 하세요) - 2026 업데이트
 
 | 항목 | 설명 | 예시 |
 |------|------|------|
 | **새 API 사용** | SharedPreferencesAsync 또는 WithCache 사용 | ✅ `SharedPreferencesAsync()` |
 | **SecureStorage v10** | 새로운 초기화 API 사용 | ✅ `FlutterSecureStorage.standard()` |
-| **Isar 피하기** | 새 프로젝트는 Drift/ObjectBox | ✅ Drift로 시작 |
+| **Drift 사용** | 새 프로젝트는 Drift로 시작 | ✅ `@DriftDatabase(tables: [...])` |
 | **Key 상수화** | PreferenceKeys 클래스로 관리 | ✅ `PreferenceKeys.themeMode` |
 | **인터페이스 분리** | TokenStorage, AppPreferences 등 | ✅ 단일 책임 원칙 |
 | **비동기 초기화** | WithCache는 앱 시작 시 초기화 | ✅ `@preResolve` 사용 |
 | **타입 안전성** | Generic이 아닌 명시적 메서드 | ✅ `Future<String?>` 반환 |
 
-### 11.3 DON'T (하지 마세요) - 2026 업데이트
+### 12.3 DON'T (하지 마세요) - 2026 업데이트
 
 ```dart
 // ❌ Legacy SharedPreferences API 사용
@@ -1658,9 +3035,9 @@ final theme = prefs.getString('theme');  // await 필요!
 // ✅ await prefs.getString('theme');
 ```
 
-## 12. 마이그레이션
+## 13. 마이그레이션
 
-### 12.1 Isar 스키마 변경
+### 13.1 Isar 스키마 변경
 
 ```dart
 // 버전 관리가 필요한 경우
@@ -1676,7 +3053,7 @@ class CachedUser {
 }
 ```
 
-### 12.2 데이터 마이그레이션
+### 13.2 데이터 마이그레이션
 
 ```dart
 // app/lib/src/migration/storage_migration.dart
@@ -1710,7 +3087,9 @@ class StorageMigration {
 }
 ```
 
-## 13. 2026년 1월 업데이트 요약
+> **참고**: Drift의 마이그레이션 전략에 대해서는 섹션 4.10을 참조하세요.
+
+## 14. 2026년 1월 업데이트 요약
 
 이 문서는 2026년 1월 기준 최신 Flutter 로컬 저장소 베스트 프랙티스를 반영합니다.
 
@@ -1738,6 +3117,9 @@ class StorageMigration {
   - **ObjectBox** (NoSQL): Isar 유사, 고성능, 상업적 지원
 - **기존 프로젝트**: 동작은 하지만 장기적으로 마이그레이션 고려
 
+#### 4. Drift 심화 가이드 통합
+- **섹션 4에 Drift 종합 가이드 추가**: 테이블 정의, DAO 패턴, 복잡한 쿼리, JOIN, 트랜잭션, Stream, 마이그레이션, 인덱싱, FTS, 대용량 처리, Clean Architecture 통합, 테스트 전략
+
 ### 새 프로젝트 권장 스택 (2026)
 
 ```yaml
@@ -1748,15 +3130,17 @@ dependencies:
   # 보안 저장소
   flutter_secure_storage: ^10.0.0  # v10 새 API
 
-  # 데이터베이스 (택 1)
-  drift: ^2.14.0  # SQL, 권장!
-  # objectbox: ^2.4.0  # NoSQL 대안
+  # 데이터베이스 (권장: Drift)
+  drift: ^2.22.0              # SQL, 권장!
+  drift_flutter: ^0.2.0       # 간편한 DB 연결
+  sqlite3_flutter_libs: ^0.5.0
+  # objectbox: ^2.4.0         # NoSQL 대안
 
   injectable: ^2.5.0
   path_provider: ^2.1.2
 
 dev_dependencies:
-  drift_dev: ^2.14.0  # Drift 사용 시
+  drift_dev: ^2.22.0  # Drift 사용 시
   build_runner: ^2.4.15
 ```
 
@@ -1768,11 +3152,14 @@ dev_dependencies:
 - [ ] DI 설정 업데이트 (PreferencesModule, SecureStorageModule)
 - [ ] 테스트 코드 업데이트
 
-## 14. 참고
+## 15. 참고
 
 - [SharedPreferences 공식 문서](https://pub.dev/packages/shared_preferences)
 - [Flutter Secure Storage 공식 문서](https://pub.dev/packages/flutter_secure_storage)
 - [Drift 공식 문서](https://drift.simonbinder.eu/)
+- [Drift GitHub](https://github.com/simolus3/drift)
+- [SQLite 공식 문서](https://www.sqlite.org/docs.html)
+- [SQL Tutorial](https://www.sqltutorial.org/)
 - [ObjectBox 공식 문서](https://docs.objectbox.io/getting-started)
 - [Isar 공식 문서 (레거시)](https://isar.dev/)
 
@@ -1789,9 +3176,52 @@ SecureStorage로 JWT 토큰과 리프레시 토큰을 저장하고, 토큰 만�
 ### 과제 3: 로컬 캐시 전략
 API 응답 데이터를 로컬에 캐시하고, 네트워크 연결이 없을 때 캐시 데이터를 반환하는 Repository를 구현하세요.
 
+### 과제 4: Todo 앱 데이터베이스 구현 (Drift)
+
+Drift로 Todo 앱의 데이터베이스를 구현하세요.
+
+요구사항:
+1. `Todos` 테이블 생성 (id, title, description, completed, dueDate, createdAt)
+2. `TodoDao` 작성 (CRUD + watch 메서드)
+3. 완료된 할 일 필터링 쿼리
+4. 기한이 오늘인 할 일 조회
+5. Stream으로 실시간 할 일 목록 제공
+
+### 과제 5: 블로그 앱 관계형 데이터 (Drift)
+
+사용자, 게시글, 댓글 관계를 구현하세요.
+
+요구사항:
+1. `Users`, `Posts`, `Comments` 테이블 정의 (Foreign Key 설정)
+2. JOIN 쿼리로 사용자와 게시글 함께 조회
+3. 게시글별 댓글 수 집계 쿼리
+4. 트랜잭션으로 게시글과 댓글 함께 삭제
+5. 사용자별 게시글 수를 Stream으로 제공
+
+### 과제 6: 대용량 데이터 처리 (Drift)
+
+1,000개 이상의 데이터를 효율적으로 처리하는 로직을 구현하세요.
+
+요구사항:
+1. Batch Insert로 1,000개 데이터 삽입
+2. 페이지네이션 (페이지당 50개)
+3. 인덱스 추가 후 성능 비교 (EXPLAIN 사용)
+4. FTS로 전문 검색 구현
+5. 백그라운드 Isolate에서 대량 데이터 처리
+
 ## Self-Check
 
 - [ ] SharedPreferences와 SecureStorage의 용도 차이를 설명할 수 있는가?
 - [ ] 민감한 데이터(토큰, 비밀번호)를 SecureStorage에 저장하고 있는가?
 - [ ] 로컬 저장소 접근을 Repository 패턴으로 추상화할 수 있는가?
 - [ ] 캐시 만료 전략(TTL)을 구현할 수 있는가?
+- [ ] Drift의 테이블 정의와 DAO 패턴을 이해하고 구현할 수 있는가?
+- [ ] JOIN, 서브쿼리, 집계 함수를 사용하여 복잡한 쿼리를 작성할 수 있는가?
+- [ ] 트랜잭션으로 원자성을 보장하는 데이터 작업을 구현할 수 있는가?
+- [ ] watch()를 사용하여 실시간으로 UI를 업데이트하는 Stream을 제공할 수 있는가?
+- [ ] 스키마 버전 관리와 마이그레이션 전략을 설명하고 적용할 수 있는가?
+- [ ] 인덱스를 추가하고 EXPLAIN으로 쿼리 성능을 분석할 수 있는가?
+- [ ] FTS(Full-Text Search)를 구현하고 전문 검색 기능을 제공할 수 있는가?
+- [ ] SQLCipher로 데이터베이스를 암호화하고 키를 안전하게 관리할 수 있는가?
+- [ ] Batch Insert와 페이지네이션으로 대용량 데이터를 효율적으로 처리할 수 있는가?
+- [ ] Clean Architecture의 DataSource와 Repository 계층에 Drift를 통합할 수 있는가?

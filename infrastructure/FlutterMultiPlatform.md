@@ -607,286 +607,32 @@ class FileRepositoryImpl implements FileRepository {
 
 ## 6. 반응형 레이아웃
 
-### 6.1 브레이크포인트 정의
+> 📖 **반응형 디자인 패턴, Breakpoint 시스템, ResponsiveBuilder 위젯**은 [ResponsiveDesign.md](../patterns/ResponsiveDesign.md)를 참조하세요.
+
+**핵심 개념:**
+- **Breakpoint 기반 레이아웃 전환**: 화면 크기에 따라 Mobile/Tablet/Desktop 레이아웃 분기
+- **MediaQuery와 LayoutBuilder**: 런타임에 화면 크기 감지 및 동적 UI 구성
+- **Adaptive Navigation**: BottomNavigationBar → NavigationRail → NavigationDrawer 전환
+
+**간단한 예제:**
 
 ```dart
-// lib/core/utils/breakpoints.dart
-class Breakpoints {
-  // Mobile: 0 ~ 599
-  static const double mobile = 600;
-
-  // Tablet: 600 ~ 1023
-  static const double tablet = 1024;
-
-  // Desktop: 1024+
-  static const double desktop = 1024;
-
-  // Large Desktop: 1440+
-  static const double largeDesktop = 1440;
-}
-
-enum DeviceType {
-  mobile,
-  tablet,
-  desktop,
-  largeDesktop;
-}
-
-class ResponsiveHelper {
-  static DeviceType getDeviceType(double width) {
-    if (width >= Breakpoints.largeDesktop) {
-      return DeviceType.largeDesktop;
-    } else if (width >= Breakpoints.desktop) {
-      return DeviceType.desktop;
-    } else if (width >= Breakpoints.mobile) {
-      return DeviceType.tablet;
-    }
-    return DeviceType.mobile;
-  }
-
-  static bool isMobile(BuildContext context) {
-    return MediaQuery.of(context).size.width < Breakpoints.mobile;
-  }
-
-  static bool isTablet(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    return width >= Breakpoints.mobile && width < Breakpoints.desktop;
-  }
-
-  static bool isDesktop(BuildContext context) {
-    return MediaQuery.of(context).size.width >= Breakpoints.desktop;
-  }
-}
-```
-
-### 6.2 ResponsiveBuilder 위젯
-
-```dart
-// lib/core/utils/responsive_builder.dart
-import 'package:flutter/material.dart';
-import 'breakpoints.dart';
-
-class ResponsiveBuilder extends StatelessWidget {
-  final Widget Function(BuildContext context, DeviceType deviceType) builder;
-  final Widget? mobile;
-  final Widget? tablet;
-  final Widget? desktop;
-
-  const ResponsiveBuilder({
-    super.key,
-    required this.builder,
-  }) : mobile = null, tablet = null, desktop = null;
-
-  const ResponsiveBuilder.explicit({
-    super.key,
-    this.mobile,
-    this.tablet,
-    this.desktop,
-  }) : builder = _defaultBuilder;
-
-  static Widget _defaultBuilder(BuildContext context, DeviceType deviceType) {
-    throw UnimplementedError('Use explicit constructor');
-  }
+// 화면 크기에 따라 다른 레이아웃 표시
+class ResponsiveHomePage extends StatelessWidget {
+  const ResponsiveHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final deviceType = ResponsiveHelper.getDeviceType(constraints.maxWidth);
-
-        if (mobile != null || tablet != null || desktop != null) {
-          // Explicit mode
-          switch (deviceType) {
-            case DeviceType.mobile:
-              return mobile ?? tablet ?? desktop!;
-            case DeviceType.tablet:
-              return tablet ?? mobile ?? desktop!;
-            case DeviceType.desktop:
-            case DeviceType.largeDesktop:
-              return desktop ?? tablet ?? mobile!;
-          }
+        if (constraints.maxWidth < 600) {
+          return const MobileLayout();
+        } else if (constraints.maxWidth < 1200) {
+          return const TabletLayout();
+        } else {
+          return const DesktopLayout();
         }
-
-        // Builder mode
-        return builder(context, deviceType);
       },
-    );
-  }
-}
-```
-
-### 6.3 반응형 레이아웃 예제
-
-```dart
-// lib/features/home/presentation/home_page.dart
-import 'package:flutter/material.dart';
-import '../../../core/utils/responsive_builder.dart';
-import 'widgets/home_page_mobile.dart';
-import 'widgets/home_page_desktop.dart';
-
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return ResponsiveBuilder.explicit(
-      mobile: const HomePageMobile(),
-      tablet: const HomePageDesktop(), // Tablet uses desktop layout
-      desktop: const HomePageDesktop(),
-    );
-  }
-}
-```
-
-```dart
-// lib/features/home/presentation/widgets/home_page_desktop.dart
-import 'package:flutter/material.dart';
-
-class HomePageDesktop extends StatelessWidget {
-  const HomePageDesktop({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          // Sidebar Navigation
-          Container(
-            width: 250,
-            color: Theme.of(context).colorScheme.surfaceContainer,
-            child: const NavigationRail(
-              destinations: [
-                NavigationRailDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
-                  label: Text('Home'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.settings_outlined),
-                  selectedIcon: Icon(Icons.settings),
-                  label: Text('Settings'),
-                ),
-              ],
-              selectedIndex: 0,
-              onDestinationSelected: (index) {
-                setState(() { _selectedIndex = index; });
-              },
-            ),
-          ),
-
-          // Main Content
-          Expanded(
-            child: Column(
-              children: [
-                // App Bar
-                Container(
-                  height: 64,
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Theme.of(context).dividerColor,
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        'Dashboard',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.search),
-                        onPressed: () {},
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.notifications_outlined),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Content Area
-                Expanded(
-                  child: GridView.count(
-                    crossAxisCount: 3,
-                    padding: const EdgeInsets.all(24),
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    children: List.generate(
-                      12,
-                      (index) => Card(
-                        child: Center(
-                          child: Text('Card $index'),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-```
-
-```dart
-// lib/features/home/presentation/widgets/home_page_mobile.dart
-import 'package:flutter/material.dart';
-
-class HomePageMobile extends StatelessWidget {
-  const HomePageMobile({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      drawer: Drawer(
-        child: ListView(
-          children: [
-            const DrawerHeader(
-              child: Text('Menu'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Home'),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
-              onTap: () {},
-            ),
-          ],
-        ),
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: 12,
-        itemBuilder: (context, index) => Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            title: Text('Item $index'),
-          ),
-        ),
-      ),
     );
   }
 }

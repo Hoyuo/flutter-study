@@ -33,6 +33,10 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
+  # Isar Plus (NoSQL - 커뮤니티 포크)
+  isar_plus: ^1.2.1
+  isar_plus_flutter_libs: ^1.2.1
+
   # 상태 관리
   flutter_bloc: ^9.1.1
   freezed_annotation: ^3.1.0  # Dart 3.6 호환
@@ -51,6 +55,7 @@ dev_dependencies:
   build_runner: ^2.4.15
   drift_dev: ^2.22.0
   hive_generator: ^2.0.1
+  # isar_plus는 코드 생성기가 내장되어 있어 별도 generator 불필요
 ```
 
 **주요 변경사항 (2026년 기준):**
@@ -286,32 +291,33 @@ class ConnectivityBloc extends Bloc<ConnectivityEvent, ConnectivityState> {
 
 ## 로컬 데이터 저장
 
-### Drift (SQLite) 설정
+> 📖 **데이터베이스 설정 참고:**
+> - **Drift (SQLite)**: [LocalStorage.md](../infrastructure/LocalStorage.md#4-drift-sqlite) - 테이블 정의, DAO 패턴, CRUD, 마이그레이션
+> - **Isar Plus (NoSQL)**: [LocalStorage.md](../infrastructure/LocalStorage.md#4-isar-plus-database) - Collection 정의, Database 설정, Repository 패턴
+> - **Hive (Key-Value)**: [LocalStorage.md](../infrastructure/LocalStorage.md) - 경량 캐시 저장소
+
+이 문서에서는 데이터베이스 설정 방법 대신, **오프라인 동기화에 필요한 공통 구조**만 다룹니다.
+
+### 동기화 상태 정의
+
+오프라인 우선 앱에서는 모든 로컬 데이터에 동기화 상태를 추적해야 합니다.
 
 ```dart
-// lib/core/database/app_database.dart
-import 'dart:io';
-
-import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-
-part 'app_database.g.dart';
-
-// 테이블 정의
-class DiaryEntries extends Table {
-  TextColumn get id => text()();
-  TextColumn get title => text().withLength(min: 1, max: 200)();
-  TextColumn get content => text()();
-  DateTimeColumn get createdAt => dateTime()();
-  DateTimeColumn get updatedAt => dateTime()();
-  IntColumn get syncStatus => intEnum<SyncStatus>()();
-
-  @override
-  Set<Column> get primaryKey => {id};
+/// 데이터 동기화 상태 (Drift/Isar 공통)
+enum SyncStatus {
+  synced,    // 서버와 동기화됨
+  pending,   // 동기화 대기 중
+  failed,    // 동기화 실패
+  conflict,  // 충돌 발생
 }
+```
 
+### 동기화 큐 테이블 (Drift)
+
+동기화 큐는 오프라인에서 발생한 변경사항을 서버에 순서대로 전달하기 위한 구조입니다.
+
+```dart
+// 동기화 큐 테이블 정의 (Drift)
 class SyncQueue extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get entityType => text()();
@@ -325,122 +331,42 @@ class SyncQueue extends Table {
   @override
   Set<Column> get primaryKey => {id};
 }
-
-enum SyncStatus {
-  synced,    // 서버와 동기화됨
-  pending,   // 동기화 대기 중
-  failed,    // 동기화 실패
-  conflict,  // 충돌 발생
-}
-
-@DriftDatabase(tables: [DiaryEntries, SyncQueue])
-class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
-
-  @override
-  int get schemaVersion => 1;
-
-  @override
-  MigrationStrategy get migration {
-    return MigrationStrategy(
-      onCreate: (Migrator m) async {
-        await m.createAll();
-      },
-      onUpgrade: (Migrator m, int from, int to) async {
-        // 마이그레이션 로직
-      },
-    );
-  }
-}
-
-LazyDatabase _openConnection() {
-  return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'app_database.sqlite'));
-    return NativeDatabase.createInBackground(file);
-  });
-}
 ```
 
-### 로컬 데이터 소스
+### 로컬 데이터 소스 인터페이스
+
+DB에 관계없이 오프라인 우선 Repository가 의존할 공통 인터페이스입니다.
 
 ```dart
-// lib/core/database/local_data_source.dart
-import 'package:drift/drift.dart';
-import 'package:injectable/injectable.dart';
-
-import 'app_database.dart';
-
-@lazySingleton
-class DiaryLocalDataSource {
-  final AppDatabase _db;
-
-  DiaryLocalDataSource(this._db);
-
-  /// 모든 일기 조회
-  Future<List<DiaryEntry>> getAll() async {
-    return _db.select(_db.diaryEntries).get();
-  }
-
-  /// ID로 일기 조회
-  Future<DiaryEntry?> getById(String id) async {
-    return (_db.select(_db.diaryEntries)
-          ..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
-  }
-
-  /// 일기 저장 (upsert)
-  Future<void> save(DiaryEntriesCompanion entry) async {
-    await _db.into(_db.diaryEntries).insertOnConflictUpdate(entry);
-  }
-
-  /// 여러 일기 저장 (bulk upsert)
-  Future<void> saveAll(List<DiaryEntriesCompanion> entries) async {
-    await _db.batch((batch) {
-      batch.insertAllOnConflictUpdate(_db.diaryEntries, entries);
-    });
-  }
-
-  /// 일기 삭제
-  Future<void> delete(String id) async {
-    await (_db.delete(_db.diaryEntries)
-          ..where((t) => t.id.equals(id)))
-        .go();
-  }
-
-  /// 동기화 상태별 조회
-  Future<List<DiaryEntry>> getBySyncStatus(SyncStatus status) async {
-    return (_db.select(_db.diaryEntries)
-          ..where((t) => t.syncStatus.equals(status.index)))
-        .get();
-  }
-
-  /// 동기화 상태 업데이트
-  Future<void> updateSyncStatus(String id, SyncStatus status) async {
-    await (_db.update(_db.diaryEntries)
-          ..where((t) => t.id.equals(id)))
-        .write(DiaryEntriesCompanion(syncStatus: Value(status)));
-  }
-
-  /// 변경 스트림 (실시간 UI 업데이트용)
-  Stream<List<DiaryEntry>> watchAll() {
-    return _db.select(_db.diaryEntries).watch();
-  }
+/// 오프라인 우선 로컬 데이터 소스 인터페이스 (DB-agnostic)
+abstract class OfflineLocalDataSource<T> {
+  Future<List<T>> getAll();
+  Future<T?> getById(String id);
+  Future<void> save(T entity);
+  Future<void> saveAll(List<T> entities);
+  Future<void> delete(String id);
+  Future<List<T>> getBySyncStatus(SyncStatus status);
+  Future<void> updateSyncStatus(String id, SyncStatus status);
+  Stream<List<T>> watchAll();
 }
 ```
+
+> 💡 위 인터페이스를 Drift 또는 Isar Plus로 구현하세요. 구체적인 CRUD 구현은 각 DB 문서를 참조하세요.
 
 ## Repository 패턴 (오프라인 우선)
 
 ### Offline-First Repository
 
+> **구현 예시:** 아래 코드는 Drift 기반 구현 예시입니다. Isar Plus나 다른 DB를 사용하는 경우 `OfflineLocalDataSource<T>` 인터페이스를 해당 DB로 구현하세요.
+
 ```dart
-// lib/features/diary/data/repositories/diary_repository_impl.dart
+// lib/features/diary/data/repositories/diary_repository_impl.dart (Drift 기반 구현 예시)
 import 'package:fpdart/fpdart.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../../core/database/app_database.dart';
-import '../../../../core/database/local_data_source.dart';
+import '../../../../core/database/app_database.dart';  // Drift 기반
+import '../../../../core/database/local_data_source.dart';  // Drift 기반
 import '../../../../core/error/failure.dart';
 import '../../../../core/network/connectivity_service.dart';
 import '../../domain/entities/diary_entry.dart';

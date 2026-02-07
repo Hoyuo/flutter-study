@@ -51,9 +51,9 @@ Dart 언어와 Flutter 기본기
 핵심 아키텍처 패턴
 - Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, AdvancedStateManagement, PlatformIntegration, Riverpod, Isolates
 
-### Infrastructure (11개)
+### Infrastructure (10개)
 인프라 설정
-- DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD, Firebase, FlutterMultiPlatform, PackageDevelopment, **DatabaseAdvanced**, **CachingStrategy**
+- DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD, Firebase, FlutterMultiPlatform, PackageDevelopment, **CachingStrategy**
 
 ### Networking (4개)
 네트워크 통신
@@ -69,7 +69,7 @@ Dart 언어와 Flutter 기본기
 
 ### System (14개)
 시스템 품질
-- ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring, AdvancedPerformance, AdvancedTesting, AdvancedSecurity, ProductionOperations, **TeamCollaboration**
+- ErrorHandling, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring, AdvancedPerformance, AdvancedTesting, ProductionOperations, **TeamCollaboration**
 
 ### Projects (1개) - NEW
 실전 프로젝트 튜토리얼
@@ -82,7 +82,6 @@ Dart 언어와 Flutter 기본기
 - [PlatformIntegration](./core/PlatformIntegration.md) - Platform Channel, FFI, Pigeon
 - [AdvancedPerformance](./system/AdvancedPerformance.md) - Custom RenderObject, Impeller, Memory Profiling
 - [AdvancedTesting](./system/AdvancedTesting.md) - Property-based, Golden Test, E2E
-- [AdvancedSecurity](./system/AdvancedSecurity.md) - Code Obfuscation, RASP, mTLS
 - [AdvancedCICD](./infrastructure/AdvancedCICD.md) - Trunk-based, Canary Release, Shorebird
 - [ProductionOperations](./system/ProductionOperations.md) - SLO/SLI, Crash-free Rate, Incident Management
 - [AdvancedPatterns](./patterns/AdvancedPatterns.md) - DDD, Hexagonal, Saga, Specification

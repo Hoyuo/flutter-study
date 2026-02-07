@@ -1686,6 +1686,213 @@ class ThemeSettingsScreen extends StatelessWidget {
 }
 ```
 
+### 9.3 테마 전환 (Bloc 패턴)
+
+Bloc 패턴과 SharedPreferences를 활용한 테마 전환 구현입니다. 사용자 설정을 영구 저장하고, 시스템 테마 감지 + 수동 전환을 모두 지원합니다.
+
+#### Theme State
+
+```dart
+// lib/features/settings/presentation/bloc/theme_state.dart
+import 'package:flutter/material.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'theme_state.freezed.dart';
+
+@freezed
+class ThemeState with _$ThemeState {
+  const factory ThemeState({
+    required ThemeMode themeMode,
+  }) = _ThemeState;
+
+  factory ThemeState.initial() => const ThemeState(
+        themeMode: ThemeMode.system,
+      );
+}
+```
+
+#### Theme Event
+
+```dart
+// lib/features/settings/presentation/bloc/theme_event.dart
+import 'package:flutter/material.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'theme_event.freezed.dart';
+
+@freezed
+class ThemeEvent with _$ThemeEvent {
+  const factory ThemeEvent.changed(ThemeMode themeMode) = _Changed;
+  const factory ThemeEvent.loaded() = _Loaded;
+}
+```
+
+#### Theme Bloc
+
+```dart
+// lib/features/settings/presentation/bloc/theme_bloc.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../domain/usecases/get_theme_mode_usecase.dart';
+import '../../domain/usecases/save_theme_mode_usecase.dart';
+import 'theme_event.dart';
+import 'theme_state.dart';
+
+class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
+  final GetThemeModeUseCase _getThemeModeUseCase;
+  final SaveThemeModeUseCase _saveThemeModeUseCase;
+
+  ThemeBloc({
+    required GetThemeModeUseCase getThemeModeUseCase,
+    required SaveThemeModeUseCase saveThemeModeUseCase,
+  })  : _getThemeModeUseCase = getThemeModeUseCase,
+        _saveThemeModeUseCase = saveThemeModeUseCase,
+        super(ThemeState.initial()) {
+    on<ThemeEvent>((event, emit) async {
+      await event.when(
+        changed: (themeMode) => _onChanged(themeMode, emit),
+        loaded: () => _onLoaded(emit),
+      );
+    });
+  }
+
+  Future<void> _onLoaded(Emitter<ThemeState> emit) async {
+    final result = await _getThemeModeUseCase();
+
+    result.fold(
+      (failure) => null,  // 실패 시 기본값 유지
+      (themeMode) => emit(state.copyWith(themeMode: themeMode)),
+    );
+  }
+
+  Future<void> _onChanged(
+    ThemeMode themeMode,
+    Emitter<ThemeState> emit,
+  ) async {
+    emit(state.copyWith(themeMode: themeMode));
+    await _saveThemeModeUseCase(themeMode);
+  }
+}
+```
+
+#### Theme 저장/로드 (Repository)
+
+```dart
+// lib/features/settings/data/repositories/theme_repository_impl.dart
+import 'package:flutter/material.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class ThemeRepositoryImpl implements ThemeRepository {
+  final SharedPreferences _prefs;
+
+  static const _themeModeKey = 'theme_mode';
+
+  ThemeRepositoryImpl(this._prefs);
+
+  @override
+  Future<Either<Failure, ThemeMode>> getThemeMode() async {
+    try {
+      final value = _prefs.getString(_themeModeKey);
+
+      final themeMode = switch (value) {
+        'light' => ThemeMode.light,
+        'dark' => ThemeMode.dark,
+        _ => ThemeMode.system,
+      };
+
+      return Right(themeMode);
+    } catch (e) {
+      return Left(Failure.cache(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> saveThemeMode(ThemeMode themeMode) async {
+    try {
+      final value = switch (themeMode) {
+        ThemeMode.light => 'light',
+        ThemeMode.dark => 'dark',
+        ThemeMode.system => 'system',
+      };
+
+      await _prefs.setString(_themeModeKey, value);
+      return const Right(null);
+    } catch (e) {
+      return Left(Failure.cache(message: e.toString()));
+    }
+  }
+}
+```
+
+#### App에 ThemeBloc 적용
+
+```dart
+// lib/main.dart
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, state) {
+        return MaterialApp(
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: state.themeMode,
+          // ...
+        );
+      },
+    );
+  }
+}
+```
+
+#### 테마 설정 UI (Bloc 버전)
+
+```dart
+class ThemeSettingsPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('테마 설정')),
+          body: ListView(
+            children: [
+              RadioListTile<ThemeMode>(
+                title: const Text('시스템 설정'),
+                subtitle: const Text('기기 설정에 따라 자동 변경'),
+                value: ThemeMode.system,
+                groupValue: state.themeMode,
+                onChanged: (value) {
+                  context.read<ThemeBloc>().add(ThemeEvent.changed(value!));
+                },
+              ),
+              RadioListTile<ThemeMode>(
+                title: const Text('라이트 모드'),
+                value: ThemeMode.light,
+                groupValue: state.themeMode,
+                onChanged: (value) {
+                  context.read<ThemeBloc>().add(ThemeEvent.changed(value!));
+                },
+              ),
+              RadioListTile<ThemeMode>(
+                title: const Text('다크 모드'),
+                value: ThemeMode.dark,
+                groupValue: state.themeMode,
+                onChanged: (value) {
+                  context.read<ThemeBloc>().add(ThemeEvent.changed(value!));
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+```
+
 ---
 
 ## 10. Widgetbook으로 컴포넌트 카탈로그 구축
