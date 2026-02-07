@@ -1,5 +1,8 @@
 # Flutter Networking Guide - Part 1: Dio
 
+> **난이도**: 중급 | **카테고리**: networking
+> **선행 학습**: [Architecture](../core/Architecture.md), [ErrorHandling](../core/ErrorHandling.md) | **예상 학습 시간**: 2h
+
 > 이 문서는 Dio를 사용한 네트워크 통신 설정 및 패턴을 설명합니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:

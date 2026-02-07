@@ -1,5 +1,9 @@
 # Dart 언어 심화 가이드
 
+> **난이도**: 중급 | **카테고리**: fundamentals
+> **선행 학습**: 없음
+> **예상 학습 시간**: 2h
+
 > Flutter Clean Architecture + Bloc 패턴 기반 교육 자료
 > Package versions: flutter_bloc ^9.1.1, freezed ^3.2.4, fpdart ^1.2.0, go_router ^17.0.1, get_it ^9.2.0, injectable ^2.5.0
 
@@ -780,7 +784,7 @@ Future<void> computeExample() async {
 
 ### 9.4 참고
 
-Isolate에 대한 더 자세한 내용은 [core/Isolates.md](../core/Isolates.md)를 참조하세요.
+Isolate에 대한 더 자세한 내용은 [system/Isolates.md](../system/Isolates.md)를 참조하세요.
 
 ---
 
@@ -847,6 +851,17 @@ Bloc 패턴을 사용하여 Todo 앱의 상태 관리를 구현하세요:
 - [ ] build_runner와 code generation의 원리를 이해하고, freezed/injectable을 활용할 수 있다
 - [ ] WeakReference를 사용한 캐시 패턴을 이해하고, Stream 구독 해제로 메모리 누수를 방지할 수 있다
 - [ ] Isolate의 메모리 격리 개념을 이해하고, compute 함수로 무거운 연산을 백그라운드에서 처리할 수 있다
+
+---
+
+## 관련 문서
+
+**다음 단계**:
+- [WidgetFundamentals](./WidgetFundamentals.md) - Widget/Element/RenderObject 트리와 BuildContext 학습
+
+**심화 학습**:
+- [system/Isolates](../system/Isolates.md) - Isolate 상세 가이드
+- [core/ErrorHandling](../core/ErrorHandling.md) - 에러 처리 패턴
 
 ---
 

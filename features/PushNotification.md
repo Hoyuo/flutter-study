@@ -1,5 +1,8 @@
 # Flutter 푸시 알림 가이드 (FCM + Local Notification)
 
+> **난이도**: 고급 | **카테고리**: features
+> **선행 학습**: [Firebase](../infrastructure/Firebase.md) | **예상 학습 시간**: 2h
+
 ## 학습 목표
 
 이 문서를 학습하면 다음을 할 수 있습니다:

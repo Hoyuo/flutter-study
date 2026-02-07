@@ -1,5 +1,9 @@
 # Advanced Design Patterns - Flutter 고급 설계 패턴
 
+> **난이도**: 시니어 | **카테고리**: advanced
+> **선행 학습**: [Architecture](../core/Architecture.md), [Bloc](../core/Bloc.md)
+> **예상 학습 시간**: 2h
+
 > 이 문서는 10년 이상 경력의 시니어 개발자를 대상으로 작성된 Flutter 고급 설계 패턴 가이드입니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
@@ -402,9 +406,9 @@ class OrderRepositoryImpl implements OrderRepository {
 
 ## 5. CQRS Pattern
 
-### 5.1 개념
+### 5.1 핵심 개념
 
-Command(쓰기)와 Query(읽기)를 분리합니다.
+CQRS(Command Query Responsibility Segregation)는 Command(쓰기)와 Query(읽기)의 책임을 분리하는 패턴입니다. 읽기와 쓰기의 성능 요구사항이 다를 때, 또는 복잡한 도메인 로직과 단순한 조회 로직을 분리할 때 유용합니다.
 
 ```
 Command Side                  Query Side
@@ -417,108 +421,15 @@ Command Side                  Query Side
 └──────────────┘            └──────────────┘
 ```
 
-### 5.2 Command 구현
-
-```dart
-abstract class Command {}
-
-class CreateOrderCommand extends Command {
-  final String customerId;
-  final List<OrderItem> items;
-  
-  CreateOrderCommand(this.customerId, this.items);
-}
-
-abstract class CommandHandler<T extends Command, R> {
-  Future<Either<Failure, R>> handle(T command);
-}
-
-class CreateOrderCommandHandler 
-    implements CommandHandler<CreateOrderCommand, String> {
-  final OrderRepository repository;
-  final EventPublisher eventPublisher;
-  
-  CreateOrderCommandHandler(this.repository, this.eventPublisher);
-  
-  @override
-  Future<Either<Failure, String>> handle(CreateOrderCommand cmd) async {
-    final order = Order.create(cmd.customerId, cmd.items);
-    
-    await repository.save(order);
-    
-    await eventPublisher.publish(OrderCreatedEvent(order.id));
-    
-    return Right(order.id);
-  }
-}
-```
-
-### 5.3 Query 구현
-
-```dart
-abstract class Query<R> {}
-
-class GetOrderDetailsQuery extends Query<OrderDetailsDto> {
-  final String orderId;
-  GetOrderDetailsQuery(this.orderId);
-}
-
-abstract class QueryHandler<T extends Query<R>, R> {
-  Future<Either<Failure, R>> handle(T query);
-}
-
-class GetOrderDetailsQueryHandler 
-    implements QueryHandler<GetOrderDetailsQuery, OrderDetailsDto> {
-  final OrderReadRepository readRepo;
-  
-  GetOrderDetailsQueryHandler(this.readRepo);
-  
-  @override
-  Future<Either<Failure, OrderDetailsDto>> handle(
-    GetOrderDetailsQuery query,
-  ) async {
-    final dto = await readRepo.getOrderDetails(query.orderId);
-    return dto != null ? Right(dto) : Left(NotFoundFailure());
-  }
-}
-```
-
-### 5.4 CQRS Bus
-
-```dart
-class CQRSBus {
-  final Map<Type, CommandHandler> _commandHandlers = {};
-  final Map<Type, QueryHandler> _queryHandlers = {};
-  
-  void registerCommand<T extends Command, R>(CommandHandler<T, R> handler) {
-    _commandHandlers[T] = handler;
-  }
-  
-  void registerQuery<T extends Query<R>, R>(QueryHandler<T, R> handler) {
-    _queryHandlers[T] = handler;
-  }
-  
-  Future<Either<Failure, R>> send<T extends Command, R>(T command) async {
-    final handler = _commandHandlers[T] as CommandHandler<T, R>?;
-    if (handler == null) throw StateError('No handler for $T');
-    return handler.handle(command);
-  }
-  
-  Future<Either<Failure, R>> query<T extends Query<R>, R>(T query) async {
-    final handler = _queryHandlers[T] as QueryHandler<T, R>?;
-    if (handler == null) throw StateError('No handler for $T');
-    return handler.handle(query);
-  }
-}
-```
+**CQRS의 상세 구현과 Bloc 통합은 [AdvancedStateManagement](./AdvancedStateManagement.md#5-cqrs-패턴) 참조**
 
 ---
 
 ## 6. Event Sourcing
 
-### 6.1 개념
+### 6.1 핵심 개념
 
-상태 대신 이벤트를 저장합니다.
+Event Sourcing은 현재 상태를 직접 저장하는 대신, 상태 변경을 발생시킨 모든 이벤트를 저장하는 패턴입니다. 감사 로그가 필수적이거나, 시간 여행 디버깅이 필요하거나, 복잡한 Undo/Redo 기능이 필요할 때 적합합니다.
 
 ```
 Traditional                Event Sourcing
@@ -535,146 +446,7 @@ Traditional                Event Sourcing
                           └─────────────┘
 ```
 
-### 6.2 Event Store
-
-```dart
-abstract class DomainEvent {
-  final String aggregateId;
-  final int version;
-  final DateTime occurredAt;
-  
-  DomainEvent(this.aggregateId, this.version, this.occurredAt);
-  
-  Map<String, dynamic> toJson();
-  String get eventType;
-}
-
-class OrderCreatedEvent extends DomainEvent {
-  final String customerId;
-  final List<OrderItem> items;
-  
-  OrderCreatedEvent(String aggregateId, int version, this.customerId, this.items)
-    : super(aggregateId, version, DateTime.now());
-  
-  @override
-  String get eventType => 'OrderCreated';
-  
-  @override
-  Map<String, dynamic> toJson() => {
-    'aggregateId': aggregateId,
-    'version': version,
-    'customerId': customerId,
-    'items': items.map((i) => i.toJson()).toList(),
-  };
-}
-
-abstract class EventStore {
-  Future<void> saveEvents(String aggregateId, List<DomainEvent> events, int expectedVersion);
-  Future<List<DomainEvent>> getEvents(String aggregateId);
-}
-```
-
-### 6.3 Event Sourced Aggregate
-
-```dart
-class EventSourcedOrder {
-  final String id;
-  int version = 0;
-  final List<DomainEvent> uncommittedEvents = [];
-  
-  String? customerId;
-  List<OrderItem> items = [];
-  OrderStatus status = OrderStatus.pending;
-  
-  EventSourcedOrder(this.id);
-  
-  factory EventSourcedOrder.create(String id, String customerId, List<OrderItem> items) {
-    final order = EventSourcedOrder(id);
-    final event = OrderCreatedEvent(id, 1, customerId, items);
-    order._applyEvent(event, isNew: true);
-    return order;
-  }
-  
-  void confirm() {
-    if (status != OrderStatus.pending) {
-      throw StateError('Can only confirm pending orders');
-    }
-    final event = OrderConfirmedEvent(id, version + 1);
-    _applyEvent(event, isNew: true);
-  }
-  
-  void _applyEvent(DomainEvent event, {bool isNew = false}) {
-    if (event is OrderCreatedEvent) {
-      customerId = event.customerId;
-      items = event.items;
-      status = OrderStatus.pending;
-    } else if (event is OrderConfirmedEvent) {
-      status = OrderStatus.confirmed;
-    }
-    
-    version = event.version;
-    if (isNew) uncommittedEvents.add(event);
-  }
-  
-  void loadFromHistory(List<DomainEvent> history) {
-    for (final event in history) {
-      _applyEvent(event);
-    }
-  }
-}
-```
-
-### 6.4 Snapshot 최적화
-
-```dart
-class Snapshot {
-  final String aggregateId;
-  final int version;
-  final Map<String, dynamic> state;
-  
-  Snapshot(this.aggregateId, this.version, this.state);
-}
-
-class SnapshotStore {
-  Future<Snapshot?> getLatest(String aggregateId) async {
-    // Load latest snapshot from DB
-  }
-  
-  Future<void> save(Snapshot snapshot) async {
-    // Save snapshot to DB
-  }
-}
-
-class OptimizedEventSourcedRepository {
-  final EventStore eventStore;
-  final SnapshotStore snapshotStore;
-  
-  OptimizedEventSourcedRepository(this.eventStore, this.snapshotStore);
-  
-  Future<EventSourcedOrder?> load(String orderId) async {
-    // 1. Load latest snapshot
-    final snapshot = await snapshotStore.getLatest(orderId);
-    
-    EventSourcedOrder order;
-    int fromVersion;
-    
-    if (snapshot != null) {
-      order = EventSourcedOrder(orderId);
-      _restoreFromSnapshot(order, snapshot);
-      fromVersion = snapshot.version;
-    } else {
-      order = EventSourcedOrder(orderId);
-      fromVersion = 0;
-    }
-    
-    // 2. Load events since snapshot
-    final events = await eventStore.getEventsSince(orderId, fromVersion);
-    order.loadFromHistory(events);
-    
-    return order;
-  }
-}
-```
+**Event Sourcing의 상세 구현, Aggregate 패턴, Bloc 통합, Snapshot 최적화는 [AdvancedStateManagement](./AdvancedStateManagement.md#4-event-sourcing-패턴) 참조**
 
 ---
 
@@ -734,6 +506,7 @@ class OptimizedEventSourcedRepository {
 
 | 문서 | 관련 패턴 | 설명 |
 |------|----------|------|
+| [AdvancedStateManagement.md](./AdvancedStateManagement.md) | CQRS, Event Sourcing | CQRS/Event Sourcing 상세 구현 및 Bloc 통합 |
 | Architecture.md | DDD, Hexagonal | Clean Architecture 기본 |
 | Bloc.md | CQRS, Event Sourcing | 상태 관리 통합 |
 | Fpdart.md | 모든 패턴 | Either, Option 활용 |

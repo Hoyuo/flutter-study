@@ -1,5 +1,8 @@
 # Flutter 다국어 처리 가이드 (easy_localization)
 
+> **난이도**: 중급 | **카테고리**: features
+> **선행 학습**: [Architecture](../core/Architecture.md) | **예상 학습 시간**: 1.5h
+
 ## 학습 목표
 
 이 문서를 학습하면 다음을 할 수 있습니다:

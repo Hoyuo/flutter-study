@@ -2,6 +2,9 @@
 
 > 앱 외부(웹 브라우저, 이메일, SMS 등)에서 특정 URL을 통해 Flutter 앱의 특정 화면으로 직접 이동하는 기술을 구현하는 방법을 다룹니다. URL Scheme, Universal Links(iOS), App Links(Android), Firebase Dynamic Links를 활용하여 사용자 경험을 개선하고, go_router와 Bloc을 연동하여 Clean Architecture 기반의 딥링크 처리 시스템을 구축합니다.
 
+> **난이도**: 고급 | **카테고리**: features
+> **선행 학습**: [Navigation](./Navigation.md) | **예상 학습 시간**: 2h
+
 ## 학습 목표
 
 이 문서를 학습하면 다음을 할 수 있습니다:

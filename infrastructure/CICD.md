@@ -1,5 +1,9 @@
 # Flutter CI/CD 통합 가이드 (기본 + 심화)
 
+> **난이도**: 시니어 | **카테고리**: infrastructure
+> **선행 학습**: [Testing](../system/Testing.md)
+> **예상 학습 시간**: 3h
+
 > 이 문서는 Flutter 앱의 CI/CD 파이프라인 설정(기본)부터 Trunk-based Development, Feature Flag, Canary Release, Shorebird OTA 등 프로덕션 수준 고급 전략(심화)까지 통합하여 다룹니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:

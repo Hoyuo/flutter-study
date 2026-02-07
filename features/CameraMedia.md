@@ -2,6 +2,9 @@
 
 > Flutter에서 카메라, 갤러리, 비디오 재생, QR 스캔 등 미디어 관련 기능을 Clean Architecture와 Bloc 패턴으로 구현하는 종합 가이드입니다. camera, image_picker, video_player, mobile_scanner 패키지를 활용한 실전 예제를 다룹니다.
 
+> **난이도**: 중급 | **카테고리**: features
+> **선행 학습**: [Permission](./Permission.md) | **예상 학습 시간**: 1.5h
+
 ## 학습 목표
 
 이 문서를 학습하면 다음을 할 수 있습니다:

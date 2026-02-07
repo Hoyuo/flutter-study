@@ -1,5 +1,9 @@
 # Flutter 반응형 디자인 가이드
 
+> **난이도**: 중급 | **카테고리**: features
+> **선행 학습**: [LayoutSystem](../fundamentals/LayoutSystem.md)
+> **예상 학습 시간**: 2h
+
 > 이 문서는 Flutter에서 다양한 화면 크기와 디바이스(스마트폰, 태블릿, 폴더블, 웹, 데스크톱)에 대응하는 반응형 디자인 구현 방법을 다룹니다. MediaQuery, LayoutBuilder, Adaptive Layout 패턴을 활용하여 모든 플랫폼에서 최적화된 사용자 경험을 제공하는 방법을 학습합니다.
 
 > **학습 목표**:
@@ -1872,6 +1876,14 @@ Samsung Galaxy Fold와 같은 폴더블 디바이스를 고려한 이메일 앱�
 - [ ] Shortcuts와 Actions를 활용하여 키보드 단축키를 정의하고, 데스크톱 환경에서 생산성을 높일 수 있다
 - [ ] 텍스트 스케일링을 제한(clamp)하고 Semantics를 활용하여 접근성을 고려한 UI를 구현할 수 있다
 - [ ] 디바이스 픽셀 비율과 화면 크기를 고려하여 적절한 해상도의 이미지를 선택적으로 로딩하는 반응형 이미지 시스템을 구현할 수 있다
+
+---
+
+## 관련 문서
+
+- [LayoutSystem](../fundamentals/LayoutSystem.md) - Flutter 레이아웃 시스템 기초
+- [WidgetFundamentals](../fundamentals/WidgetFundamentals.md) - Widget 크기와 제약 조건
+- [DesignSystem](../fundamentals/DesignSystem.md) - 디자인 토큰과 반응형 스타일링
 
 ---
 

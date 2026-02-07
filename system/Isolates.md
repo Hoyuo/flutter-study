@@ -1,5 +1,8 @@
 # Flutter Isolate & 동시성 가이드
 
+> **난이도**: 고급 | **카테고리**: system
+> **선행 학습**: [DartAdvanced](../fundamentals/DartAdvanced.md) | **예상 학습 시간**: 2h
+
 > **Flutter 3.27+ / Dart 3.6+** | flutter_bloc ^9.1.1 | workmanager ^0.5.2 | flutter_background_service ^5.0.10
 
 > Flutter의 Isolate를 활용한 동시성 프로그래밍 완벽 가이드. Event Loop 이해부터 백그라운드 작업, Worker Isolate, WorkManager, 그리고 실전 패턴까지 Clean Architecture와 Bloc을 활용한 실무 예제로 학습합니다.

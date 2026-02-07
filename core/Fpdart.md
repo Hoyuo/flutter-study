@@ -1,5 +1,9 @@
 # Flutter Functional Programming with fpdart
 
+> **난이도**: 중급 | **카테고리**: core
+> **선행 학습**: [Architecture](./Architecture.md)
+> **예상 학습 시간**: 1.5h
+
 > **Package Versions (2025-01 기준)**
 > - fpdart: ^1.2.0
 
@@ -127,11 +131,9 @@ class UserRepositoryImpl implements UserRepository {
     try {
       final dto = await _dataSource.getUser(id);
       return Right(_mapper.toEntity(dto));
-    // import 'package:dio/dio.dart';
-    } on DioException catch (e) {
-      return Left(_mapDioError(e));
     } catch (e) {
-      return const Left(UserFailure.unknown());
+      // Exception을 Failure로 변환
+      return Left(_handleError(e));
     }
   }
 
@@ -140,19 +142,23 @@ class UserRepositoryImpl implements UserRepository {
     try {
       await _dataSource.updateUser(_mapper.toDto(user));
       return const Right(unit);  // 성공, 반환값 없음
-    } on DioException catch (e) {
-      return Left(_mapDioError(e));
     } catch (e) {
-      return const Left(UserFailure.unknown());
+      return Left(_handleError(e));
     }
   }
 
-  UserFailure _mapDioError(DioException e) {
-    // 에러 매핑 로직
-    return const UserFailure.network();
+  UserFailure _handleError(Object e) {
+    // Exception → Failure 변환
+    // 상세한 에러 매핑 전략은 ErrorHandling.md 참조
+    if (e is NetworkException) return const UserFailure.network();
+    if (e is ServerException) return const UserFailure.server();
+    return const UserFailure.unknown();
   }
 }
 ```
+
+> **💡 실무 에러 처리 전략**
+> DioException 처리, ErrorInterceptor, safeApiCall 헬퍼, 재시도 패턴 등 실무 에러 처리의 상세 내용은 [ErrorHandling.md](./ErrorHandling.md)를 참조하세요.
 
 ### 3.3 유틸리티 생성자
 
@@ -218,21 +224,15 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
     // fold로 성공/실패 처리
     result.fold(
-      (failure) => emit(UserState.error(_mapFailureMessage(failure))),
+      (failure) => emit(UserState.error(failure)),  // Failure 객체 전달
       (user) => emit(UserState.loaded(user)),
-    );
-  }
-
-  String _mapFailureMessage(UserFailure failure) {
-    return failure.when(
-      network: () => '네트워크 오류가 발생했습니다.',
-      notFound: () => '사용자를 찾을 수 없습니다.',
-      unauthorized: () => '권한이 없습니다.',
-      unknown: () => '알 수 없는 오류가 발생했습니다.',
     );
   }
 }
 ```
+
+> **💡 에러 UI 표시 전략**
+> State에 Failure 포함하기, ErrorPresenter로 스낵바/다이얼로그 표시, BlocConsumer 활용 등 실무 에러 UI 패턴은 [ErrorHandling.md](./ErrorHandling.md)를 참조하세요.
 
 ## 4. Either 체이닝
 
@@ -981,8 +981,8 @@ class UserBloc {
 
 | 문서 | 설명 |
 |------|------|
+| [ErrorHandling.md](./ErrorHandling.md) | 실무 에러 처리 전략 (Failure 설계, ErrorInterceptor, ErrorPresenter, 재시도 패턴) |
 | [Architecture.md](./Architecture.md) | Either 패턴이 적용되는 전체 아키텍처 |
-| [ErrorHandling.md](../system/ErrorHandling.md) | Failure 클래스 설계와 에러 분류 |
 | [Bloc.md](./Bloc.md) | Bloc에서 Either 결과 처리 |
 | [Networking_Dio.md](../networking/Networking_Dio.md) | DioException → Either 변환 |
 

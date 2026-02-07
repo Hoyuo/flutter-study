@@ -1,5 +1,8 @@
 # Flutter Testing Guide (기본+심화 통합)
 
+> **난이도**: 고급 | **카테고리**: system
+> **선행 학습**: [Architecture](../core/Architecture.md), [Bloc](../core/Bloc.md) | **예상 학습 시간**: 3h
+
 > 이 문서는 Flutter 프로젝트에서 기본 테스트부터 고급 테스트 전략까지 포괄적으로 다룹니다. Unit/Widget/Integration 테스트 기초와 Property-based Testing, Mutation Testing, Contract Testing, Fuzz Testing 등 엔터프라이즈급 테스트 기법을 포함합니다.
 
 ## 학습 목표

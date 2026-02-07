@@ -15,13 +15,13 @@ Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architect
 
 ```
 flutter-study/
-├── fundamentals/   # 기초 (6개)
-├── core/           # 핵심 아키텍처 (9개)
+├── fundamentals/   # 기초 (5개)
+├── core/           # 핵심 아키텍처 (7개)
+├── advanced/       # 시니어급 고급 주제 (5개)
 ├── infrastructure/ # 인프라 (10개)
 ├── networking/     # 네트워킹 (4개)
-├── features/       # 기능별 가이드 (7개)
-├── patterns/       # 필수 패턴 (10개)
-├── system/         # 시스템 (9개)
+├── features/       # 기능별 가이드 (14개)
+├── system/         # 시스템 (10개)
 └── projects/       # 실전 프로젝트 (1개)
 ```
 
@@ -43,13 +43,17 @@ flutter-study/
 
 ## Documentation Categories
 
-### Fundamentals (6개)
+### Fundamentals (5개)
 Dart 언어와 Flutter 기본기
-- DartAdvanced, WidgetFundamentals, LayoutSystem, FlutterInternals, DevToolsProfiling, DesignSystem
+- DartAdvanced, WidgetFundamentals, LayoutSystem, FlutterInternals, DesignSystem
 
-### Core (9개)
+### Core (7개)
 핵심 아키텍처 패턴
-- Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, AdvancedStateManagement, Riverpod, ErrorHandling
+- Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, Riverpod, ErrorHandling
+
+### Advanced (5개)
+시니어급 아키텍처 패턴과 고급 상태 관리
+- ModularArchitecture, AdvancedStateManagement, AdvancedPatterns, ServerDrivenUI, OfflineSupport
 
 ### Infrastructure (10개)
 인프라 설정
@@ -59,17 +63,13 @@ Dart 언어와 Flutter 기본기
 네트워크 통신
 - Networking_Dio, Networking_Retrofit, WebSocket, GraphQL
 
-### Features (7개)
+### Features (14개)
 기능별 구현
-- Navigation, Localization, Permission, PushNotification, DeepLinking, MapsGeolocation, CameraMedia
+- Navigation, Localization, Permission, PushNotification, DeepLinking, MapsGeolocation, CameraMedia, Animation, CustomPainting, FormValidation, ImageHandling, InAppPurchase, Pagination, ResponsiveDesign
 
-### Patterns (10개)
-공통 패턴
-- ImageHandling, Pagination, FormValidation, InAppPurchase, Animation, OfflineSupport, AdvancedPatterns, CustomPainting, ResponsiveDesign, ServerDrivenUI
-
-### System (9개)
+### System (10개)
 시스템 품질
-- AppLifecycle, Testing, Performance, Security, Accessibility, ProductionOperations, TeamCollaboration, Isolates, Observability
+- AppLifecycle, Testing, Performance, Security, Accessibility, ProductionOperations, TeamCollaboration, Isolates, Observability, DevToolsProfiling
 
 ### Projects (1개)
 실전 프로젝트 튜토리얼
@@ -77,14 +77,16 @@ Dart 언어와 Flutter 기본기
 
 ### Advanced - Senior Level (9개)
 10년차+ 시니어 개발자를 위한 고급 주제
-- [ModularArchitecture](./core/ModularArchitecture.md) - Mono-repo, Melos, Micro Frontend
-- [AdvancedStateManagement](./core/AdvancedStateManagement.md) - CQRS, Event Sourcing, Undo/Redo
+- [ModularArchitecture](./advanced/ModularArchitecture.md) - Mono-repo, Melos, Micro Frontend
+- [AdvancedStateManagement](./advanced/AdvancedStateManagement.md) - CQRS, Event Sourcing, Undo/Redo
+- [AdvancedPatterns](./advanced/AdvancedPatterns.md) - DDD, Hexagonal, Saga, Specification
+- [ServerDrivenUI](./advanced/ServerDrivenUI.md) - Server-Driven UI 패턴
+- [OfflineSupport](./advanced/OfflineSupport.md) - Offline-first Architecture
 - [PlatformIntegration](./infrastructure/PlatformIntegration.md) - Platform Channel, FFI, Pigeon
 - [Performance](./system/Performance.md) - Custom RenderObject, Impeller, Memory Profiling
 - [Testing](./system/Testing.md) - Property-based, Golden Test, Mutation, Contract, Fuzz Testing
 - [CICD](./infrastructure/CICD.md) - Trunk-based, Canary Release, Shorebird
 - [ProductionOperations](./system/ProductionOperations.md) - SLO/SLI, Crash-free Rate, Incident Management
-- [AdvancedPatterns](./patterns/AdvancedPatterns.md) - DDD, Hexagonal, Saga, Specification
 
 ## Tech Stack
 

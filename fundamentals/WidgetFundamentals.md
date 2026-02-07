@@ -1,12 +1,18 @@
 # Flutter Widget 기본기 가이드
 
+> **난이도**: 초급 | **카테고리**: fundamentals
+> **선행 학습**: [DartAdvanced](./DartAdvanced.md)
+> **예상 학습 시간**: 2h
+
 > Flutter Clean Architecture + Bloc 패턴 기반 교육 자료
 > Package versions: flutter_bloc ^9.1.1, freezed ^3.2.4, fpdart ^1.2.0, go_router ^17.0.1, get_it ^9.2.0, injectable ^2.5.0
 
 > **학습 목표**:
-> - Widget, Element, RenderObject의 관계와 Flutter의 렌더링 파이프라인을 이해한다
+> - Widget, Element, RenderObject의 관계를 이해하고 실전에서 활용할 수 있다
 > - BuildContext의 정체를 파악하고 InheritedWidget의 동작 원리를 설명할 수 있다
 > - Key의 종류와 사용 시나리오를 이해하고 리빌드 최적화를 적용할 수 있다
+>
+> **관련 문서**: 렌더링 파이프라인, Dirty 체크, VSync 등 내부 동작 원리는 [FlutterInternals](./FlutterInternals.md) 참조
 
 ## 목차
 
@@ -277,26 +283,11 @@ RenderObject (실제 레이아웃 & 페인팅)
 > **3-tree 관계 요약**:
 > - **Widget**: 불변 설계도. 매 빌드마다 새로 생성될 수 있음 (가벼움)
 > - **Element**: 위젯의 인스턴스를 관리하는 중간 계층. 위젯이 변경되어도 가능하면 재사용됨
-> - **RenderObject**: 실제 레이아웃(크기 계산)과 페인팅(화면 그리기)을 담당. `layout()` → `paint()` → compositing 순으로 처리됨
+> - **RenderObject**: 실제 레이아웃(크기 계산)과 페인팅(화면 그리기)을 담당
 >
 > Widget은 가볍게 재생성되지만, RenderObject는 비용이 크므로 Element가 중간에서 재사용 여부를 판단합니다.
 
-```dart
-// Widget은 Element를 생성
-class MyCustomWidget extends StatelessWidget {
-  final String title;
-
-  const MyCustomWidget({super.key, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(title);
-  }
-
-  @override
-  StatelessElement createElement() => StatelessElement(this);
-}
-```
+> **내부 동작 원리**: 3개 트리의 상세한 생성 과정, updateChild 알고리즘, Build/Layout/Paint/Composite 파이프라인은 [FlutterInternals](./FlutterInternals.md) 참조
 
 ### 3.2 Element의 재사용 조건
 
@@ -311,6 +302,8 @@ Element 재사용 조건:
 >       && oldWidget.key == newWidget.key;
 > }
 > ```
+
+> **updateChild 알고리즘**: Element 재사용의 상세한 내부 메커니즘은 [FlutterInternals - Build Phase](./FlutterInternals.md#3-build-phase) 참조
 
 ```dart
 class ElementReuseExample extends StatefulWidget {
@@ -1255,6 +1248,21 @@ Theme 시스템을 InheritedWidget으로 구현하세요.
 - [ ] State Hoisting과 Local State의 차이를 이해하고, 상황에 맞게 선택할 수 있다
 - [ ] 흔한 안티패턴(build()에서 객체 생성, 잘못된 context 사용 등)을 식별하고 피할 수 있다
 - [ ] mounted 체크, dispose 구현 등 메모리 누수를 방지하는 습관을 갖추었다
+
+---
+
+## 관련 문서
+
+**선행 학습**:
+- [DartAdvanced](./DartAdvanced.md) - Dart 언어 심화 (Generics, Extension, Sealed Class 등)
+
+**다음 단계**:
+- [LayoutSystem](./LayoutSystem.md) - Constraints 전파 원리와 Sliver 기반 레이아웃
+- [FlutterInternals](./FlutterInternals.md) - 렌더링 파이프라인과 내부 동작 원리
+
+**심화 학습**:
+- [DevToolsProfiling](./DevToolsProfiling.md) - Widget 리빌드 디버깅과 성능 최적화
+- [DesignSystem](./DesignSystem.md) - 재사용 가능한 컴포넌트 설계
 
 ---
 

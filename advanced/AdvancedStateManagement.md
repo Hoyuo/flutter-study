@@ -1,5 +1,9 @@
 # Flutter 고급 상태 관리 가이드 (시니어)
 
+> **난이도**: 시니어 | **카테고리**: advanced
+> **선행 학습**: [Bloc](../core/Bloc.md), [Fpdart](../core/Fpdart.md)
+> **예상 학습 시간**: 3h
+
 > 대규모 엔터프라이즈 애플리케이션을 위한 고급 상태 관리 패턴 및 아키텍처
 
 > **Flutter 3.27+ / Dart 3.6+** | bloc ^9.1.1 | flutter_bloc ^9.1.1 | bloc_concurrency ^0.3.0 | hydrated_bloc ^9.1.5 | freezed ^3.2.4 | fpdart ^1.2.0
@@ -931,6 +935,8 @@ class SqliteEventStore implements EventStore {
 ```
 
 ### 4.2 Aggregate 패턴
+
+> **Note**: Aggregate는 DDD(Domain-Driven Design)의 핵심 전술 패턴입니다. DDD의 Entity, Value Object, Aggregate Root 등 상세 내용은 [AdvancedPatterns](./AdvancedPatterns.md#1-ddd-domain-driven-design) 참조
 
 ```dart
 // Aggregate: 이벤트로부터 현재 상태 재구성 (불변 패턴)
@@ -3182,6 +3188,10 @@ class EncryptedStorage implements Storage {
 
 ## 참고 자료
 
+**관련 문서:**
+- [AdvancedPatterns.md](./AdvancedPatterns.md) - DDD, Hexagonal Architecture, Saga Pattern 등 아키텍처 패턴
+
+**외부 자료:**
 - [Bloc Library](https://bloclibrary.dev/)
 - [Riverpod Documentation](https://riverpod.dev/)
 - [Event Sourcing Pattern](https://martinfowler.com/eaaDev/EventSourcing.html)
@@ -3207,4 +3217,4 @@ Event Sourcing 패턴으로 사용자 액션의 히스토리를 관리하고, Un
 
 ---
 
-**다음 문서:** [PlatformIntegration](./PlatformIntegration.md) - Platform Channel, FFI, Pigeon
+**다음 문서:** [PlatformIntegration](../infrastructure/PlatformIntegration.md) - Platform Channel, FFI, Pigeon

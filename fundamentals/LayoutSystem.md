@@ -1,5 +1,9 @@
 # Flutter 레이아웃 시스템 가이드
 
+> **난이도**: 초급 | **카테고리**: fundamentals
+> **선행 학습**: [WidgetFundamentals](./WidgetFundamentals.md)
+> **예상 학습 시간**: 3h
+
 Flutter의 Constraints 기반 레이아웃 원리와 고급 레이아웃 패턴을 다루는 가이드입니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
@@ -4055,6 +4059,20 @@ Pinterest 스타일의 Masonry 레이아웃을 CustomMultiChildLayout으로 구�
 
 ---
 
+## 관련 문서
+
+**선행 학습**:
+- [WidgetFundamentals](./WidgetFundamentals.md) - Widget 기본기와 BuildContext 이해
+
+**다음 단계**:
+- [FlutterInternals](./FlutterInternals.md) - Layout Phase 내부 동작 원리
+- [DevToolsProfiling](./DevToolsProfiling.md) - Layout 성능 디버깅
+
+**심화 학습**:
+- [DesignSystem](./DesignSystem.md) - 재사용 가능한 레이아웃 컴포넌트 설계
+
+---
+
 ## Self-Check
 
 학습 내용을 제대로 이해했는지 확인하세요:
@@ -4072,4 +4090,4 @@ Pinterest 스타일의 Masonry 레이아웃을 CustomMultiChildLayout으로 구�
 
 ---
 
-**학습 완료 후**: [fundamentals/DevToolsProfiling.md](./DevToolsProfiling.md)로 진행하여 DevTools 실전 활용과 성능 프로파일링을 학습하세요.
+**학습 완료 후**: [system/DevToolsProfiling.md](../system/DevToolsProfiling.md)로 진행하여 DevTools 실전 활용과 성능 프로파일링을 학습하세요.

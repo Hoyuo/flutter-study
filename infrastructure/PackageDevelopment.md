@@ -1,5 +1,9 @@
 # Flutter 패키지 개발 & 배포 가이드
 
+> **난이도**: 고급 | **카테고리**: infrastructure
+> **선행 학습**: [Architecture](../core/Architecture.md)
+> **예상 학습 시간**: 2h
+
 > Flutter 패키지 및 플러그인 개발부터 Pub.dev 배포, 유지보수까지의 전체 프로세스를 다루는 실무 가이드입니다. Dart Package, Flutter Plugin, FFI Plugin의 개발 방법과 API 설계, 테스트, CI/CD, 버전 관리 전략을 포함합니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:

@@ -1,5 +1,8 @@
 # Flutter WebSocket & 실시간 통신 가이드
 
+> **난이도**: 고급 | **카테고리**: networking
+> **선행 학습**: [Networking_Dio](./Networking_Dio.md) | **예상 학습 시간**: 2h
+
 > Flutter에서 WebSocket과 Socket.IO를 사용한 실시간 양방향 통신 구현 가이드입니다. Clean Architecture, Bloc 패턴, fpdart의 Either를 활용한 실전 예제를 포함합니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:

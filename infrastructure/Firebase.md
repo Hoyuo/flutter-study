@@ -1,5 +1,9 @@
 # Flutter Firebase 통합 가이드
 
+> **난이도**: 중급 | **카테고리**: infrastructure
+> **선행 학습**: [DI](./DI.md)
+> **예상 학습 시간**: 2h
+
 > Flutter 애플리케이션에서 Firebase의 주요 서비스(Authentication, Firestore, Storage, FCM, Crashlytics, Analytics)를 Clean Architecture와 Bloc 패턴으로 통합하는 종합 가이드입니다. 실무에서 바로 적용 가능한 코드 예제와 Best Practices를 제공합니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:

@@ -1,5 +1,9 @@
 # Flutter 페이지네이션 가이드
 
+> **난이도**: 중급 | **카테고리**: features
+> **선행 학습**: [Bloc](../core/Bloc.md)
+> **예상 학습 시간**: 1.5h
+
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - 무한 스크롤과 페이지 기반 페이지네이션을 Bloc으로 구현할 수 있다
 > - Pull-to-refresh와 리스트/그리드 뷰를 조합할 수 있다
@@ -1414,6 +1418,16 @@ Bloc 패턴으로 무한 스크롤 페이지네이션을 구현하세요. Scroll
 
 ### 과제 2: 커서 기반 페이지네이션
 offset 기반이 아닌 cursor(커서) 기반 페이지네이션을 구현하세요. 이전/다음 페이지 네비게이션, 페이지 크기 조절, 정렬 옵션을 지원하도록 설계하세요.
+
+---
+
+## 관련 문서
+
+- [Bloc](../core/Bloc.md) - Pagination Bloc 패턴 및 상태 관리
+- [Architecture](../core/Architecture.md) - Repository 패턴과 데이터 레이어 설계
+- [Networking_Retrofit](../networking/Networking_Retrofit.md) - 페이지네이션 API 정의
+
+---
 
 ## Self-Check
 

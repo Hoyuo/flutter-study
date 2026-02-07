@@ -1,5 +1,9 @@
 # Flutter Custom Painting & 그래픽 가이드
 
+> **난이도**: 고급 | **카테고리**: features
+> **선행 학습**: [FlutterInternals](../fundamentals/FlutterInternals.md)
+> **예상 학습 시간**: 3h
+
 > Flutter의 CustomPainter를 활용한 고급 그래픽 렌더링 패턴입니다. Canvas API를 통해 복잡한 도형, 차트, 애니메이션을 직접 그리는 방법을 다룹니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
@@ -3299,6 +3303,16 @@ CustomPainter를 사용하여 막대 차트(Bar Chart)와 라인 차트(Line Cha
 
 ### 과제 2: 애니메이션 게이지 위젯
 원형 게이지(Circular Gauge) 위젯을 구현하세요. AnimationController와 CustomPainter를 조합하여 값 변경 시 부드러운 애니메이션, 그라데이션 색상, 눈금 표시를 구현하세요.
+
+---
+
+## 관련 문서
+
+- [FlutterInternals](../fundamentals/FlutterInternals.md) - 렌더링 파이프라인과 RenderObject
+- [Animation](./Animation.md) - AnimationController와 애니메이션 통합
+- [Performance](../infrastructure/Performance.md) - CustomPainter 성능 최적화
+
+---
 
 ## Self-Check
 

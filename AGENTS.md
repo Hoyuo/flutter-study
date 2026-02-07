@@ -16,13 +16,13 @@ Flutter 개발팀을 위한 포괄적인 개발 가이드 문서 저장소입니
 
 | Directory | Purpose | Documents |
 |-----------|---------|-----------|
-| `fundamentals/` | 기초 - DartAdvanced, WidgetFundamentals, LayoutSystem, FlutterInternals, DevToolsProfiling, DesignSystem | 6개 (see `fundamentals/AGENTS.md`) |
-| `core/` | 핵심 아키텍처 - Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, AdvancedStateManagement, Riverpod, ErrorHandling | 9개 (see `core/AGENTS.md`) |
+| `fundamentals/` | 기초 - DartAdvanced, WidgetFundamentals, LayoutSystem, FlutterInternals, DesignSystem | 5개 (see `fundamentals/AGENTS.md`) |
+| `core/` | 핵심 아키텍처 - Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, Riverpod, ErrorHandling | 7개 (see `core/AGENTS.md`) |
+| `advanced/` | 시니어급 고급 - ModularArchitecture, AdvancedStateManagement, AdvancedPatterns, ServerDrivenUI, OfflineSupport | 5개 (see `advanced/AGENTS.md`) |
 | `infrastructure/` | 인프라 - DI, Environment, LocalStorage, CICD, StoreSubmission, Firebase, FlutterMultiPlatform, PackageDevelopment, CachingStrategy, PlatformIntegration | 10개 (see `infrastructure/AGENTS.md`) |
 | `networking/` | 네트워킹 - Dio, Retrofit, WebSocket, GraphQL | 4개 (see `networking/AGENTS.md`) |
-| `features/` | 기능별 - Navigation, Localization, Permission, PushNotification, DeepLinking, MapsGeolocation, CameraMedia | 7개 (see `features/AGENTS.md`) |
-| `patterns/` | 필수 패턴 - ImageHandling, Pagination, FormValidation, OfflineSupport, InAppPurchase, Animation, AdvancedPatterns, CustomPainting, ResponsiveDesign, ServerDrivenUI | 10개 (see `patterns/AGENTS.md`) |
-| `system/` | 시스템 - AppLifecycle, Testing, Performance, Security, Accessibility, ProductionOperations, TeamCollaboration, Isolates, Observability | 9개 (see `system/AGENTS.md`) |
+| `features/` | 기능별 - Navigation, Localization, Permission, PushNotification, DeepLinking, MapsGeolocation, CameraMedia, Animation, CustomPainting, FormValidation, ImageHandling, InAppPurchase, Pagination, ResponsiveDesign | 14개 (see `features/AGENTS.md`) |
+| `system/` | 시스템 - AppLifecycle, Testing, Performance, Security, Accessibility, ProductionOperations, TeamCollaboration, Isolates, Observability, DevToolsProfiling | 10개 (see `system/AGENTS.md`) |
 | `projects/` | 실전 프로젝트 - FullStackProject (Clean Architecture + Bloc Todo 앱 튜토리얼) | 1개 |
 
 **총 56개 문서**
@@ -38,7 +38,6 @@ flutter-study/
 │   ├── WidgetFundamentals.md
 │   ├── LayoutSystem.md
 │   ├── FlutterInternals.md
-│   ├── DevToolsProfiling.md
 │   └── DesignSystem.md
 ├── core/                     ← 핵심 아키텍처
 │   ├── AGENTS.md
@@ -47,10 +46,15 @@ flutter-study/
 │   ├── BlocUiEffect.md
 │   ├── Freezed.md
 │   ├── Fpdart.md
-│   ├── ModularArchitecture.md
-│   ├── AdvancedStateManagement.md
 │   ├── Riverpod.md
 │   └── ErrorHandling.md
+├── advanced/                 ← 시니어급 고급
+│   ├── AGENTS.md
+│   ├── ModularArchitecture.md
+│   ├── AdvancedStateManagement.md
+│   ├── AdvancedPatterns.md
+│   ├── ServerDrivenUI.md
+│   └── OfflineSupport.md
 ├── infrastructure/           ← 인프라
 │   ├── AGENTS.md
 │   ├── DI.md
@@ -77,19 +81,14 @@ flutter-study/
 │   ├── PushNotification.md
 │   ├── DeepLinking.md
 │   ├── MapsGeolocation.md
-│   └── CameraMedia.md
-├── patterns/                 ← 필수 패턴
-│   ├── AGENTS.md
-│   ├── ImageHandling.md
-│   ├── Pagination.md
-│   ├── FormValidation.md
-│   ├── OfflineSupport.md
-│   ├── InAppPurchase.md
+│   ├── CameraMedia.md
 │   ├── Animation.md
-│   ├── AdvancedPatterns.md
 │   ├── CustomPainting.md
-│   ├── ResponsiveDesign.md
-│   └── ServerDrivenUI.md
+│   ├── FormValidation.md
+│   ├── ImageHandling.md
+│   ├── InAppPurchase.md
+│   ├── Pagination.md
+│   └── ResponsiveDesign.md
 ├── system/                   ← 시스템
 │   ├── AGENTS.md
 │   ├── AppLifecycle.md
@@ -100,7 +99,8 @@ flutter-study/
 │   ├── ProductionOperations.md
 │   ├── TeamCollaboration.md
 │   ├── Isolates.md
-│   └── Observability.md
+│   ├── Observability.md
+│   └── DevToolsProfiling.md
 └── projects/                 ← 실전 프로젝트
     └── FullStackProject.md
 ```
@@ -222,38 +222,44 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 
 ### 시니어 (Senior Level)
 
-31. `core/ModularArchitecture.md` - Mono-repo, Melos, Micro Frontend
-32. `core/AdvancedStateManagement.md` - CQRS, Event Sourcing, Undo/Redo
-33. `infrastructure/PlatformIntegration.md` - Platform Channel, FFI, Pigeon
-34. `system/Performance.md` (심화) - Custom RenderObject, Impeller, Memory Profiling
-35. `system/Testing.md` (심화) - Property-based, Golden Test, Mutation, Contract, Fuzz Testing
-36. `infrastructure/CICD.md` (심화) - Trunk-based, Canary Release, Shorebird
-37. `patterns/AdvancedPatterns.md` - DDD, Hexagonal, Saga, Specification
+31. `advanced/ModularArchitecture.md` - Mono-repo, Melos, Micro Frontend
+32. `advanced/AdvancedStateManagement.md` - CQRS, Event Sourcing, Undo/Redo
+33. `advanced/AdvancedPatterns.md` - DDD, Hexagonal, Saga, Specification
+34. `advanced/ServerDrivenUI.md` - Server-Driven UI
+35. `advanced/OfflineSupport.md` - Offline-first Architecture
+36. `infrastructure/PlatformIntegration.md` - Platform Channel, FFI, Pigeon
+37. `system/Performance.md` (심화) - Custom RenderObject, Impeller, Memory Profiling
+38. `system/Testing.md` (심화) - Property-based, Golden Test, Mutation, Contract, Fuzz Testing
+39. `infrastructure/CICD.md` (심화) - Trunk-based, Canary Release, Shorebird
 
 ### 실전 심화 (Phase 1)
 
-38. `core/Riverpod.md` - Riverpod 상태 관리, Bloc 마이그레이션
-39. `networking/WebSocket.md` - WebSocket 실시간 통신
-40. `infrastructure/Firebase.md` - Firebase 통합
-41. `system/Isolates.md` - Isolate, compute(), 백그라운드 처리
-42. `infrastructure/FlutterMultiPlatform.md` - Web/Desktop 멀티플랫폼
-43. `infrastructure/PackageDevelopment.md` - Dart/Flutter 패키지 개발
-44. `networking/GraphQL.md` - GraphQL 클라이언트
-45. `features/DeepLinking.md` - Universal Links, 딥링크
-46. `features/MapsGeolocation.md` - Google Maps, 위치 서비스
-47. `features/CameraMedia.md` - 카메라, 미디어 처리
-48. `patterns/CustomPainting.md` - Canvas API, CustomPainter
+40. `core/Riverpod.md` - Riverpod 상태 관리, Bloc 마이그레이션
+41. `networking/WebSocket.md` - WebSocket 실시간 통신
+42. `infrastructure/Firebase.md` - Firebase 통합
+43. `system/Isolates.md` - Isolate, compute(), 백그라운드 처리
+44. `infrastructure/FlutterMultiPlatform.md` - Web/Desktop 멀티플랫폼
+45. `infrastructure/PackageDevelopment.md` - Dart/Flutter 패키지 개발
+46. `networking/GraphQL.md` - GraphQL 클라이언트
+47. `features/DeepLinking.md` - Universal Links, 딥링크
+48. `features/MapsGeolocation.md` - Google Maps, 위치 서비스
+49. `features/CameraMedia.md` - 카메라, 미디어 처리
+50. `features/CustomPainting.md` - Canvas API, CustomPainter
 
 ### 신규 추가 (Phase 2)
 
-49. `patterns/ResponsiveDesign.md` - 반응형/적응형 디자인
-50. `infrastructure/CachingStrategy.md` - 캐싱 전략
-51. `system/TeamCollaboration.md` - 팀 협업
-52. `fundamentals/WidgetFundamentals.md` - Widget/Element/RenderObject 트리
-53. `fundamentals/LayoutSystem.md` - Constraints 전파, Flex, Sliver
-54. `fundamentals/FlutterInternals.md` - 렌더링 파이프라인
-55. `fundamentals/DevToolsProfiling.md` - DevTools, 프로파일링
-56. `projects/FullStackProject.md` - Clean Architecture + Bloc Todo 앱 튜토리얼
-57. `patterns/ServerDrivenUI.md` - Server-Driven UI
+51. `features/ResponsiveDesign.md` - 반응형/적응형 디자인
+52. `infrastructure/CachingStrategy.md` - 캐싱 전략
+53. `system/TeamCollaboration.md` - 팀 협업
+54. `fundamentals/WidgetFundamentals.md` - Widget/Element/RenderObject 트리
+55. `fundamentals/LayoutSystem.md` - Constraints 전파, Flex, Sliver
+56. `fundamentals/FlutterInternals.md` - 렌더링 파이프라인
+57. `system/DevToolsProfiling.md` - DevTools, 프로파일링
+58. `projects/FullStackProject.md` - Clean Architecture + Bloc Todo 앱 튜토리얼
+59. `features/Animation.md` - 애니메이션
+60. `features/FormValidation.md` - 폼 검증
+61. `features/ImageHandling.md` - 이미지 처리
+62. `features/InAppPurchase.md` - 인앱 결제
+63. `features/Pagination.md` - 페이지네이션
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->

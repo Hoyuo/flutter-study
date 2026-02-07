@@ -1,5 +1,9 @@
 # Flutter 캐싱 전략 가이드
 
+> **난이도**: 중급 | **카테고리**: infrastructure
+> **선행 학습**: [Architecture](../core/Architecture.md)
+> **예상 학습 시간**: 2h
+
 > 이 문서는 Flutter 애플리케이션에서 HTTP 캐시, 로컬 DB 캐시, 메모리 캐시를 통합하여 3계층 캐싱 시스템을 설계하고 구현하는 방법을 다룹니다. Cache-First, Network-First, Stale-While-Revalidate 전략을 활용하여 네트워크 요청을 최소화하고, 오프라인 환경에서도 최적의 사용자 경험을 제공하는 방법을 학습합니다.
 
 > **학습 목표**:
@@ -1003,107 +1007,45 @@ abstract class CachedRepositoryWithResult<T> {
 
 ## 6. 이미지 캐싱
 
-### 6.1 cached_network_image
+> 📖 **이미지 전용 캐싱 구현은 [../features/ImageHandling.md](../features/ImageHandling.md)를 참조하세요.** 이 섹션에서는 이미지 캐싱에 적용되는 일반 캐싱 원리만 다룹니다.
 
+### 6.1 이미지 캐싱에 적용되는 일반 원칙
+
+이미지는 일반적으로 가장 큰 네트워크 리소스이므로, 효과적인 캐싱 전략이 필수입니다:
+
+**캐싱 계층:**
+- **메모리 캐시**: 디코딩된 이미지를 메모리에 보관 (가장 빠름, 제한적)
+- **디스크 캐시**: 원본 이미지 파일을 디스크에 보관 (영구적, 용량 큼)
+- **네트워크**: 캐시 미스 시 서버에서 다운로드
+
+**권장 전략:**
+- **프로필 이미지**: Cache-First (거의 변경되지 않음)
+- **피드 이미지**: Stale-While-Revalidate (빠른 로딩 + 최신 유지)
+- **임시 이미지**: Network-First (항상 최신 필요)
+
+**TTL 설정:**
 ```dart
-// pubspec.yaml
-/*
-dependencies:
-  cached_network_image: ^3.3.0
-*/
-
-import 'package:cached_network_image/cached_network_image.dart';
-
-class CachedImage extends StatelessWidget {
-  final String imageUrl;
-  final double? width;
-  final double? height;
-  final BoxFit fit;
-
-  const CachedImage({
-    super.key,
-    required this.imageUrl,
-    this.width,
-    this.height,
-    this.fit = BoxFit.cover,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return CachedNetworkImage(
-      imageUrl: imageUrl,
-      width: width,
-      height: height,
-      fit: fit,
-      placeholder: (context, url) => Container(
-        width: width,
-        height: height,
-        color: Colors.grey[200],
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      ),
-      errorWidget: (context, url, error) => Container(
-        width: width,
-        height: height,
-        color: Colors.grey[300],
-        child: const Icon(Icons.error),
-      ),
-      // 메모리 캐시 설정
-      memCacheWidth: width?.toInt(),
-      memCacheHeight: height?.toInt(),
-      // 디스크 캐시 설정
-      maxWidthDiskCache: 1000,
-      maxHeightDiskCache: 1000,
-    );
-  }
-}
+// 이미지 유형별 TTL 예시
+const imageTtl = {
+  'profile': Duration(days: 7),      // 프로필: 7일
+  'thumbnail': Duration(days: 3),    // 썸네일: 3일
+  'feed': Duration(hours: 24),       // 피드: 24시간
+  'banner': Duration(hours: 12),     // 배너: 12시간
+};
 ```
 
-### 6.2 이미지 캐시 관리
+**캐시 무효화:**
+- 사용자가 이미지를 업데이트하면 관련 캐시 즉시 삭제
+- 앱 설정에서 "캐시 지우기" 기능 제공
+- 디스크 용량 부족 시 오래된 이미지부터 자동 삭제
 
-```dart
-import 'package:cached_network_image/cached_network_image.dart';
+**구체적인 구현:**
+- cached_network_image 사용법
+- 플레이스홀더 및 에러 위젯 설정
+- 메모리/디스크 캐시 크기 제한
+- 이미지 프리로딩 및 캐시 관리
 
-class ImageCacheManager {
-  static final ImageCacheManager _instance = ImageCacheManager._internal();
-  factory ImageCacheManager() => _instance;
-  ImageCacheManager._internal();
-
-  /// 이미지 프리로드
-  Future<void> precacheImages(
-    BuildContext context,
-    List<String> imageUrls,
-  ) async {
-    await Future.wait(
-      imageUrls.map((url) => precacheImage(
-        CachedNetworkImageProvider(url),
-        context,
-      )),
-    );
-  }
-
-  /// 이미지 캐시 삭제
-  Future<void> clearImageCache() async {
-    await CachedNetworkImage.evictFromCache('https://example.com/image.jpg');
-  }
-
-  /// 전체 이미지 캐시 삭제
-  Future<void> clearAllImageCache() async {
-    final cacheManager = DefaultCacheManager();
-    await cacheManager.emptyCache();
-  }
-
-  /// 이미지 캐시 크기 확인
-  Future<int> getImageCacheSize() async {
-    final cacheManager = DefaultCacheManager();
-    // ⚠️ 주의: retrieveCacheData()는 flutter_cache_manager의 공식 API가 아닙니다.
-    // 실제 캐시 크기 확인은 getFileFromCache() 또는 store의 다른 메서드를 사용해야 합니다.
-    final files = await cacheManager.store.retrieveCacheData();
-    return files.fold<int>(0, (sum, file) => sum + (file.length ?? 0));
-  }
-}
-```
+→ [ImageHandling.md](../features/ImageHandling.md)의 "이미지 캐싱" 섹션 참조
 
 ---
 
@@ -1439,7 +1381,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
 
 ## 9. 오프라인 캐시
 
-> 📖 **오프라인 우선 아키텍처, 동기화 큐, 충돌 해결 전략은 [../patterns/OfflineSupport.md](../patterns/OfflineSupport.md)를 참조하세요.** 이 섹션에서는 캐시 전략 관점의 오프라인 처리만 다룹니다.
+> 📖 **오프라인 우선 아키텍처, 동기화 큐, 충돌 해결 전략은 [../advanced/OfflineSupport.md](../advanced/OfflineSupport.md)를 참조하세요.** 이 섹션에서는 캐시 전략 관점의 오프라인 처리만 다룹니다.
 
 ### 9.1 오프라인 캐시 전략 개요
 
@@ -1481,7 +1423,7 @@ class ConnectivityService {
 }
 ```
 
-**상세 구현**: ConnectivityService, OfflineFirstRepository, 동기화 큐 구현은 [../patterns/OfflineSupport.md](../patterns/OfflineSupport.md)를 참조하세요
+**상세 구현**: ConnectivityService, OfflineFirstRepository, 동기화 큐 구현은 [../advanced/OfflineSupport.md](../advanced/OfflineSupport.md)를 참조하세요
 
 ---
 

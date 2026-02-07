@@ -1,5 +1,9 @@
 # Flutter 렌더링 파이프라인 가이드
 
+> **난이도**: 중급 | **카테고리**: fundamentals
+> **선행 학습**: [WidgetFundamentals](./WidgetFundamentals.md)
+> **예상 학습 시간**: 2h
+
 Flutter의 내부 동작 원리 (Widget → Element → RenderObject → 화면)를 다루는 가이드입니다.
 
 > **패키지 버전 (2024.01 기준)**
@@ -7,9 +11,11 @@ Flutter의 내부 동작 원리 (Widget → Element → RenderObject → 화면)
 > - Dart SDK: 3.6.x
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
-> - Widget Tree, Element Tree, RenderObject Tree의 3개 트리 구조와 역할을 이해할 수 있습니다
+> - Widget Tree, Element Tree, RenderObject Tree의 3개 트리 구조와 내부 동작 원리를 이해할 수 있습니다
 > - Build → Layout → Paint → Composite 렌더링 파이프라인의 각 단계를 설명할 수 있습니다
-> - Dirty checking 메커니즘과 최적화 전략(RepaintBoundary, const)을 실전에 적용할 수 있습니다
+> - Dirty checking 메커니즘, VSync, Frame 처리 흐름 등 내부 최적화 원리를 이해할 수 있습니다
+>
+> **관련 문서**: Widget 사용법, BuildContext, State Lifecycle 등 실용적 사용법은 [WidgetFundamentals](./WidgetFundamentals.md) 참조
 
 ---
 
@@ -54,6 +60,8 @@ Flutter의 내부 동작 원리 (Widget → Element → RenderObject → 화면)
 > - `const` 생성자: 리빌드 방지
 > - `RepaintBoundary`: 리페인트 범위 격리
 > - `Keys`: Element 재사용
+>
+> **실용적 사용법**: BuildContext, State Lifecycle, InheritedWidget 등 위젯 사용법은 [WidgetFundamentals](./WidgetFundamentals.md) 참조
 
 ---
 
@@ -81,6 +89,8 @@ class MyWidget extends StatelessWidget {
 //   - build() 호출 시 실제 RenderObject 생성을 위임
 //   - @immutable: 생성 후 변경 불가
 ```
+
+> **Widget 사용법**: Widget의 종류(StatelessWidget, StatefulWidget, InheritedWidget)와 실용적 사용법은 [WidgetFundamentals](./WidgetFundamentals.md) 참조
 
 ### Element Tree
 
@@ -278,6 +288,8 @@ class _MyWidgetState extends State<MyWidget> {
 // 3. Flutter는 Key로 green Element를 찾아서 재사용
 // 4. Key가 없으면 순서대로 매칭 (red → green으로 업데이트되는 문제 발생)
 ```
+
+> **Key 사용법**: Key의 종류(ValueKey, ObjectKey, GlobalKey, UniqueKey)와 실전 사용 시나리오는 [WidgetFundamentals](./WidgetFundamentals.md#5-key의-역할) 참조
 
 ---
 
@@ -535,6 +547,8 @@ class MyWidget extends StatelessWidget {
 // updateChild에서 child.widget == newWidget 체크
 // const이면 true → Element 재사용, build() 호출 안함!
 ```
+
+> **리빌드 최적화 패턴**: const 생성자, Widget 분리, Builder 패턴 등 실용적 최적화 기법은 [WidgetFundamentals - 리빌드 최적화](./WidgetFundamentals.md#6-widget-리빌드-최적화) 참조
 
 ### Build 최적화: Key 사용
 
@@ -1440,6 +1454,11 @@ class MyInheritedWidget extends InheritedWidget {
     return context.dependOnInheritedWidgetOfExactType<MyInheritedWidget>();
   }
 }
+```
+
+> **InheritedWidget 실전 활용**: InheritedWidget, InheritedModel의 사용법과 패턴은 [WidgetFundamentals - InheritedWidget 심화](./WidgetFundamentals.md#7-inheritedwidget-심화) 참조
+
+```dart
 
 // CustomPainter: 리페인트 조건 제어
 class MyPainter extends CustomPainter {
@@ -1962,6 +1981,23 @@ StreamBuilder<int>(
 - [ ] Platform Channel의 메시지 직렬화/역직렬화 과정을 안다
 - [ ] Impeller와 Skia의 차이점과 Flutter에서의 역할 전환을 이해한다
 - [ ] Custom RenderObject를 구현할 수 있다
+
+---
+
+## 관련 문서
+
+**선행 학습**:
+- [WidgetFundamentals](./WidgetFundamentals.md) - Widget/Element/RenderObject 기본 개념
+
+**병행 학습**:
+- [LayoutSystem](./LayoutSystem.md) - Constraints 전파와 레이아웃 원리
+
+**다음 단계**:
+- [DevToolsProfiling](./DevToolsProfiling.md) - 렌더링 파이프라인 디버깅과 최적화
+- [core/Architecture](../core/Architecture.md) - Clean Architecture 적용
+
+**심화 학습**:
+- [infrastructure/PlatformIntegration](../infrastructure/PlatformIntegration.md) - Platform Channel 상세 가이드
 
 ---
 

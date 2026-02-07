@@ -1,5 +1,9 @@
 # Flutter Dependency Injection Guide
 
+> **난이도**: 중급 | **카테고리**: infrastructure
+> **선행 학습**: [Architecture](../core/Architecture.md)
+> **예상 학습 시간**: 1.5h
+
 > 이 문서는 GetIt과 Injectable을 사용한 의존성 주입 설정 방법을 설명합니다.
 
 > **Flutter 3.27+ / Dart 3.6+** | get_it ^9.2.0 | injectable ^2.5.0 | injectable_generator ^2.7.0

@@ -1,5 +1,9 @@
 # Flutter Clean Architecture Guide
 
+> **난이도**: 중급 | **카테고리**: core
+> **선행 학습**: 없음
+> **예상 학습 시간**: 2h
+
 > 이 문서는 AI 에이전트(Claude, Copilot 등)가 프로젝트를 이해하고 작업할 때 반드시 참고해야 하는 가이드입니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
@@ -47,21 +51,11 @@ Dart에서는 1클래스 1파일이 기본입니다. (위젯 코드 제외)
 
 ### 2.2 Bloc 생명주기 관리
 
-```dart
-// ✅ 올바른 패턴 - BlocProvider가 생명주기 관리
-BlocProvider(
-  create: (_) => HomeBloc(GetIt.I<GetHomeDataUseCase>()),
-  child: const HomeScreen(),
-)
-
-// ❌ 잘못된 패턴 - Bloc을 GetIt에 등록하면 안 됨
-@injectable  // Bloc에 사용 금지!
-class HomeBloc extends Bloc { ... }
-```
-
 - **Bloc**: BlocProvider에서 직접 생성 (생명주기 자동 관리)
 - **UseCase/Repository**: GetIt으로 관리 (singleton, 재사용)
 - **이유**: BlocProvider가 close한 Bloc을 GetIt이 다시 반환하면 에러 발생
+
+> 상세 내용은 [Bloc](./Bloc.md)의 "생명주기 관리" 섹션 참조
 
 ### 2.3 비즈니스 로직은 Bloc에
 
@@ -302,22 +296,13 @@ context.push('/vendor/$vendorId');
 
 ## 8. Failure 패턴 (Feature별 Failure)
 
-### 8.1 왜 공통 Failure가 아닌 Feature별 Failure인가?
+### 핵심 원칙
+
+- **Feature별 Failure 정의**: 공통 Failure가 아닌 각 Feature에서 자체 Failure 정의
+- **Domain 순수성**: Domain 레이어는 외부 의존성이 없어야 함
+- **Feature 독립성**: 각 Feature는 독립적으로 배포/테스트 가능
 
 ```dart
-// ❌ 잘못된 패턴 - 공통 Failure
-// common/lib/failures/common_failure.dart
-@freezed
-class CommonFailure with _$CommonFailure {
-  const factory CommonFailure.network() = _Network;
-  const factory CommonFailure.server(String message) = _Server;
-  const factory CommonFailure.unknown() = _Unknown;
-  const factory CommonFailure.unauthorized() = _Unauthorized;
-  const factory CommonFailure.cancelled() = _Cancelled;  // 특정 feature에만 필요
-  const factory CommonFailure.invalidCredentials() = _InvalidCredentials;  // auth만 필요
-}
-
-// ✅ 올바른 패턴 - Feature별 Failure
 // features/home/lib/domain/failures/home_failure.dart
 @freezed
 class HomeFailure with _$HomeFailure {
@@ -330,92 +315,12 @@ class HomeFailure with _$HomeFailure {
 @freezed
 class AuthFailure with _$AuthFailure {
   const factory AuthFailure.network() = _Network;
-  const factory AuthFailure.server(String message) = _Server;
-  const factory AuthFailure.unknown() = _Unknown;
   const factory AuthFailure.invalidCredentials() = _InvalidCredentials;  // auth 전용
-  const factory AuthFailure.userNotFound() = _UserNotFound;  // auth 전용
-}
-
-// features/booking/lib/domain/failures/booking_failure.dart
-@freezed
-class BookingFailure with _$BookingFailure {
-  const factory BookingFailure.network() = _Network;
-  const factory BookingFailure.server(String message) = _Server;
-  const factory BookingFailure.unknown() = _Unknown;
-  const factory BookingFailure.cancelled() = _Cancelled;  // booking 전용
-  const factory BookingFailure.slotUnavailable() = _SlotUnavailable;  // booking 전용
+  // ...
 }
 ```
 
-### 8.2 Feature별 Failure의 장점
-
-| 관점 | 공통 Failure | Feature별 Failure |
-|------|-------------|-------------------|
-| **Domain 순수성** | 외부 의존성 발생 | ✅ 순수한 Domain 레이어 유지 |
-| **Feature 독립성** | 다른 feature의 failure 케이스 포함 | ✅ 해당 feature에 필요한 것만 |
-| **확장성** | 하나 추가 시 모든 feature 영향 | ✅ 개별 feature만 변경 |
-| **타입 안전성** | 불필요한 케이스 처리 필요 | ✅ 필요한 케이스만 처리 |
-| **테스트** | 모든 케이스 테스트 필요 | ✅ 해당 feature 케이스만 |
-
-### 8.3 공통 부분 vs Feature 전용 부분
-
-```
-공통으로 보이는 부분:
-├── network()       → 네트워크 오류 (인터넷 연결)
-├── server(message) → 서버 오류 (5xx)
-└── unknown()       → 알 수 없는 오류
-
-Feature 전용 부분:
-├── Auth: invalidCredentials, userNotFound, sessionExpired
-├── Booking: cancelled, slotUnavailable, paymentFailed
-├── Search: noResults, rateLimited
-└── Profile: permissionDenied, dataNotFound
-```
-
-**중복이 있어도 Feature별로 정의하는 이유:**
-
-1. **Domain 레이어 순수성**: Domain은 외부 의존성이 없어야 함
-2. **Feature 독립성**: 각 feature는 독립적으로 배포/테스트 가능해야 함
-3. **명확한 책임**: 해당 feature에서만 발생하는 에러를 명확히 정의
-4. **Freezed when 패턴**: 필요한 케이스만 처리하여 코드 간결성 유지
-
-### 8.4 Failure Mapper 패턴
-
-```dart
-// features/home/lib/data/mappers/home_failure_mapper.dart
-class HomeFailureMapper {
-  static HomeFailure fromDioException(DioException e) {
-    switch (e.type) {
-      case DioExceptionType.connectionError:
-      case DioExceptionType.connectionTimeout:
-        return const HomeFailure.network();
-      case DioExceptionType.badResponse:
-        return HomeFailure.server(e.message ?? 'Server error');
-      default:
-        return const HomeFailure.unknown();
-    }
-  }
-}
-
-// features/auth/lib/data/mappers/auth_failure_mapper.dart
-class AuthFailureMapper {
-  static AuthFailure fromDioException(DioException e) {
-    if (e.response?.statusCode == 401) {
-      return const AuthFailure.invalidCredentials();
-    }
-    if (e.response?.statusCode == 404) {
-      return const AuthFailure.userNotFound();
-    }
-    // 공통 처리
-    switch (e.type) {
-      case DioExceptionType.connectionError:
-        return const AuthFailure.network();
-      default:
-        return const AuthFailure.unknown();
-    }
-  }
-}
-```
+> 상세 내용(Failure Mapper 패턴, Feature별 정의 이유)은 [ErrorHandling](./ErrorHandling.md) 참조
 
 ## 9. 네이밍 컨벤션
 
@@ -754,46 +659,26 @@ class HomeDto {
 ## 15. UseCase 패턴
 
 ```dart
-import 'package:fpdart/fpdart.dart';
-import 'package:injectable/injectable.dart';
-
 @injectable
 class GetHomeDataUseCase {
   final HomeRepository _repository;
-
   GetHomeDataUseCase(this._repository);
 
-  Future<Either<HomeFailure, HomeData>> call() {
-    return _repository.getHomeData();
-  }
+  Future<Either<HomeFailure, HomeData>> call() => _repository.getHomeData();
 }
 ```
 
 ## 16. Repository 패턴
 
-### Interface (Domain)
-
 ```dart
-import 'package:fpdart/fpdart.dart';
-
+// Interface (Domain)
 abstract class HomeRepository {
   Future<Either<HomeFailure, HomeData>> getHomeData();
 }
-```
 
-### Implementation (Data)
-
-```dart
-import 'package:fpdart/fpdart.dart';
-import 'package:injectable/injectable.dart';
-
+// Implementation (Data)
 @LazySingleton(as: HomeRepository)
 class HomeRepositoryImpl implements HomeRepository {
-  final HomeRemoteDataSource _dataSource;
-  final HomeMapper _mapper;
-
-  HomeRepositoryImpl(this._dataSource, this._mapper);
-
   @override
   Future<Either<HomeFailure, HomeData>> getHomeData() async {
     try {
@@ -806,11 +691,11 @@ class HomeRepositoryImpl implements HomeRepository {
 }
 ```
 
+> Either 패턴, fold 사용법 등 함수형 에러 처리 상세 내용은 [Fpdart](./Fpdart.md) 참조
+
 ## 17. Bloc 패턴
 
 ```dart
-import 'package:flutter_bloc/flutter_bloc.dart';
-
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final GetHomeDataUseCase _getHomeDataUseCase;
 
@@ -819,12 +704,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   Future<void> _onEvent(HomeEvent event, Emitter<HomeState> emit) async {
-    // Freezed when 패턴: 모든 이벤트 타입에 대한 핸들러를 제공
-    // 개별 이벤트에 다른 Transformer가 필요하면 on<SpecificEvent>() 사용 (Bloc.md 참조)
     await event.when(
       started: () => _onStarted(emit),
       refresh: () => _onRefresh(emit),
-      loadMore: () => _onLoadMore(emit),
     );
   }
 
@@ -832,16 +714,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     emit(const HomeState.loading());
     final result = await _getHomeDataUseCase();
     result.fold(
-      (failure) => emit(HomeState.error(failure.when(
-        network: () => '네트워크 오류가 발생했습니다',
-        server: (message) => message,
-        unknown: () => '알 수 없는 오류가 발생했습니다',
-      ))),
+      (failure) => emit(HomeState.error(_mapFailureMessage(failure))),
       (data) => emit(HomeState.loaded(data)),
     );
   }
 }
 ```
+
+> 상세 내용(Transformer, 동시성 처리, 테스트 등)은 [Bloc](./Bloc.md) 참조
 
 ## 18. Screen 패턴
 
@@ -980,7 +860,7 @@ class HomeFailure { ... }
 | [Freezed.md](./Freezed.md) | 불변 데이터 모델 |
 | [Fpdart.md](./Fpdart.md) | Either/TaskEither 함수형 에러 처리 |
 | [DI.md](../infrastructure/DI.md) | 의존성 주입 설정 |
-| [ErrorHandling.md](../system/ErrorHandling.md) | 에러 처리 전략 |
+| [ErrorHandling.md](./ErrorHandling.md) | 에러 처리 전략 |
 | [Networking_Dio.md](../networking/Networking_Dio.md) | 네트워크 통신 |
 
 ---

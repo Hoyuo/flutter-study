@@ -1,5 +1,8 @@
 # Flutter 성능 최적화 가이드 (기본 + 심화)
 
+> **난이도**: 시니어 | **카테고리**: system
+> **선행 학습**: [FlutterInternals](../fundamentals/FlutterInternals.md) | **예상 학습 시간**: 3h
+>
 > **대상**: Flutter 3.27+ | Dart 3.10+ | Impeller 렌더링 엔진
 
 ## 학습 목표

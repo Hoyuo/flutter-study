@@ -20,6 +20,7 @@
 | `TeamCollaboration.md` | 팀 협업, 코드 리뷰, 브랜치 전략, 문서화, 온보딩 |
 | `Isolates.md` | Isolate 개념, compute() 함수, 백그라운드 처리, Worker Pool, 병렬 처리 패턴 |
 | `Observability.md` | 통합 관찰성 - 구조화된 로깅, 에러 추적, 성능 모니터링, Crashlytics/Sentry 연동 |
+| `DevToolsProfiling.md` | Flutter DevTools 활용, 성능 프로파일링, 메모리 분석, Widget Inspector, Timeline |
 
 ## For AI Agents
 
@@ -39,10 +40,11 @@
 3. `../fundamentals/DesignSystem.md` → UI 테마 시스템 (fundamentals로 이동)
 4. `Accessibility.md` → 모든 사용자가 사용 가능한 UI 설계
 5. `Performance.md` → 성능 최적화
-6. `Security.md` → 보안 강화
-7. `AppLifecycle.md` → 생명주기 관리
-8. `Testing.md` → 테스트 작성
-9. `Isolates.md` → 백그라운드 처리 및 병렬화
+6. `DevToolsProfiling.md` → DevTools 프로파일링
+7. `Security.md` → 보안 강화
+8. `AppLifecycle.md` → 생명주기 관리
+9. `Testing.md` → 테스트 작성
+10. `Isolates.md` → 백그라운드 처리 및 병렬화
 
 ### Common Patterns
 

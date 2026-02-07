@@ -1,5 +1,9 @@
 # Flutter 오프라인 우선 아키텍처
 
+> **난이도**: 고급 | **카테고리**: advanced
+> **선행 학습**: [LocalStorage](../infrastructure/LocalStorage.md)
+> **예상 학습 시간**: 2h
+
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - 오프라인 우선 아키텍처의 원리와 동기화 전략을 이해할 수 있다
 > - 로컬 DB와 네트워크 데이터 간 충돌 해결 패턴을 구현할 수 있다
@@ -13,29 +17,13 @@
 
 ### 의존성 추가
 
+오프라인 우선 아키텍처에 필요한 핵심 패키지:
+
 ```yaml
 # pubspec.yaml
 dependencies:
   # 네트워크 상태 감지
   connectivity_plus: ^7.0.0  # 2026년 1월 기준 최신 버전
-
-  # 로컬 데이터베이스
-  drift: ^2.22.0             # SQLite 래퍼 (2026년 최신)
-  drift_flutter: ^0.2.0      # sqlite3_flutter_libs 대체 (권장)
-  path_provider: ^2.1.5
-  path: ^1.9.0
-
-  # 또는 Hive (NoSQL)
-  # Hive 4.0 사용 시 (isar_flutter_libs 필요):
-  # hive: ^4.0.0
-  # isar_flutter_libs: ^4.0.0-dev.13
-  # 또는 안정 버전 사용 (권장):
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
-
-  # Isar Plus (NoSQL - 커뮤니티 포크)
-  isar_plus: ^1.2.1
-  isar_plus_flutter_libs: ^1.2.1
 
   # 상태 관리
   flutter_bloc: ^9.1.1
@@ -53,15 +41,11 @@ dependencies:
 dev_dependencies:
   freezed: ^3.2.4            # Dart 3.6 호환
   build_runner: ^2.4.15
-  drift_dev: ^2.22.0
-  hive_generator: ^2.0.1
-  # isar_plus는 코드 생성기가 내장되어 있어 별도 generator 불필요
 ```
 
-**주요 변경사항 (2026년 기준):**
-- `connectivity_plus` ^7.0.0: 새로운 `ConnectivityResult` enum 값 추가, 다중 연결 타입 지원
-- `drift` ^2.22.0: 성능 개선 및 Web 지원 강화
-- `hive` ^2.2.3: 안정 버전 권장 (4.0은 isar_flutter_libs 필요)
+> 📖 **로컬 데이터베이스 설정**:
+> - **Drift, Hive, Isar Plus** 등 로컬 저장소 설정은 [LocalStorage.md](../infrastructure/LocalStorage.md) 참조
+> - Drift (SQLite) 권장: 타입 안전한 쿼리, 마이그레이션, Stream 지원
 
 ## 오프라인 우선 아키텍처 개념
 
@@ -2153,6 +2137,18 @@ class StorageManager {
 
 ### 과제 2: SyncQueue 시스템 구현
 오프라인 상태에서 발생한 변경사항을 큐에 저장하고, 온라인 복구 시 순차적으로 서버에 반영하는 SyncQueue를 구현하세요. 실패 시 재시도(지수 백오프)와 충돌 감지를 포함하세요.
+
+---
+
+## 관련 문서
+
+- [LocalStorage](../infrastructure/LocalStorage.md) - Drift, Hive, Isar Plus 로컬 데이터베이스
+- [Architecture](../core/Architecture.md) - Repository 패턴과 데이터 레이어 설계
+- [Bloc](../core/Bloc.md) - Sync Bloc 및 오프라인 상태 관리
+- [CachingStrategy](../infrastructure/CachingStrategy.md) - 캐싱 전략 및 데이터 무효화
+- [Networking_Dio](../networking/Networking_Dio.md) - API 동기화 및 네트워크 통신
+
+---
 
 ## Self-Check
 

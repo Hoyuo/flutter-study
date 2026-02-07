@@ -2,6 +2,9 @@
 
 > Flutter에서 Google Maps, Geolocator, Geocoding을 활용한 위치 기반 서비스 구현 가이드. Clean Architecture, Bloc 패턴, injectable DI, fpdart Either를 적용한 실전 예제로 마커 관리, 경로 탐색, Geofencing, 클러스터링까지 다룹니다.
 
+> **난이도**: 중급 | **카테고리**: features
+> **선행 학습**: [Permission](./Permission.md) | **예상 학습 시간**: 2h
+
 ## 학습 목표
 
 이 문서를 학습하면 다음을 할 수 있습니다:

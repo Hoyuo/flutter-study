@@ -18,6 +18,13 @@
 | `DeepLinking.md` | Universal Links, App Links, 딥링크 처리, 라우팅 통합, 동적 링크 |
 | `MapsGeolocation.md` | Google Maps 통합, 위치 서비스, Geofencing, 마커/폴리라인, 권한 처리 |
 | `CameraMedia.md` | 카메라 촬영, 이미지/비디오 처리, 갤러리 접근, 미디어 압축, 권한 관리 |
+| `Animation.md` | 암시적/명시적 애니메이션, AnimatedBuilder, Lottie, Hero, Custom Tween |
+| `CustomPainting.md` | Canvas API, CustomPainter, Path 그리기, 차트/그래픽 렌더링 |
+| `FormValidation.md` | 폼 유효성 검사, ValidatorBuilder, Form Bloc, 실시간 검증 |
+| `ImageHandling.md` | 이미지 캐싱, 크롭, 압축, 서버 업로드, cached_network_image |
+| `InAppPurchase.md` | 인앱 결제, 구독 관리, 영수증 검증, 복원 처리 |
+| `Pagination.md` | 무한 스크롤, 커서 기반 페이지네이션, PaginationState, LazyLoad |
+| `ResponsiveDesign.md` | 반응형/적응형 디자인, LayoutBuilder, MediaQuery, Breakpoints |
 
 ## For AI Agents
 
@@ -33,6 +40,9 @@
 2. `Localization.md` → 다국어 지원
 3. `Permission.md` → 권한 관리
 4. `PushNotification.md` → 알림 시스템
+5. `FormValidation.md` → 폼 처리
+6. `Animation.md` → 애니메이션
+7. `Pagination.md` → 페이지네이션
 
 ### Common Patterns
 

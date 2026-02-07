@@ -1,5 +1,9 @@
 # Flutter 플랫폼 통합 가이드 (시니어)
 
+> **난이도**: 시니어 | **카테고리**: infrastructure
+> **선행 학습**: [FlutterInternals](../fundamentals/FlutterInternals.md)
+> **예상 학습 시간**: 3h
+
 > **Flutter 3.27+ / Dart 3.6+** | pigeon ^22.0.0 | ffigen ^13.0.0 | ffi ^2.1.3
 
 > 네이티브 플랫폼과의 심층 통합을 위한 고급 패턴 및 최적화 전략

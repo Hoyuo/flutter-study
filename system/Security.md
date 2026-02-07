@@ -1,5 +1,8 @@
 # Flutter 보안 가이드
 
+> **난이도**: 고급 | **카테고리**: system
+> **선행 학습**: [Architecture](../core/Architecture.md) | **예상 학습 시간**: 2h
+>
 > **최신 업데이트**: Flutter 3.27 및 flutter_secure_storage 10.0.0 기준으로 작성되었습니다.
 
 > **대상**: Mid-level ~ Senior 개발자 | Flutter 3.27+ | OWASP MASVS Level 2 준수

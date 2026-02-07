@@ -1,5 +1,8 @@
 # Flutter 접근성(Accessibility) 가이드
 
+> **난이도**: 중급 | **카테고리**: system
+> **선행 학습**: [WidgetFundamentals](../fundamentals/WidgetFundamentals.md) | **예상 학습 시간**: 1.5h
+
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - Semantics 위젯으로 스크린 리더 지원을 구현할 수 있다
 > - 접근성 테스트를 수행하고 WCAG 기준을 충족할 수 있다

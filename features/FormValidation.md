@@ -1,5 +1,9 @@
 # Flutter 폼 검증 가이드
 
+> **난이도**: 중급 | **카테고리**: features
+> **선행 학습**: [Bloc](../core/Bloc.md)
+> **예상 학습 시간**: 1.5h
+
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - Form/TextFormField를 사용한 실시간 폼 검증을 구현할 수 있다
 > - Bloc을 활용한 폼 상태 관리와 제출 처리를 설계할 수 있다
@@ -2016,6 +2020,16 @@ void main() {
 
 ### 과제 2: 동적 폼 빌더
 서버에서 받은 JSON 스키마를 기반으로 동적으로 폼 필드를 생성하고 검증하는 FormBuilder를 구현하세요. 다양한 필드 타입(텍스트, 드롭다운, 체크박스, 날짜)을 지원하세요.
+
+---
+
+## 관련 문서
+
+- [Bloc](../core/Bloc.md) - Form Bloc 패턴 및 폼 상태 관리
+- [WidgetFundamentals](../fundamentals/WidgetFundamentals.md) - TextFormField와 Form 위젯
+- [Architecture](../core/Architecture.md) - Validator 로직 분리 및 재사용
+
+---
 
 ## Self-Check
 

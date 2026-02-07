@@ -16,8 +16,6 @@ Flutter 앱 개발의 핵심 아키텍처와 패턴을 다루는 문서 모음�
 | `BlocUiEffect.md` | UI Effect 패턴, 일회성 이벤트 처리 (Toast, Navigation, Dialog, SnackBar) |
 | `Freezed.md` | 불변 데이터 클래스 생성, Union Type(Sealed Class), copyWith 패턴 |
 | `Fpdart.md` | 함수형 프로그래밍, Either/Option/TaskEither를 활용한 에러 처리 |
-| `ModularArchitecture.md` | Mono-repo/Multi-package 구조, Melos 워크스페이스, Micro Frontend 패턴 |
-| `AdvancedStateManagement.md` | CQRS, Event Sourcing, Optimistic UI, Undo/Redo, State Sync |
 | `Riverpod.md` | Riverpod 상태 관리, Provider 종류, Code Generation, Bloc 마이그레이션 |
 | `ErrorHandling.md` | Failure sealed class 설계, Dio 에러 인터셉터, ErrorView 위젯, 재시도 패턴 |
 

@@ -1,5 +1,9 @@
 # Bloc 패턴 가이드
 
+> **난이도**: 중급 | **카테고리**: core
+> **선행 학습**: [Architecture](./Architecture.md)
+> **예상 학습 시간**: 3h
+
 Flutter에서 Bloc(Business Logic Component) 패턴을 사용한 상태 관리 가이드입니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
@@ -710,6 +714,8 @@ BlocListener<LoginBloc, LoginState>(
 )
 ```
 
+> **일회성 UI Effect 처리**: Toast, Dialog, Navigation 등 일회성 UI 이벤트의 상세 패턴과 고급 기법은 [BlocUiEffect](./BlocUiEffect.md) 참조
+
 ### MultiBlocListener
 
 여러 Bloc을 동시에 listen합니다.
@@ -1355,6 +1361,8 @@ class ProductListPage extends StatelessWidget {
 | `canLoadMore` | 중복 로드 방지 |
 | `ScrollEndNotification` | 스크롤 80% 지점에서 미리 로드 |
 | `RefreshIndicator` | Pull-to-refresh 지원 |
+
+> **상세 구현**: Pagination 패턴의 고급 기법과 최적화는 [Pagination](../features/Pagination.md) 참조
 
 ---
 

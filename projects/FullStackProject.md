@@ -1,5 +1,8 @@
 # Flutter 실전 프로젝트 가이드 - Todo 앱 처음부터 끝까지
 
+> **난이도**: 중급 | **카테고리**: projects
+> **선행 학습**: [Architecture](../core/Architecture.md), [Bloc](../core/Bloc.md), [Freezed](../core/Freezed.md), [Fpdart](../core/Fpdart.md) | **예상 학습 시간**: 8h
+
 > Clean Architecture + Bloc 패턴으로 프로덕션급 Todo 앱을 단계별로 구축하는 완전한 가이드입니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:

@@ -1,5 +1,8 @@
 # Flutter GraphQL 가이드
 
+> **난이도**: 고급 | **카테고리**: networking
+> **선행 학습**: [Networking_Dio](./Networking_Dio.md) | **예상 학습 시간**: 2h
+
 > GraphQL을 활용한 효율적인 데이터 페칭과 실시간 통신 구현 가이드. Clean Architecture, Bloc 패턴, 타입 안전성을 갖춘 현대적인 Flutter GraphQL 애플리케이션 개발 방법을 다룹니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:

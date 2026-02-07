@@ -1,5 +1,9 @@
 # Riverpod 상태 관리 가이드
 
+> **난이도**: 고급 | **카테고리**: core
+> **선행 학습**: [Bloc](./Bloc.md)
+> **예상 학습 시간**: 3h
+
 > **참고**: 이 프로젝트의 표준 상태 관리는 **Bloc 패턴**입니다 (`core/Bloc.md` 참조). Riverpod은 대안적 접근 방식으로, 특정 시나리오에서의 활용법을 학습 목적으로 다룹니다.
 
 > **Flutter 3.27+ / Dart 3.6+** | riverpod ^3.0.0 | flutter_riverpod ^3.0.0 | riverpod_annotation ^3.0.0 | freezed ^3.2.4 | fpdart ^1.2.0

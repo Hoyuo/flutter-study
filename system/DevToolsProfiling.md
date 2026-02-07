@@ -1,5 +1,9 @@
 # Flutter DevTools & 성능 프로파일링 가이드
 
+> **난이도**: 중급 | **카테고리**: system
+> **선행 학습**: [FlutterInternals](../fundamentals/FlutterInternals.md)
+> **예상 학습 시간**: 2h
+
 > Flutter Clean Architecture + Bloc 패턴 기반 교육 자료
 > Package versions: flutter_bloc ^9.1.1, freezed ^3.2.4, fpdart ^1.2.0, go_router ^17.0.1, get_it ^9.2.0, injectable ^2.5.0
 
@@ -1649,4 +1653,21 @@ ListView 스크롤 성능을 측정하는 integration_test를 작성하세요:
 
 ---
 
-**학습 완료 후**: [fundamentals/FlutterInternals.md](./FlutterInternals.md)로 진행하여 렌더링 파이프라인의 내부 동작을 학습하세요.
+## 관련 문서
+
+**선행 학습**:
+- [FlutterInternals](../fundamentals/FlutterInternals.md) - 렌더링 파이프라인 이해
+- [WidgetFundamentals](../fundamentals/WidgetFundamentals.md) - Widget 리빌드 최적화 기법
+
+**병행 학습**:
+- [LayoutSystem](../fundamentals/LayoutSystem.md) - Layout 에러 진단과 해결
+
+**다음 단계**:
+- [system/Observability](../system/Observability.md) - 로깅과 모니터링
+
+**실전 적용**:
+- [DesignSystem](../fundamentals/DesignSystem.md) - 성능 최적화된 컴포넌트 설계
+
+---
+
+**학습 완료 후**: [fundamentals/FlutterInternals.md](../fundamentals/FlutterInternals.md)로 진행하여 렌더링 파이프라인의 내부 동작을 학습하세요.

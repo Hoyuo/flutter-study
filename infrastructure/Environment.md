@@ -1,5 +1,9 @@
 # Flutter Environment & Multi-Country Guide
 
+> **난이도**: 중급 | **카테고리**: infrastructure
+> **선행 학습**: [DI](./DI.md)
+> **예상 학습 시간**: 1h
+
 > 이 문서는 KR, JP, TW 다국가 환경 설정 및 코드 패리티를 유지하는 방법을 설명합니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:

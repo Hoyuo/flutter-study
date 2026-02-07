@@ -1,5 +1,9 @@
 # Flutter 모듈러 아키텍처 가이드 (시니어)
 
+> **난이도**: 시니어 | **카테고리**: advanced
+> **선행 학습**: [Architecture](../core/Architecture.md), [Bloc](../core/Bloc.md)
+> **예상 학습 시간**: 3h
+
 > 대규모 Flutter 애플리케이션을 위한 모듈화 전략 및 아키텍처 패턴
 
 > **Package Versions (2025-01 기준)**

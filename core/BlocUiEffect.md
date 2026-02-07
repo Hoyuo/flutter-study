@@ -1,5 +1,9 @@
 # Bloc에서 UI Effect 처리하기
 
+> **난이도**: 고급 | **카테고리**: core
+> **선행 학습**: [Bloc](./Bloc.md)
+> **예상 학습 시간**: 2h
+
 Toast, Dialog, Navigation 등 일회성 이벤트 처리 패턴에 대한 가이드입니다.
 
 > **Package Versions (2025-01 기준)**
@@ -298,69 +302,11 @@ State 변경
     └──→ BlocListener ──→ Side Effect (1회만 실행)
 ```
 
-### BlocListener 사용법
+> **BlocListener 기본 사용법**: BlocListener, MultiBlocListener, BlocConsumer의 기본 사용법과 문법은 [Bloc](./Bloc.md#8-ui-연동) 참조
 
-```dart
-BlocListener<AuthBloc, AuthState>(
-  listenWhen: (previous, current) {
-    return previous.status != current.status;
-  },
-  listener: (context, state) {
-    if (state.status == AuthStatus.failure) {
-      showErrorToast(state.errorMessage);
-    }
-    if (state.status == AuthStatus.success) {
-      context.go('/home');
-    }
-  },
-  child: const LoginForm(),
-)
-```
+### 일회성 UI Effect의 핵심 문제
 
-### MultiBlocListener
-
-여러 Bloc을 동시에 Listen할 수 있습니다.
-
-```dart
-MultiBlocListener(
-  listeners: [
-    BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        // Auth 관련 Side Effect
-      },
-    ),
-    BlocListener<NetworkBloc, NetworkState>(
-      listener: (context, state) {
-        // Network 관련 Side Effect
-      },
-    ),
-  ],
-  child: const MyApp(),
-)
-```
-
-### BlocConsumer 사용법
-
-UI 빌드와 Side Effect를 동시에 처리합니다.
-
-```dart
-BlocConsumer<AuthBloc, AuthState>(
-  listenWhen: (prev, curr) => prev.status != curr.status,
-  listener: (context, state) {
-    // Side Effect는 여기서!
-    if (state.status == AuthStatus.failure) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(state.errorMessage ?? '오류')),
-      );
-    }
-  },
-  buildWhen: (prev, curr) => prev.isLoading != curr.isLoading,
-  builder: (context, state) {
-    // UI 빌드는 여기서!
-    return state.isLoading ? const CircularProgressIndicator() : const LoginForm();
-  },
-)
-```
+BlocListener는 상태 변경마다 호출되므로, 동일한 Effect가 중복 실행되거나 유실될 수 있습니다. 이 문서에서는 이러한 문제를 해결하는 고급 패턴을 다룹니다.
 
 ---
 

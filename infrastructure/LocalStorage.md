@@ -1,5 +1,9 @@
 # Flutter Local Storage Guide
 
+> **난이도**: 중급 | **카테고리**: infrastructure
+> **선행 학습**: [Architecture](../core/Architecture.md)
+> **예상 학습 시간**: 2h
+
 > 이 문서는 SharedPreferences, Drift, Isar Plus, SecureStorage를 사용한 로컬 저장소 패턴을 설명합니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
@@ -49,6 +53,9 @@ SecureStorage
 ├── 사용자 인증 정보
 └── 암호화 키
 ```
+
+> 📖 **오프라인 동기화 패턴**:
+> 로컬 저장소를 사용한 **오프라인 우선 아키텍처, 동기화 전략, 충돌 해결**은 [OfflineSupport.md](../advanced/OfflineSupport.md) 참조
 
 ### 1.3 프로젝트 구조
 

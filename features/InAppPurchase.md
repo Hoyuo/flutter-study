@@ -1,5 +1,9 @@
 # Flutter 인앱 결제 가이드 (In-App Purchase)
 
+> **난이도**: 고급 | **카테고리**: features
+> **선행 학습**: [Architecture](../core/Architecture.md)
+> **예상 학습 시간**: 3h
+
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - iOS/Android 인앱 결제 흐름을 이해하고 통합 구현할 수 있다
 > - 구독, 소모품, 비소모품 상품 유형별 결제를 처리할 수 있다
@@ -1964,6 +1968,17 @@ in_app_purchase 패키지를 사용하여 월간/연간 구독 상품의 결제 
 
 ### 과제 2: 서버 사이드 검증 시스템
 클라이언트에서 받은 영수증을 서버에서 검증하는 API를 설계하세요. App Store/Play Store 영수증 형식 차이, 구독 갱신/취소 웹훅 처리를 포함해 주세요.
+
+---
+
+## 관련 문서
+
+- [Architecture](../core/Architecture.md) - Repository 패턴과 결제 도메인 설계
+- [Bloc](../core/Bloc.md) - Purchase Bloc 패턴 및 결제 상태 관리
+- [ErrorHandling](../core/ErrorHandling.md) - 결제 실패 및 에러 처리
+- [Networking_Dio](../networking/Networking_Dio.md) - 영수증 검증 API 통신
+
+---
 
 ## Self-Check
 

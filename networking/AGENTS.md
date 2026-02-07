@@ -22,7 +22,7 @@ HTTP 통신 및 API 연동을 다루는 문서 모음입니다. Dio HTTP 클라�
 
 - Dio는 저수준 HTTP 설정, Retrofit은 고수준 API 정의
 - 두 문서는 함께 사용되므로 연관성 유지
-- 에러 처리는 `../system/ErrorHandling.md`와 연계
+- 에러 처리는 `../core/ErrorHandling.md`와 연계
 
 ### Learning Path
 
@@ -57,7 +57,7 @@ abstract class UserApi {
 ### Internal
 
 - `../infrastructure/DI.md` - Dio 인스턴스 주입
-- `../system/ErrorHandling.md` - API 에러 처리
+- `../core/ErrorHandling.md` - API 에러 처리
 
 ### External
 

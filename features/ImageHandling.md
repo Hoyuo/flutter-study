@@ -1,5 +1,9 @@
 # Flutter 이미지 처리 가이드
 
+> **난이도**: 중급 | **카테고리**: features
+> **선행 학습**: [Architecture](../core/Architecture.md)
+> **예상 학습 시간**: 2h
+
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - cached_network_image로 이미지 캐싱 전략을 구현할 수 있다
 > - 이미지 선택, 크롭, 압축 파이프라인을 구축할 수 있다
@@ -76,6 +80,8 @@ dependencies:
 ```
 
 ## 이미지 캐싱 (cached_network_image)
+
+> 📖 **일반적인 캐싱 전략(TTL, LRU, Cache Invalidation, 캐시 계층 구조)은 [../infrastructure/CachingStrategy.md](../infrastructure/CachingStrategy.md)를 참조하세요.** 이 섹션에서는 이미지에 특화된 캐싱 구현만 다룹니다.
 
 ### 기본 사용
 
@@ -1469,6 +1475,16 @@ image_picker로 이미지 선택 → image_cropper로 크롭 → 압축 → 서�
 
 ### 과제 2: 이미지 캐싱 전략 최적화
 cached_network_image를 활용하여 메모리/디스크 캐시 설정, placeholder/에러 위젯, 캐시 무효화 전략을 구현하세요. 리스트 스크롤 성능을 고려한 최적화를 적용하세요.
+
+---
+
+## 관련 문서
+
+- [Architecture](../core/Architecture.md) - Clean Architecture와 Repository 패턴
+- [CachingStrategy](../infrastructure/CachingStrategy.md) - 캐싱 전략 및 TTL, LRU 패턴
+- [Networking_Dio](../networking/Networking_Dio.md) - Multipart를 활용한 이미지 업로드
+
+---
 
 ## Self-Check
 

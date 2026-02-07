@@ -1,5 +1,9 @@
 # Flutter 디자인 시스템 구축 가이드
 
+> **난이도**: 중급 | **카테고리**: fundamentals
+> **선행 학습**: [WidgetFundamentals](./WidgetFundamentals.md), [LayoutSystem](./LayoutSystem.md)
+> **예상 학습 시간**: 2h
+
 > 이 문서는 Flutter 프로젝트에서 확장 가능하고 일관된 디자인 시스템을 구축하는 방법을 다룹니다. Design Tokens, ThemeExtension, Atomic Design 원칙을 활용하여 재사용 가능한 컴포넌트 라이브러리를 설계하고, Figma와의 협업 워크플로우를 구축하는 방법을 학습합니다.
 
 > **학습 목표**:
@@ -2061,6 +2065,21 @@ Atomic Design 원칙에 따라 다음 컴포넌트를 구현하세요:
 - [ ] 시스템 설정과 연동하여 자동으로 다크 모드를 전환하고, 사용자 설정을 저장할 수 있다
 - [ ] Widgetbook을 설정하고, 모든 컴포넌트를 카탈로그에 등록하여 독립적으로 개발하고 테스트할 수 있다
 - [ ] 한글 폰트(Pretendard, Noto Sans) 또는 Google Fonts를 프로젝트에 통합하고, 타이포그래피 시스템을 구축할 수 있다
+
+---
+
+## 관련 문서
+
+**선행 학습**:
+- [WidgetFundamentals](./WidgetFundamentals.md) - Widget 기본기와 InheritedWidget
+- [LayoutSystem](./LayoutSystem.md) - 레이아웃 시스템과 반응형 디자인
+
+**병행 학습**:
+- [DevToolsProfiling](./DevToolsProfiling.md) - 컴포넌트 성능 최적화
+
+**실전 적용**:
+- [Bloc](../core/Bloc.md) - 테마 상태 관리 (Bloc 패턴)
+- [core/Architecture](../core/Architecture.md) - 디자인 시스템을 Clean Architecture에 통합
 
 ---
 

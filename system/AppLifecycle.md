@@ -1,5 +1,8 @@
 # Flutter 앱 생명주기 가이드
 
+> **난이도**: 중급 | **카테고리**: system
+> **선행 학습**: [WidgetFundamentals](../fundamentals/WidgetFundamentals.md) | **예상 학습 시간**: 1.5h
+
 ## 학습 목표
 
 이 문서를 학습하면 다음을 할 수 있습니다:

@@ -1,5 +1,9 @@
 # Flutter App Store Submission Guide
 
+> **난이도**: 고급 | **카테고리**: infrastructure
+> **선행 학습**: 없음
+> **예상 학습 시간**: 2h
+
 Production-ready patterns for submitting Flutter apps to Google Play Store and Apple App Store.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:

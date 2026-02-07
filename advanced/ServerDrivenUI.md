@@ -1,5 +1,9 @@
 # Server-Driven UI - Flutter 서버 주도 UI 패턴
 
+> **난이도**: 시니어 | **카테고리**: advanced
+> **선행 학습**: [Architecture](../core/Architecture.md), [Freezed](../core/Freezed.md)
+> **예상 학습 시간**: 3h
+
 > **학습 목표**
 > - Server-Driven UI(SDUI) 개념과 동작 원리 이해
 > - JSON 스키마를 Flutter 위젯으로 변환하는 렌더링 엔진 구현

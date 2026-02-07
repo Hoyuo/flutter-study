@@ -36,7 +36,7 @@ Dart 언어와 Flutter의 핵심 개념을 이해합니다. 다른 플랫폼(iOS
 | 1 | `fundamentals/DartAdvanced.md` | Fundamentals | Generics, Extension, Mixin, Sealed Class, Pattern Matching | 6h |
 | 2 | `fundamentals/WidgetFundamentals.md` | Fundamentals | Widget/Element/RenderObject 트리, BuildContext, Key, State Lifecycle | 5h |
 | 3 | `fundamentals/LayoutSystem.md` | Fundamentals | Constraints 전파, Flex 레이아웃, Sliver 시스템 | 5h |
-| 4 | `fundamentals/DevToolsProfiling.md` | Fundamentals | DevTools 실전, 성능 프로파일링, 메모리 릭 디버깅 | 4h |
+| 4 | `system/DevToolsProfiling.md` | System | DevTools 실전, 성능 프로파일링, 메모리 릭 디버깅 | 4h |
 | 5 | `fundamentals/FlutterInternals.md` | Fundamentals | 렌더링 파이프라인, Build/Layout/Paint/Composite | 4h |
 
 **총 예상 학습 시간: 24시간**
@@ -48,7 +48,7 @@ Dart 언어와 Flutter의 핵심 개념을 이해합니다. 다른 플랫폼(iOS
 | **1주** | `DartAdvanced.md` | Dart 심화 문법 (Generics, Extension, Mixin, Sealed Class) | Extension Method로 유틸리티 작성 |
 | **2주** | `WidgetFundamentals.md` | Widget Tree, BuildContext, Key의 동작 원리 | StatefulWidget Lifecycle 실습 |
 | **3주** | `LayoutSystem.md` | Constraints 전파 원리, Sliver 기반 스크롤 레이아웃 | 복잡한 UI 레이아웃 구현 |
-| **4주** | `DevToolsProfiling.md` + `FlutterInternals.md` | 렌더링 파이프라인 이해, DevTools로 프로파일링 | DevTools로 리빌드 추적 및 최적화 |
+| **4주** | `system/DevToolsProfiling.md` + `FlutterInternals.md` | 렌더링 파이프라인 이해, DevTools로 프로파일링 | DevTools로 리빌드 추적 및 최적화 |
 
 ---
 
@@ -69,7 +69,7 @@ Dart 언어와 Flutter의 핵심 개념을 이해합니다. 다른 플랫폼(iOS
 | 7 | `core/ErrorHandling.md` | Core | Failure sealed class, Either 에러 처리 | 4h |
 | 8 | `features/Navigation.md` | Features | GoRouter, 인증 리다이렉트, ShellRoute | 4h |
 | 9 | `fundamentals/DesignSystem.md` | Fundamentals | Material 3 테마, 다크 모드, ThemeExtension, 디자인 토큰 | 3h |
-| 10 | `patterns/FormValidation.md` | Patterns | 폼 유효성 검사, ValidatorBuilder, Form Bloc | 3h |
+| 10 | `features/FormValidation.md` | Patterns | 폼 유효성 검사, ValidatorBuilder, Form Bloc | 3h |
 
 **총 예상 학습 시간: 38시간**
 
@@ -142,10 +142,10 @@ Junior 과정 완료를 전제로 합니다. 실무 프로젝트에서 자주 �
 | 5 | `features/Localization.md` | Features | easy_localization, JSON 번역, 런타임 언어 변경 | 4h |
 | 6 | `features/Permission.md` | Features | permission_handler, 플랫폼별 설정, 권한 플로우 | 3h |
 | 7 | `features/PushNotification.md` | Features | FCM, 로컬 알림, 토픽 구독, 백그라운드 처리 | 5h |
-| 8 | `patterns/Pagination.md` | Patterns | 무한 스크롤, 커서 기반, PaginationState | 4h |
-| 9 | `patterns/ImageHandling.md` | Patterns | 이미지 캐싱, 크롭, 압축, 서버 업로드 | 4h |
+| 8 | `features/Pagination.md` | Patterns | 무한 스크롤, 커서 기반, PaginationState | 4h |
+| 9 | `features/ImageHandling.md` | Patterns | 이미지 캐싱, 크롭, 압축, 서버 업로드 | 4h |
 | 10 | `system/Observability.md` | System | Analytics, Logging, Monitoring 통합 - 이벤트 추적, 구조화 로깅, Crashlytics | 5h |
-| 11 | `patterns/Animation.md` | Patterns | 암시적/명시적 애니메이션, Lottie, Hero | 4h |
+| 11 | `features/Animation.md` | Patterns | 암시적/명시적 애니메이션, Lottie, Hero | 4h |
 | 12 | `system/Testing.md` | System | Unit/Widget/Integration 테스트, Mocktail, BlocTest | 6h |
 | 13 | `system/Performance.md` | System | 렌더링 최적화, 메모리 관리, DevTools | 4h |
 | 14 | `system/Security.md` | System | 데이터 암호화, Certificate Pinning, 인증 보안 | 4h |
@@ -202,7 +202,7 @@ Junior 과정 완료를 전제로 합니다. 실무 프로젝트에서 자주 �
 | 항목 | 내용 |
 |------|------|
 | 기술 스택 | Bloc, Hive, Dio, fpdart |
-| 추가 참고 문서 | `patterns/OfflineSupport.md` |
+| 추가 참고 문서 | `advanced/OfflineSupport.md` |
 | 기능 | 메모 CRUD, 오프라인 작성/편집, 온라인 동기화, 충돌 해결 |
 | 품질 요구사항 | 오프라인 동작 완전 지원, 동기화 큐 구현, 성능 프로파일링 |
 | 학습 포인트 | Offline-first 아키텍처, Sync Queue, Conflict Resolution |
@@ -226,16 +226,16 @@ Junior 과정 완료를 전제로 합니다. 실무 프로젝트에서 자주 �
 
 | 순서 | 문서 | 카테고리 | 핵심 학습 내용 | 난이도 |
 |------|------|----------|---------------|--------|
-| 1 | `core/AdvancedStateManagement.md` | Core | CQRS, Event Sourcing, Optimistic UI, Undo/Redo | ★★★ |
-| 2 | `core/ModularArchitecture.md` | Core | Mono-repo, Melos, Micro Frontend | ★★★ |
-| 3 | `patterns/AdvancedPatterns.md` | Patterns | DDD, Hexagonal, Saga, Specification | ★★★ |
+| 1 | `advanced/AdvancedStateManagement.md` | Core | CQRS, Event Sourcing, Optimistic UI, Undo/Redo | ★★★ |
+| 2 | `advanced/ModularArchitecture.md` | Core | Mono-repo, Melos, Micro Frontend | ★★★ |
+| 3 | `advanced/AdvancedPatterns.md` | Patterns | DDD, Hexagonal, Saga, Specification | ★★★ |
 | 4 | `infrastructure/PlatformIntegration.md` | Infra | Platform Channel, FFI, Pigeon | ★★★ |
 | 5 | `system/Isolates.md` | System | Isolate 기반 병렬 처리, Compute, IsolateChannel | ★★★ |
 | 6 | `system/Testing.md` (심화) | System | Property-based, Golden Test, Mutation, Contract, Fuzz, E2E Patrol | ★★★ |
 | 7 | `system/Performance.md` (심화) | System | Custom RenderObject, Impeller, Memory Profiling | ★★★ |
 | 8 | `infrastructure/CICD.md` (심화) | Infra | Trunk-based, Canary Release, Shorebird OTA | ★★★ |
 | 9 | `system/ProductionOperations.md` | System | SLO/SLI, Crash-free Rate, Incident Management | ★★★ |
-| 10 | `patterns/OfflineSupport.md` | Patterns | Offline-first, Drift ORM, Sync Queue, Conflict Resolution | ★★★ |
+| 10 | `advanced/OfflineSupport.md` | Patterns | Offline-first, Drift ORM, Sync Queue, Conflict Resolution | ★★★ |
 
 ### 3.2 아키텍처 리뷰 과제
 
@@ -336,19 +336,19 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
  3. features/PushNotification.md     ← 채팅 알림
     │
     ▼
- 4. patterns/ImageHandling.md        ← 프로필/채팅 이미지
+ 4. features/ImageHandling.md        ← 프로필/채팅 이미지
     │
     ▼
  5. features/CameraMedia.md (*)      ← 사진/영상 촬영 공유
     │
     ▼
- 6. patterns/Pagination.md           ← 메시지/피드 무한 스크롤
+ 6. features/Pagination.md           ← 메시지/피드 무한 스크롤
     │
     ▼
  7. features/DeepLinking.md (*)      ← 초대 링크, 프로필 공유
     │
     ▼
- 8. patterns/OfflineSupport.md       ← 오프라인 메시지 큐잉
+ 8. advanced/OfflineSupport.md       ← 오프라인 메시지 큐잉
 ```
 
 (*) NEXT_ROADMAP Phase 2 문서
@@ -423,16 +423,16 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
  2. features/CameraMedia.md (*)      ← 미디어 촬영/편집
     │
     ▼
- 3. patterns/ImageHandling.md        ← 이미지 캐싱/최적화
+ 3. features/ImageHandling.md        ← 이미지 캐싱/최적화
     │
     ▼
- 4. patterns/Animation.md            ← 풍부한 UI 전환 효과
+ 4. features/Animation.md            ← 풍부한 UI 전환 효과
     │
     ▼
- 5. patterns/CustomPainting.md (*)   ← 커스텀 차트/그래픽
+ 5. features/CustomPainting.md (*)   ← 커스텀 차트/그래픽
     │
     ▼
- 6. patterns/Pagination.md           ← 콘텐츠 피드 무한 스크롤
+ 6. features/Pagination.md           ← 콘텐츠 피드 무한 스크롤
     │
     ▼
  7. system/Performance.md            ← 이미지/영상 렌더링 최적화

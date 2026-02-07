@@ -1,5 +1,8 @@
 # Flutter Observability 가이드 (통합)
 
+> **난이도**: 시니어 | **카테고리**: system
+> **선행 학습**: [ProductionOperations](./ProductionOperations.md) | **예상 학습 시간**: 2h
+
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - Firebase Analytics로 사용자 행동 이벤트를 추적할 수 있다
 > - 구조화된 로깅 시스템을 구축할 수 있다

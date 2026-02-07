@@ -1,5 +1,9 @@
 # Freezed 가이드
 
+> **난이도**: 중급 | **카테고리**: core
+> **선행 학습**: [Architecture](./Architecture.md)
+> **예상 학습 시간**: 1.5h
+
 Dart에서 불변(immutable) 데이터 클래스를 쉽게 생성하기 위한 Freezed 패키지 사용 가이드입니다.
 
 > **Package Versions (2025-01 기준)**

@@ -1,5 +1,9 @@
 # Flutter Web & Desktop 멀티플랫폼 가이드
 
+> **난이도**: 고급 | **카테고리**: infrastructure
+> **선행 학습**: [Architecture](../core/Architecture.md)
+> **예상 학습 시간**: 2h
+
 > Flutter를 사용하여 단일 코드베이스로 Web과 Desktop(Windows, macOS, Linux) 애플리케이션을 개발하는 완벽 가이드. Clean Architecture, Bloc 패턴, 플랫폼별 최적화 전략을 포함합니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
@@ -607,7 +611,7 @@ class FileRepositoryImpl implements FileRepository {
 
 ## 6. 반응형 레이아웃
 
-> 📖 **반응형 디자인 패턴, Breakpoint 시스템, ResponsiveBuilder 위젯**은 [ResponsiveDesign.md](../patterns/ResponsiveDesign.md)를 참조하세요.
+> 📖 **반응형 디자인 패턴, Breakpoint 시스템, ResponsiveBuilder 위젯**은 [ResponsiveDesign.md](../features/ResponsiveDesign.md)를 참조하세요.
 
 **핵심 개념:**
 - **Breakpoint 기반 레이아웃 전환**: 화면 크기에 따라 Mobile/Tablet/Desktop 레이아웃 분기
