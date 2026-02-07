@@ -1993,7 +1993,7 @@ StreamBuilder<int>(
 - [LayoutSystem](./LayoutSystem.md) - Constraints 전파와 레이아웃 원리
 
 **다음 단계**:
-- [DevToolsProfiling](./DevToolsProfiling.md) - 렌더링 파이프라인 디버깅과 최적화
+- [DevToolsProfiling](../system/DevToolsProfiling.md) - 렌더링 파이프라인 디버깅과 최적화
 - [core/Architecture](../core/Architecture.md) - Clean Architecture 적용
 
 **심화 학습**:

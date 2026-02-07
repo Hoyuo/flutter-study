@@ -2987,4 +2987,4 @@ Dart FFI를 활용하여 C 라이브러리(예: 이미지 처리, 암호화)를 
 - [ ] 플랫폼별 분기 처리와 에러 핸들링을 적용할 수 있다
 
 ---
-**다음 문서:** [Riverpod](./Riverpod.md) - Alternative State Management
+**다음 문서:** [Riverpod](../core/Riverpod.md) - Alternative State Management

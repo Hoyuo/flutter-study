@@ -1663,7 +1663,7 @@ ListView 스크롤 성능을 측정하는 integration_test를 작성하세요:
 - [LayoutSystem](../fundamentals/LayoutSystem.md) - Layout 에러 진단과 해결
 
 **다음 단계**:
-- [system/Observability](../system/Observability.md) - 로깅과 모니터링
+- [system/Observability](./Observability.md) - 로깅과 모니터링
 
 **실전 적용**:
 - [DesignSystem](../fundamentals/DesignSystem.md) - 성능 최적화된 컴포넌트 설계

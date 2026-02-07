@@ -2129,7 +2129,7 @@ Lottie 애니메이션을 로딩 인디케이터와 빈 상태 화면에 적용�
 
 - [WidgetFundamentals](../fundamentals/WidgetFundamentals.md) - Widget 생명주기와 State 관리
 - [FlutterInternals](../fundamentals/FlutterInternals.md) - 렌더링 파이프라인과 애니메이션 원리
-- [Performance](../infrastructure/Performance.md) - 애니메이션 성능 최적화
+- [Performance](../system/Performance.md) - 애니메이션 성능 최적화
 
 ---
 

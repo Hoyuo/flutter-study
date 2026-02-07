@@ -2075,7 +2075,7 @@ Atomic Design 원칙에 따라 다음 컴포넌트를 구현하세요:
 - [LayoutSystem](./LayoutSystem.md) - 레이아웃 시스템과 반응형 디자인
 
 **병행 학습**:
-- [DevToolsProfiling](./DevToolsProfiling.md) - 컴포넌트 성능 최적화
+- [DevToolsProfiling](../system/DevToolsProfiling.md) - 컴포넌트 성능 최적화
 
 **실전 적용**:
 - [Bloc](../core/Bloc.md) - 테마 상태 관리 (Bloc 패턴)

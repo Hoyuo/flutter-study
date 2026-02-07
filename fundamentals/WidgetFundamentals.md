@@ -1261,7 +1261,7 @@ Theme 시스템을 InheritedWidget으로 구현하세요.
 - [FlutterInternals](./FlutterInternals.md) - 렌더링 파이프라인과 내부 동작 원리
 
 **심화 학습**:
-- [DevToolsProfiling](./DevToolsProfiling.md) - Widget 리빌드 디버깅과 성능 최적화
+- [DevToolsProfiling](../system/DevToolsProfiling.md) - Widget 리빌드 디버깅과 성능 최적화
 - [DesignSystem](./DesignSystem.md) - 재사용 가능한 컴포넌트 설계
 
 ---

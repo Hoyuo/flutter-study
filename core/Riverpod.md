@@ -2283,4 +2283,4 @@ StateProvider, FutureProvider, StreamProvider, NotifierProvider를 각각 사용
 - [ ] Riverpod과 Bloc의 장단점을 프로젝트 맥락에서 비교할 수 있다
 
 ---
-**다음 문서:** [Isolates](./Isolates.md) - Flutter Isolate & 동시성 프로그래밍
+**다음 문서:** [Isolates](../system/Isolates.md) - Flutter Isolate & 동시성 프로그래밍

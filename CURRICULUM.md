@@ -20,7 +20,7 @@
 ```
 Beginner 기초 (5) ──> Junior 필수 (10) ──> Mid-level 실무 (16) ──> Senior 심화 (10)
                                                                         │
-                                                              프로젝트별 선택 (8) + NEXT_ROADMAP (7)
+                                                              프로젝트별 선택 (8)
 ```
 
 ---
@@ -129,7 +129,7 @@ Dart 언어와 Flutter의 핵심 개념을 이해합니다. 다른 플랫폼(iOS
 
 ## 2. Mid-level 레벨 (6-12개월)
 
-### 2.1 실무 필수 문서 13개
+### 2.1 실무 필수 문서 14개
 
 Junior 과정 완료를 전제로 합니다. 실무 프로젝트에서 자주 마주치는 기능과 품질 관리 역량을 키웁니다.
 
@@ -351,8 +351,6 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
  8. advanced/OfflineSupport.md       ← 오프라인 메시지 큐잉
 ```
 
-(*) NEXT_ROADMAP Phase 2 문서
-
 **핵심 기술 조합:** WebSocket + Firebase Auth + Firestore + FCM + Image 처리
 
 | 주요 과제 | 관련 문서 | 난이도 |
@@ -387,7 +385,7 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
  5. features/PushNotification.md     ← 주문/배달 상태 알림
     │
     ▼
- 6. patterns/InAppPurchase.md        ← 결제 연동 (참고)
+ 6. features/InAppPurchase.md        ← 결제 연동 (참고)
     │
     ▼
  7. system/Performance.md            ← 지도 렌더링 최적화
@@ -395,8 +393,6 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
     ▼
  8. system/Observability.md          ← 주문 실패 모니터링 및 로깅
 ```
-
-(*) NEXT_ROADMAP Phase 2 문서
 
 **핵심 기술 조합:** Google Maps + Geolocator + WebSocket + Firebase + FCM
 
@@ -441,8 +437,6 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
  8. system/Observability.md          ← 콘텐츠 소비 추적 및 분석
 ```
 
-(*) NEXT_ROADMAP Phase 2/3 문서
-
 **핵심 기술 조합:** Deep Link + Media 처리 + Animation + Custom Painting + 캐싱
 
 | 주요 과제 | 관련 문서 | 난이도 |
@@ -463,11 +457,10 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
 | 레벨 | 문서 (카테고리) |
 |------|----------------|
 | **Beginner 기초** (5) | DartAdvanced (fund), WidgetFundamentals (fund), LayoutSystem (fund), DevToolsProfiling (fund), FlutterInternals (fund) |
-| **Junior 필수** (10) | Architecture (core), DI (infra), Bloc (core), Freezed (core), Networking_Dio (net), Networking_Retrofit (net), ErrorHandling (core), Navigation (feat), DesignSystem (fund), FormValidation (pat) |
-| **Mid-level 필수** (16) | Fpdart (core), BlocUiEffect (core), Environment (infra), LocalStorage (infra), Localization (feat), Permission (feat), PushNotification (feat), Pagination (pat), ImageHandling (pat), Observability (sys), Animation (pat), Testing (sys), Performance (sys), Security (sys), **ResponsiveDesign (pat)**, **CachingStrategy (infra)** |
-| **Senior 심화** (10) | AdvancedStateManagement (core), ModularArchitecture (core), AdvancedPatterns (pat), PlatformIntegration (infra), Isolates (sys), Testing 심화 (sys), Performance 심화 (sys), CICD 심화 (infra), ProductionOperations (sys), OfflineSupport (pat) |
-| **프로젝트별 선택** (8) | Riverpod (core), WebSocket (net), Firebase (infra), InAppPurchase (pat), AppLifecycle (sys), Accessibility (sys), StoreSubmission (infra), **ServerDrivenUI (pat)** |
-| **NEXT_ROADMAP** (7) | FlutterMultiPlatform (infra), PackageDevelopment (infra), GraphQL (net), DeepLinking (feat), MapsGeolocation (feat), CameraMedia (feat), CustomPainting (pat) |
+| **Junior 필수** (10) | Architecture (core), DI (infra), Bloc (core), Freezed (core), Networking_Dio (net), Networking_Retrofit (net), ErrorHandling (core), Navigation (feat), DesignSystem (fund), FormValidation (feat) |
+| **Mid-level 필수** (16) | Fpdart (core), BlocUiEffect (core), Environment (infra), LocalStorage (infra), Localization (feat), Permission (feat), PushNotification (feat), Pagination (feat), ImageHandling (feat), Observability (sys), Animation (feat), Testing (sys), Performance (sys), Security (sys), **ResponsiveDesign (feat)**, **CachingStrategy (infra)** |
+| **Senior 심화** (10) | AdvancedStateManagement (core), ModularArchitecture (core), AdvancedPatterns (adv), PlatformIntegration (infra), Isolates (sys), Testing 심화 (sys), Performance 심화 (sys), CICD 심화 (infra), ProductionOperations (sys), OfflineSupport (adv) |
+| **프로젝트별 선택** (8) | Riverpod (core), WebSocket (net), Firebase (infra), InAppPurchase (feat), AppLifecycle (sys), Accessibility (sys), StoreSubmission (infra), **ServerDrivenUI (adv)** |
 
 ### 의존성 다이어그램
 

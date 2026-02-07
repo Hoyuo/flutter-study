@@ -1030,4 +1030,4 @@ class UserBloc {
 
 ---
 
-**다음 문서:** [ModularArchitecture - 모듈러 아키텍처](./ModularArchitecture.md)
+**다음 문서:** [ModularArchitecture - 모듈러 아키텍처](../advanced/ModularArchitecture.md)

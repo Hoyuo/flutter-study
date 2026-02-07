@@ -3310,7 +3310,7 @@ CustomPainter를 사용하여 막대 차트(Bar Chart)와 라인 차트(Line Cha
 
 - [FlutterInternals](../fundamentals/FlutterInternals.md) - 렌더링 파이프라인과 RenderObject
 - [Animation](./Animation.md) - AnimationController와 애니메이션 통합
-- [Performance](../infrastructure/Performance.md) - CustomPainter 성능 최적화
+- [Performance](../system/Performance.md) - CustomPainter 성능 최적화
 
 ---
 

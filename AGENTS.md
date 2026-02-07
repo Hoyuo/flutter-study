@@ -189,7 +189,7 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 7. `core/ErrorHandling.md` - 에러 처리 패턴
 8. `core/BlocUiEffect.md` - UI 효과 처리
 9. `features/Navigation.md` - 라우팅
-10. `patterns/FormValidation.md` - 폼 처리
+10. `features/FormValidation.md` - 폼 처리
 
 ### 기능별 가이드 (Features)
 
@@ -203,8 +203,8 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 
 16. `infrastructure/Environment.md` - 환경 설정
 17. `infrastructure/LocalStorage.md` - 로컬 저장소
-18. `patterns/ImageHandling.md` - 이미지 처리
-19. `patterns/Pagination.md` - 페이지네이션
+18. `features/ImageHandling.md` - 이미지 처리
+19. `features/Pagination.md` - 페이지네이션
 20. `system/AppLifecycle.md` - 생명주기
 21. `system/Testing.md` - 테스트 전략
 22. `system/Performance.md` - 성능 최적화
@@ -215,9 +215,9 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 
 25. `infrastructure/CICD.md` - CI/CD 파이프라인
 26. `infrastructure/StoreSubmission.md` - 앱스토어 제출
-27. `patterns/OfflineSupport.md` - 오프라인 지원
-28. `patterns/InAppPurchase.md` - 인앱 결제
-29. `patterns/Animation.md` - 애니메이션
+27. `advanced/OfflineSupport.md` - 오프라인 지원
+28. `features/InAppPurchase.md` - 인앱 결제
+29. `features/Animation.md` - 애니메이션
 30. `system/ProductionOperations.md` - SLO/SLI, Incident Management
 
 ### 시니어 (Senior Level)

@@ -75,7 +75,7 @@ Dart 언어와 Flutter 기본기
 실전 프로젝트 튜토리얼
 - FullStackProject (Clean Architecture + Bloc 패턴으로 Todo 앱 처음부터 끝까지)
 
-### Advanced - Senior Level (9개)
+### Advanced - Senior Level (10개)
 10년차+ 시니어 개발자를 위한 고급 주제
 - [ModularArchitecture](./advanced/ModularArchitecture.md) - Mono-repo, Melos, Micro Frontend
 - [AdvancedStateManagement](./advanced/AdvancedStateManagement.md) - CQRS, Event Sourcing, Undo/Redo

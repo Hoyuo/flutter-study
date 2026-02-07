@@ -4066,7 +4066,7 @@ Pinterest 스타일의 Masonry 레이아웃을 CustomMultiChildLayout으로 구�
 
 **다음 단계**:
 - [FlutterInternals](./FlutterInternals.md) - Layout Phase 내부 동작 원리
-- [DevToolsProfiling](./DevToolsProfiling.md) - Layout 성능 디버깅
+- [DevToolsProfiling](../system/DevToolsProfiling.md) - Layout 성능 디버깅
 
 **심화 학습**:
 - [DesignSystem](./DesignSystem.md) - 재사용 가능한 레이아웃 컴포넌트 설계
