@@ -903,11 +903,17 @@ extension ColorExtensions on Color {
 
   /// 색상 투명도 조절
   ///
-  /// > ⚠️ **경고:** Color.fromARGB는 향후 deprecated될 수 있습니다.
-  /// > 최신 Flutter에서는 Color.fromARGB 대신 copyWith(alpha: alpha)를 사용하는 것을 권장합니다.
-  Color withAlpha(int alpha) {
-    return Color.fromARGB(alpha, red, green, blue);
-  }
+  /// > ⚠️ **Flutter 3.27+**: Color 클래스에 `withAlpha(int alpha)` 메서드가 이미 존재하므로,
+  /// > extension으로 정의하면 인스턴스 메서드가 우선되어 이 extension은 호출되지 않습니다.
+  /// >
+  /// > **권장 사용법:**
+  /// > - Flutter 3.27+: `color.withValues(alpha: 0.5)` (0.0~1.0 범위)
+  /// > - 또는 기존 메서드: `color.withAlpha(128)` (0~255 범위)
+  ///
+  /// 참고: 아래 코드는 교육 목적으로만 남겨두었습니다.
+  // Color withAlpha(int alpha) {
+  //   return Color.fromARGB(alpha, red, green, blue);
+  // }
 
   /// 색상 대비 텍스트 색상 반환
   Color get onColor {
@@ -996,7 +1002,7 @@ class AppFonts {
 // pubspec.yaml
 /*
 dependencies:
-  google_fonts: ^6.1.0
+  google_fonts: ^8.0.1
 */
 
 import 'package:google_fonts/google_fonts.dart';
@@ -1129,7 +1135,7 @@ Icon(CustomIcons.home, size: 24, color: Colors.blue)
 // pubspec.yaml
 /*
 dependencies:
-  flutter_svg: ^2.0.9
+  flutter_svg: ^2.2.3
 */
 
 import 'package:flutter_svg/flutter_svg.dart';
@@ -1907,10 +1913,10 @@ class ThemeSettingsPage extends StatelessWidget {
 // pubspec.yaml
 /*
 dev_dependencies:
-  widgetbook: ^3.7.0
+  widgetbook: ^3.20.2
   widgetbook_annotation: ^3.1.0
   build_runner: ^2.4.15
-  widgetbook_generator: ^3.7.0
+  widgetbook_generator: ^3.20.0
 */
 
 // widgetbook/widgetbook.dart
@@ -2084,6 +2090,10 @@ Atomic Design 원칙에 따라 다음 컴포넌트를 구현하세요:
 ---
 
 **Package Versions**
+- google_fonts: ^8.0.1
+- flutter_svg: ^2.2.3
+- widgetbook: ^3.20.2
+- widgetbook_generator: ^3.20.0
 - flutter_bloc: ^9.1.1
 - freezed: ^3.2.4
 - fpdart: ^1.2.0

@@ -119,7 +119,7 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 ### 의존성 추가
 
 ```yaml
-# pubspec.yaml (2024.01 기준)
+# pubspec.yaml (2026년 2월 기준)
 dependencies:
   flutter_bloc: ^9.1.1  # 9.x 최신 stable
   equatable: ^2.0.8
@@ -545,8 +545,8 @@ import 'package:bloc_concurrency/bloc_concurrency.dart';
 
 | Transformer | 동작 | 사용 시점 |
 |-------------|------|-----------|
-| `sequential()` | 순차 처리 (큐) - 기본값 | 순서가 중요한 이벤트 |
-| `concurrent()` | 모든 이벤트 병렬 처리 | 독립적인 이벤트 |
+| `sequential()` | 순차 처리 (큐) | 순서가 중요한 이벤트 |
+| `concurrent()` | 모든 이벤트 병렬 처리 (기본값) | 독립적인 이벤트 |
 | `droppable()` | 처리 중 새 이벤트 무시 | 중복 요청 방지 |
 | `restartable()` | 처리 중 취소 후 새 이벤트 처리 | 검색, 자동완성 |
 

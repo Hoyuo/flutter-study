@@ -3,7 +3,7 @@
 > **난이도**: 고급 | **카테고리**: system
 > **선행 학습**: [Architecture](../core/Architecture.md) | **예상 학습 시간**: 2h
 >
-> **최신 업데이트**: Flutter 3.27 및 flutter_secure_storage 10.0.0 기준으로 작성되었습니다.
+> **최신 업데이트**: 2026년 2월 기준, Flutter 3.27 및 flutter_secure_storage 9.2.4 기준으로 작성되었습니다.
 
 > **대상**: Mid-level ~ Senior 개발자 | Flutter 3.27+ | OWASP MASVS Level 2 준수
 
@@ -109,7 +109,7 @@ flutter_secure_storage는 플랫폼별 보안 저장소(iOS Keychain, Android Ke
 ```yaml
 # pubspec.yaml
 dependencies:
-  flutter_secure_storage: ^10.0.0
+  flutter_secure_storage: ^9.2.4
   crypto: ^3.0.0
   pointycastle: ^3.7.0
 ```
@@ -603,7 +603,6 @@ class RSAKeyPair {
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class HardwareSecurityManager {
-  // ⚠️ **주의:** `AndroidOptions`의 일부 파라미터는 실제 `flutter_secure_storage` 패키지에서 지원하지 않을 수 있습니다. 최신 문서를 확인하세요.
   static final _storage = FlutterSecureStorage(
     aOptions: AndroidOptions(
       encryptedSharedPreferences: true,
@@ -2859,9 +2858,9 @@ class PenetrationTestChecklist {
 
   /// 체크리스트 출력
   static void printChecklist() {
-    print('=== 침투 테스트 체크리스트 ===');
+    debugPrint('=== 침투 테스트 체크리스트 ===');
     checklist.forEach((key, value) {
-      print('[$key] $value');
+      debugPrint('[$key] $value');
     });
   }
 
@@ -2872,7 +2871,7 @@ class PenetrationTestChecklist {
     required String notes,
   }) async {
     // 테스트 결과 저장
-    print('Test [$testId]: ${passed ? 'PASS' : 'FAIL'} - $notes');
+    debugPrint('Test [$testId]: ${passed ? 'PASS' : 'FAIL'} - $notes');
   }
 }
 ```

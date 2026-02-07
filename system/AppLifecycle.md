@@ -140,13 +140,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void _onResumed() {
     // 포그라운드로 복귀
     // 데이터 새로고침, 연결 재개 등
-    print('App resumed');
+    debugPrint('App resumed');
   }
 
   void _onPaused() {
     // 백그라운드로 이동
     // 데이터 저장, 연결 중단 등
-    print('App paused');
+    debugPrint('App paused');
   }
 
   @override
@@ -225,11 +225,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return LifecycleListenerWidget(
       onResume: () {
-        print('App resumed');
+        debugPrint('App resumed');
         // 데이터 새로고침
       },
       onPause: () {
-        print('App paused');
+        debugPrint('App paused');
         // 상태 저장
       },
       onExitRequested: () async {
@@ -693,7 +693,7 @@ class MemoryWarningObserver extends WidgetsBindingObserver {
   void didHaveMemoryPressure() {
     // 메모리 부족 경고
     // 캐시 정리, 불필요한 리소스 해제
-    print('Memory pressure warning');
+    debugPrint('Memory pressure warning');
 
     // 이미지 캐시 정리
     PaintingBinding.instance.imageCache.clear();
@@ -710,13 +710,13 @@ class SystemSettingsObserver extends WidgetsBindingObserver {
   void didChangePlatformBrightness() {
     // 시스템 밝기 모드 변경 (다크모드 등)
     final brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
-    print('Brightness changed: $brightness');
+    debugPrint('Brightness changed: $brightness');
   }
 
   @override
   void didChangeLocales(List<Locale>? locales) {
     // 시스템 언어 변경
-    print('Locales changed: $locales');
+    debugPrint('Locales changed: $locales');
   }
 
   @override
@@ -725,7 +725,7 @@ class SystemSettingsObserver extends WidgetsBindingObserver {
     // Flutter 3.16+: didChangeTextScaleFactor는 deprecated
     // platformDispatcher.textScaleFactor도 deprecated (Flutter 3.16+)
     // TextScaler 사용 권장
-    print('Metrics changed');
+    debugPrint('Metrics changed');
 
     // 텍스트 스케일 정보가 필요한 경우:
     // 1. Widget context가 있다면: MediaQuery.textScalerOf(context) 사용
@@ -735,19 +735,19 @@ class SystemSettingsObserver extends WidgetsBindingObserver {
   @override
   void didChangeAccessibilityFeatures() {
     // 접근성 설정 변경
-    print('Accessibility features changed');
+    debugPrint('Accessibility features changed');
   }
 }
 ```
 
-### 텍스트 스케일 변경 감지 (Flutter 3.38+)
+### 텍스트 스케일 변경 감지 (Flutter 3.27+)
 
 ```dart
 // Widget에서 텍스트 스케일 팩터 사용 (권장)
 class ResponsiveTextWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // Flutter 3.38+: MediaQuery.textScalerOf(context) 사용
+    // Flutter 3.27+: MediaQuery.textScalerOf(context) 사용
     final textScaler = MediaQuery.textScalerOf(context);
     final scaleFactor = textScaler.scale(1.0);
 

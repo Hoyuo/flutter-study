@@ -118,7 +118,7 @@ dependencies:
   json_annotation: ^4.9.0
 
   # 백그라운드 작업
-  workmanager: ^0.5.2
+  workmanager: ^0.9.0
   flutter_background_service: ^5.0.10
 
   # 유틸리티
@@ -301,7 +301,7 @@ Uint8List _compressWithQuality(CompressionParams params) {
 }
 ```
 
-> **Dart 3.x+**: `Isolate.run()`은 `compute()`의 순수 Dart 대안입니다. Flutter 의존성 없이 사용할 수 있습니다:
+> **Dart 2.19+**: `Isolate.run()`은 `compute()`의 순수 Dart 대안입니다. Flutter 의존성 없이 사용할 수 있습니다:
 > ```dart
 > final result = await Isolate.run(() => _parseJson(jsonString));
 > ```

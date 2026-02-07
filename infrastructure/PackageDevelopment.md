@@ -74,7 +74,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^4.0.0
   test: ^1.25.0
 
 # 플랫폼 제약이 없는 순수 Dart 패키지
@@ -1250,18 +1250,14 @@ void main() {
 ### 8.4 Mock을 사용한 테스트
 
 ```dart
-// ⚠️ 주의: 이 프로젝트의 표준 테스트 패키지는 mocktail: ^1.0.4 입니다.
-// mockito 대신 mocktail 사용을 권장합니다.
-// mocktail은 코드 생성(@GenerateMocks)이 필요 없고 when(() => ...) 문법을 사용합니다.
 // test/auth_service_test.dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:my_package/my_package.dart';
 
-// Mock 클래스 생성
-@GenerateMocks([HttpClient, SecureStorage])
-import 'auth_service_test.mocks.dart';
+// Mock 클래스 생성 (코드 생성 불필요)
+class MockHttpClient extends Mock implements HttpClient {}
+class MockSecureStorage extends Mock implements SecureStorage {}
 
 void main() {
   late AuthService authService;
@@ -1280,7 +1276,7 @@ void main() {
   group('AuthService', () {
     test('login success returns user', () async {
       // Arrange
-      when(mockHttpClient.post(any, body: anyNamed('body')))
+      when(() => mockHttpClient.post(any(), body: any(named: 'body')))
           .thenAnswer((_) async => {
                 'id': '123',
                 'name': 'Test User',
@@ -1296,12 +1292,12 @@ void main() {
       // Assert
       expect(user.id, equals('123'));
       expect(user.name, equals('Test User'));
-      verify(mockHttpClient.post(any, body: anyNamed('body'))).called(1);
+      verify(() => mockHttpClient.post(any(), body: any(named: 'body'))).called(1);
     });
 
     test('login failure throws AuthException', () async {
       // Arrange
-      when(mockHttpClient.post(any, body: anyNamed('body')))
+      when(() => mockHttpClient.post(any(), body: any(named: 'body')))
           .thenThrow(Exception('Network error'));
 
       // Act & Assert
@@ -1520,10 +1516,9 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^4.0.0
   test: ^1.25.0
-  mockito: ^5.4.4
-  build_runner: ^2.4.15
+  mocktail: ^1.0.4
 
 topics:
   - utilities
@@ -2018,7 +2013,7 @@ void main() {
     group('login', () {
       test('success case', () async {
         // Arrange
-        when(mockHttpClient.post(any, body: anyNamed('body')))
+        when(() => mockHttpClient.post(any(), body: any(named: 'body')))
             .thenAnswer((_) async => mockUserResponse);
 
         // Act

@@ -163,7 +163,7 @@ dependencies:
   go_router: ^17.0.1
 
   # 캐싱
-  hive: ^2.2.3
+  hive: ^2.2.3  # 유지보수 모드 - Hive 4.x(CE) 또는 Drift 검토 권장
   hive_flutter: ^1.1.0
   path_provider: ^2.1.4
 
@@ -178,7 +178,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^4.0.0
 
   # 코드 생성
   build_runner: ^2.4.15
@@ -3766,17 +3766,17 @@ Future<void> configureDependencies() async {
 class SDUIMonitor {
   static void trackRenderTime(String screen, Duration duration) {
     // Firebase Performance Monitoring
-    print('Schema render time for $screen: ${duration.inMilliseconds}ms');
+    debugPrint('Schema render time for $screen: ${duration.inMilliseconds}ms');
   }
 
   static void trackCacheHit(String screen, bool isHit) {
     // Analytics
-    print('Cache hit for $screen: $isHit');
+    debugPrint('Cache hit for $screen: $isHit');
   }
 
   static void trackError(String screen, Exception error) {
     // Crashlytics
-    print('Schema error for $screen: $error');
+    debugPrint('Schema error for $screen: $error');
   }
 }
 ```

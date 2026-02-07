@@ -144,7 +144,7 @@ dependencies:
   universal_io: ^2.2.2
 
   # Web Specific
-  url_strategy: ^0.3.0
+  # url_strategy: deprecated - flutter_web_plugins 내장 기능 사용
   js: ^0.7.1  # ⚠️ deprecated - dart:js_interop 사용 권장
 
   # Desktop Specific
@@ -154,9 +154,9 @@ dependencies:
   path_provider: ^2.1.4
 
   # Storage
-  shared_preferences: ^2.3.2
-  isar: ^3.1.0+1  # ⚠️ 개발 중단 - drift, objectbox 사용 권장
-  isar_flutter_libs: ^3.1.0+1
+  shared_preferences: ^2.5.4
+  # isar: ^3.1.0+1  # ⚠️ 개발 중단됨 - Drift 사용 권장
+  # isar_flutter_libs: ^3.1.0+1
 
 dev_dependencies:
   flutter_test:
@@ -169,7 +169,7 @@ dev_dependencies:
   injectable_generator: ^2.7.0
 
   # Linting
-  flutter_lints: ^5.0.0
+  flutter_lints: ^4.0.0
 
   # Testing
   bloc_test: ^9.1.7
@@ -193,8 +193,8 @@ flutter:
 ### 2.4 플랫폼별 빌드 명령
 
 ```bash
-# Web 빌드
-flutter build web --release --web-renderer canvaskit
+# Web 빌드 (CanvasKit은 Flutter 3.22+에서 기본값)
+flutter build web --release
 
 # Windows 빌드
 flutter build windows --release
@@ -262,12 +262,12 @@ flutter run -d linux           # Linux
 ```dart
 // lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:url_strategy/url_strategy.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'core/di/injection.dart';
 
 void main() {
   // Hash 제거 (#/ -> /)
-  setPathUrlStrategy();
+  usePathUrlStrategy();
 
   configureDependencies();
 
@@ -1518,7 +1518,7 @@ jobs:
         run: flutter test
 
       - name: Build web
-        run: flutter build web --release --web-renderer canvaskit
+        run: flutter build web --release
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0

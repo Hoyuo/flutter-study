@@ -258,11 +258,9 @@ class DeepLinkLocalDataSourceImpl implements DeepLinkLocalDataSource {
   }
 
   @override
-  // ⚠️ 주의: 이 코드는 무한 재귀 버그가 있습니다. getInitialUri()가 자기 자신을 호출합니다.
-  // 올바른 코드: final uri = await appLinks.getInitialLink(); (app_links 패키지 사용)
   Future<Uri?> getInitialUri() async {
     try {
-      final uri = await getInitialUri();
+      final uri = await appLinks.getInitialLink();
       return uri;
     } catch (e) {
       return null;
@@ -1323,7 +1321,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
   void _handleForegroundMessage(RemoteMessage message) {
     // 포그라운드에서는 로컬 알림 표시만
-    print('Foreground message: ${message.notification?.title}');
+    debugPrint('Foreground message: ${message.notification?.title}');
   }
 
   void _handleNotificationTap(RemoteMessage message) {
@@ -1358,32 +1356,32 @@ import '../../features/deep_linking/domain/entities/deep_link_data.dart';
 class DeepLinkLogger {
   static void logReceived(DeepLinkData data) {
     if (kDebugMode) {
-      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      print('🔗 Deep Link Received');
-      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      print('Type:       ${data.type.name}');
-      print('Scheme:     ${data.scheme}');
-      print('Host:       ${data.host}');
-      print('Path:       ${data.path}');
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      debugPrint('🔗 Deep Link Received');
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      debugPrint('Type:       ${data.type.name}');
+      debugPrint('Scheme:     ${data.scheme}');
+      debugPrint('Host:       ${data.host}');
+      debugPrint('Path:       ${data.path}');
       if (data.queryParameters.isNotEmpty) {
-        print('Parameters:');
+        debugPrint('Parameters:');
         data.queryParameters.forEach((key, value) {
-          print('  - $key: $value');
+          debugPrint('  - $key: $value');
         });
       }
-      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
   }
 
   static void logNavigation(String route) {
     if (kDebugMode) {
-      print('🧭 Navigating to: $route');
+      debugPrint('🧭 Navigating to: $route');
     }
   }
 
   static void logError(String error) {
     if (kDebugMode) {
-      print('❌ Deep Link Error: $error');
+      debugPrint('❌ Deep Link Error: $error');
     }
   }
 }
@@ -1841,7 +1839,7 @@ extension DeepLinkErrorRecovery on DeepLinkBloc {
     Emitter<DeepLinkState> emit,
   ) async {
     // 1. 에러 로깅
-    print('Deep Link Error: $error');
+    debugPrint('Deep Link Error: $error');
 
     // 2. Fallback 라우트로 이동
     if (data != null) {

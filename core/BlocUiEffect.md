@@ -6,7 +6,7 @@
 
 Toast, Dialog, Navigation 등 일회성 이벤트 처리 패턴에 대한 가이드입니다.
 
-> **Package Versions (2025-01 기준)**
+> **Package Versions (2026년 2월 기준)**
 > - flutter_bloc: ^9.1.1 | bloc: ^9.0.0
 > - freezed: ^3.2.4 | freezed_annotation: ^3.1.0
 > - go_router: ^17.0.1

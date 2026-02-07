@@ -101,7 +101,7 @@ dev_dependencies:
   mocktail: ^1.0.4
 
   # Linting
-  flutter_lints: ^5.0.0
+  flutter_lints: ^4.0.0
 ```
 
 ### 2.2 Android 설정
@@ -583,9 +583,7 @@ class MapHelpers {
     final image = await picture.toImage(size.toInt(), size.toInt());
     final bytes = await image.toByteData(format: ImageByteFormat.png);
 
-    // ⚠️ 주의: BitmapDescriptor.fromBytes()는 존재하지 않는 API입니다.
-    // Flutter 3.x+에서는 BitmapDescriptor.bytes() 사용
-    return BitmapDescriptor.fromBytes(bytes!.buffer.asUint8List());
+    return BitmapDescriptor.bytes(bytes!.buffer.asUint8List());
   }
 }
 ```
@@ -738,10 +736,16 @@ class MarkerBloc extends Bloc<MarkerEvent, MarkerState> {
       loaded: (markers, polylines, polygons, circles, selectedMarkerId) {
         final updatedMarkers = markers.map((marker) {
           if (marker.markerId.value == event.markerId) {
-            // ⚠️ 주의: Marker 클래스에는 copyWith() 메서드가 없습니다 (fabricated API).
-            // 올바른 방법: Marker(markerId: marker.markerId, position: event.newPosition, ...) 새 인스턴스 생성
-            return marker.copyWith(
-              positionParam: event.newPosition,
+            return Marker(
+              markerId: marker.markerId,
+              position: event.newPosition,
+              draggable: true,
+              onDragEnd: (newPos) {
+                add(MapEvent.markerDragged(
+                  markerId: marker.markerId.value,
+                  newPosition: newPos,
+                ));
+              },
             );
           }
           return marker;
@@ -1040,10 +1044,8 @@ class LocationRepositoryImpl implements LocationRepository {
       }
 
       // 권한 확인
-      // ⚠️ 주의: fpdart ^1.2.0에서 getOrElse 시그니처는 B Function()입니다 (파라미터 없음).
-      // 올바른 코드: permissionResult.getOrElse(() => false)
       final permissionResult = await checkLocationPermission();
-      final hasPermission = permissionResult.getOrElse((l) => false);
+      final hasPermission = permissionResult.getOrElse(() => false);
 
       if (!hasPermission) {
         yield left(const Failure.permissionDenied());
@@ -1051,15 +1053,12 @@ class LocationRepositoryImpl implements LocationRepository {
       }
 
       // 위치 스트림
-      // ⚠️ 주의: LocationSettings에는 timeLimit 파라미터가 없습니다.
-      // 타임아웃이 필요하면: Geolocator.getPositionStream().timeout(Duration(seconds: 30)) 사용
       final positionStream = Geolocator.getPositionStream(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
           distanceFilter: 10, // 10m 이동 시 업데이트
-          timeLimit: Duration(seconds: 30),
         ),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       await for (final position in positionStream) {
         yield right(_positionToLocation(position));
@@ -2059,9 +2058,7 @@ class _ClusteredMapPageState extends State<ClusteredMapPage> {
     final image = await picture.toImage(size.toInt(), size.toInt());
     final bytes = await image.toByteData(format: ImageByteFormat.png);
 
-    // ⚠️ 주의: BitmapDescriptor.fromBytes()는 존재하지 않는 API입니다.
-    // Flutter 3.x+에서는 BitmapDescriptor.bytes() 사용
-    return BitmapDescriptor.fromBytes(bytes!.buffer.asUint8List());
+    return BitmapDescriptor.bytes(bytes!.buffer.asUint8List());
   }
 
   Color _getClusterColor(int clusterSize) {

@@ -6,9 +6,9 @@
 
 Flutter의 내부 동작 원리 (Widget → Element → RenderObject → 화면)를 다루는 가이드입니다.
 
-> **패키지 버전 (2024.01 기준)**
-> - Flutter SDK: 3.27.x
-> - Dart SDK: 3.6.x
+> **패키지 버전**
+> - Flutter SDK: 3.38.x
+> - Dart SDK: 3.7.x
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - Widget Tree, Element Tree, RenderObject Tree의 3개 트리 구조와 내부 동작 원리를 이해할 수 있습니다
@@ -1071,10 +1071,10 @@ void addToScene(ui.SceneBuilder builder) {
 │ Flutter Engine (C++)                             │
 ├──────────────────────────────────────────────────┤
 │ 1. Scene을 렌더링 엔진에 전달                    │
-│    (Impeller 기본: iOS 3.16+, Android 3.22+)    │
-│    (Skia: fallback 또는 이전 버전)               │
+│    (Impeller: iOS/Android/macOS 기본 렌더러)    │
+│    (Skia: fallback 또는 명시적 비활성화 시)      │
 │ 2. 렌더링 엔진이 Scene을 GPU 명령으로 변환       │
-│ 3. OpenGL/Vulkan/Metal을 통해 GPU에 전송         │
+│ 3. Metal/Vulkan/OpenGL을 통해 GPU에 전송         │
 │ 4. GPU가 래스터화 (픽셀로 변환)                  │
 │ 5. 화면 출력                                      │
 └──────────────────────────────────────────────────┘

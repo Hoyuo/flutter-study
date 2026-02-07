@@ -1224,6 +1224,7 @@ class TransformedTextPainter extends CustomPainter {
 ```dart
 // lib/core/painters/image_painter.dart
 
+import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1298,7 +1299,7 @@ class ImagePainter extends CustomPainter {
 class ImageLoader {
   static Future<ui.Image> loadAssetImage(String assetPath) async {
     final data = await rootBundle.load(assetPath);
-    final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+    final codec = await ui.instantiateImageCodecFromBuffer(await ui.ImmutableBuffer.fromUint8List(data.buffer.asUint8List()));
     final frame = await codec.getNextFrame();
     return frame.image;
   }
@@ -1607,7 +1608,7 @@ class BarChartPainter extends CustomPainter {
 
     // 그리드
     final gridPaint = Paint()
-      ..color = Colors.grey.withOpacity(0.3)
+      ..color = Colors.grey.withValues(alpha: 0.3)
       ..strokeWidth = 1;
 
     for (int i = 0; i <= 5; i++) {
@@ -1705,6 +1706,8 @@ class BarChartPainter extends CustomPainter {
 ### 8.3 파이 차트
 
 ```dart
+import 'dart:math';
+
 // lib/features/charts/presentation/painters/pie_chart_painter.dart
 
 class PieChartPainter extends CustomPainter {
@@ -2054,6 +2057,8 @@ class AnimatedLineChartPainter extends CustomPainter {
 ### 9.3 Wave 애니메이션
 
 ```dart
+import 'dart:math';
+
 class WavePainter extends CustomPainter {
   final double wavePhase; // 0.0 ~ 2*PI
   final Color color;
@@ -2714,6 +2719,8 @@ Container(
 ### 11.3 복잡한 Shape 예제
 
 ```dart
+import 'dart:math';
+
 class StarBorder extends ShapeBorder {
   final int points;
   final double innerRadiusRatio;
@@ -2846,7 +2853,7 @@ class RenderCustomSize extends RenderBox {
   @override
   void handleEvent(PointerEvent event, BoxHitTestEntry entry) {
     if (event is PointerDownEvent) {
-      print('Tapped at ${event.localPosition}');
+      debugPrint('Tapped at ${event.localPosition}');
     }
   }
 }
@@ -2855,6 +2862,8 @@ class RenderCustomSize extends RenderBox {
 ### 12.2 MultiChildRenderObject
 
 ```dart
+import 'dart:math';
+
 class FlowLayout extends MultiChildRenderObjectWidget {
   final double spacing;
 
@@ -3218,7 +3227,7 @@ class DebugPainter extends CustomPainter {
     final shouldRepaint = true; // 실제 로직
 
     if (kDebugMode) {
-      print('shouldRepaint: $shouldRepaint');
+      debugPrint('shouldRepaint: $shouldRepaint');
     }
 
     return shouldRepaint;
@@ -3246,7 +3255,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0  # ⚠️ flutter_lints는 deprecated되었습니다. 최신 프로젝트에서는 lints 패키지를 사용하세요.
+  flutter_lints: ^4.0.0  # ⚠️ flutter_lints는 deprecated되었습니다. 최신 프로젝트에서는 lints 패키지를 사용하세요.
   bloc_test: ^9.1.0  # flutter_bloc ^9.1.1과 호환됩니다
 
 flutter:

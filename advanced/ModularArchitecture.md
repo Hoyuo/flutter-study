@@ -6,8 +6,8 @@
 
 > 대규모 Flutter 애플리케이션을 위한 모듈화 전략 및 아키텍처 패턴
 
-> **Package Versions (2025-01 기준)**
-> - melos: ^6.0.0
+> **Package Versions (2026년 2월 기준)**
+> - melos: ^7.0.0
 > - go_router: ^17.0.1
 > - get_it: ^9.2.0 | injectable: ^2.5.0
 > - dio: ^5.9.0

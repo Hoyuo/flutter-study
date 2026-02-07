@@ -10,7 +10,7 @@
 이 문서를 학습하면 다음을 할 수 있습니다:
 
 1. **Unit Test / Widget Test / Integration Test**의 차이와 테스트 피라미드 전략을 이해할 수 있다
-2. **Mockito**(또는 mocktail)를 사용하여 Mock 객체를 생성하고 Stub을 설정할 수 있다
+2. **mocktail**을 사용하여 Mock 객체를 생성하고 Stub을 설정할 수 있다
 3. **bloc_test** 패키지로 Bloc의 상태 변화를 `blocTest`로 검증할 수 있다
 4. **Widget Test**에서 `MockBloc`과 `whenListen`을 사용하여 UI 상태별 렌더링을 테스트할 수 있다
 5. **Patrol**을 활용하여 네이티브 권한 처리를 포함한 E2E 테스트를 작성할 수 있다
@@ -58,11 +58,9 @@ dev_dependencies:
     sdk: flutter
   bloc_test: ^9.1.7
   mocktail: ^1.0.4
-  mockito: ^5.6.3
-  build_runner: ^2.4.15  # mockito 코드 생성용
 
-# ⚠️ 주의: 이 문서의 테스트 예제는 mockito를 사용하지만, 이 프로젝트의 표준 모킹 라이브러리는 mocktail입니다.
-# mocktail 사용 시: import 'package:mocktail/mocktail.dart';
+# mocktail 사용법:
+# import: import 'package:mocktail/mocktail.dart';
 # Mock 클래스: class MockRepo extends Mock implements Repository {} (코드 생성 불필요)
 # when 구문: when(() => mock.method()).thenAnswer(...)
 # verify 구문: verify(() => mock.method()).called(1)
@@ -98,45 +96,35 @@ features/{feature_name}/
         └── mocks.dart
 ```
 
-## 3. Mockito 사용법
+## 3. mocktail 사용법
 
-> **💡 중요:** bloc_test의 `MockBloc`과 함께 사용 시 mockito의 `when()`이 작동하지 않습니다.
-> - `MockBloc`은 mocktail 스타일을 따르므로 `whenListen()` 사용 필요
-> - 또는 mockito 대신 **mocktail** 패키지 사용 권장
+> **💡 참고:** bloc_test의 `MockBloc`은 mocktail 기반이므로, 프로젝트 전체에서 mocktail을 표준 모킹 라이브러리로 사용합니다.
+> - 코드 생성 불필요 (`build_runner` 없이 Mock 클래스를 직접 정의)
+> - `when(() => mock.method())` 클로저 문법 사용
 > - 자세한 내용은 "6.2 Bloc과 함께 Widget Test" 섹션 참조
 
 ### 3.1 Mock 클래스 정의
 
 ```dart
 // test/mocks/mocks.dart
-import 'package:mockito/annotations.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:home/domain/domain.dart';
 import 'package:home/data/data.dart';
 
-// Mock 생성 어노테이션
-@GenerateMocks([
-  HomeRepository,
-  HomeRemoteDataSource,
-  GetHomeDataUseCase,
-])
-void main() {}
+// mocktail은 코드 생성 없이 Mock 클래스를 직접 정의합니다.
+class MockHomeRepository extends Mock implements HomeRepository {}
+class MockHomeRemoteDataSource extends Mock implements HomeRemoteDataSource {}
+class MockGetHomeDataUseCase extends Mock implements GetHomeDataUseCase {}
 ```
 
-**Mock 파일 생성:**
-
-```bash
-# Mock 파일 자동 생성
-dart run build_runner build --delete-conflicting-outputs
-```
-
-이 명령어를 실행하면 `test/mocks/mocks.mocks.dart` 파일이 자동 생성됩니다.
+> **💡 mocktail vs mockito:** mocktail은 `build_runner`를 사용한 코드 생성이 필요 없습니다. `extends Mock implements 대상클래스` 패턴으로 즉시 Mock을 정의할 수 있습니다.
 
 ### 3.2 테스트 파일에서 Mock 사용
 
 ```dart
 // test/domain/usecases/get_home_data_usecase_test.dart
 import 'package:flutter_test/flutter_test.dart';
-import '../mocks/mocks.mocks.dart';  // 생성된 Mock 파일 import
+import '../mocks/mocks.dart';  // Mock 클래스 import
 
 void main() {
   late MockHomeRepository mockRepository;
@@ -151,26 +139,26 @@ void main() {
 
 ```dart
 // 성공 케이스
-when(mockRepository.getHomeData())
+when(() => mockRepository.getHomeData())
     .thenAnswer((_) async => Right(homeData));
 
 // 실패 케이스
-when(mockRepository.getHomeData())
+when(() => mockRepository.getHomeData())
     .thenAnswer((_) async => Left(const HomeFailure.network()));
 
 // Exception 발생
-when(mockDataSource.fetchData())
+when(() => mockDataSource.fetchData())
     .thenThrow(DioException(requestOptions: RequestOptions()));
 
 // 여러 번 호출 시 다른 결과를 반환하려면 카운터 변수 사용
 // ❌ 잘못된 방법: 체이닝 시 마지막 thenAnswer만 적용됨
-// when(mockRepository.getHomeData())
+// when(() => mockRepository.getHomeData())
 //     .thenAnswer((_) async => Right(homeData1))
 //     .thenAnswer((_) async => Right(homeData2));
 
 // ✅ 올바른 방법: 카운터 변수로 순차 반환 구현
 var callCount = 0;
-when(mockRepository.getHomeData()).thenAnswer((_) async {
+when(() => mockRepository.getHomeData()).thenAnswer((_) async {
   callCount++;
   return callCount == 1 ? Right(homeData1) : Right(homeData2);
 });
@@ -184,10 +172,10 @@ when(mockRepository.getHomeData()).thenAnswer((_) async {
 // test/domain/usecases/get_home_data_usecase_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:home/domain/domain.dart';
 
-import '../../mocks/mocks.mocks.dart';
+import '../../mocks/mocks.dart';
 import '../../fixtures/home_fixture.dart';
 
 void main() {
@@ -203,7 +191,7 @@ void main() {
     test('성공 시 HomeData 반환', () async {
       // Arrange
       final expected = HomeFixture.homeData;
-      when(mockRepository.getHomeData())
+      when(() => mockRepository.getHomeData())
           .thenAnswer((_) async => Right(expected));
 
       // Act
@@ -211,12 +199,12 @@ void main() {
 
       // Assert
       expect(result, Right(expected));
-      verify(mockRepository.getHomeData()).called(1);
+      verify(() => mockRepository.getHomeData()).called(1);
     });
 
     test('실패 시 HomeFailure 반환', () async {
       // Arrange
-      when(mockRepository.getHomeData())
+      when(() => mockRepository.getHomeData())
           .thenAnswer((_) async => const Left(HomeFailure.network()));
 
       // Act
@@ -235,12 +223,12 @@ void main() {
 // test/data/repositories/home_repository_impl_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:dio/dio.dart';
 import 'package:home/data/data.dart';
 import 'package:home/domain/domain.dart';
 
-import '../../mocks/mocks.mocks.dart';
+import '../../mocks/mocks.dart';
 import '../../fixtures/home_fixture.dart';
 
 void main() {
@@ -258,7 +246,7 @@ void main() {
     test('DataSource 성공 시 Entity 반환', () async {
       // Arrange
       final dto = HomeFixture.homeDto;
-      when(mockDataSource.getHomeData())
+      when(() => mockDataSource.getHomeData())
           .thenAnswer((_) async => dto);
 
       // Act
@@ -277,7 +265,7 @@ void main() {
 
     test('DioException 발생 시 Failure 반환', () async {
       // Arrange
-      when(mockDataSource.getHomeData()).thenThrow(
+      when(() => mockDataSource.getHomeData()).thenThrow(
         DioException(
           type: DioExceptionType.connectionError,
           requestOptions: RequestOptions(),
@@ -293,7 +281,7 @@ void main() {
 
     test('서버 에러(5xx) 시 server Failure 반환', () async {
       // Arrange
-      when(mockDataSource.getHomeData()).thenThrow(
+      when(() => mockDataSource.getHomeData()).thenThrow(
         DioException(
           type: DioExceptionType.badResponse,
           response: Response(
@@ -371,11 +359,11 @@ void main() {
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:home/domain/domain.dart';
 import 'package:home/presentation/presentation.dart';
 
-import '../../mocks/mocks.mocks.dart';
+import '../../mocks/mocks.dart';
 import '../../fixtures/home_fixture.dart';
 
 void main() {
@@ -394,7 +382,7 @@ void main() {
     blocTest<HomeBloc, HomeState>(
       'started 이벤트 시 loading → loaded 상태 변화',
       build: () {
-        when(mockUseCase())
+        when(() => mockUseCase())
             .thenAnswer((_) async => Right(HomeFixture.homeData));
         return HomeBloc(mockUseCase);
       },
@@ -404,14 +392,14 @@ void main() {
         HomeState.loaded(HomeFixture.homeData),
       ],
       verify: (_) {
-        verify(mockUseCase()).called(1);
+        verify(() => mockUseCase()).called(1);
       },
     );
 
     blocTest<HomeBloc, HomeState>(
       '실패 시 loading → error 상태 변화',
       build: () {
-        when(mockUseCase())
+        when(() => mockUseCase())
             .thenAnswer((_) async => const Left(HomeFailure.network()));
         return HomeBloc(mockUseCase);
       },
@@ -425,7 +413,7 @@ void main() {
     blocTest<HomeBloc, HomeState>(
       'refresh 이벤트 시 데이터 다시 로드',
       build: () {
-        when(mockUseCase())
+        when(() => mockUseCase())
             .thenAnswer((_) async => Right(HomeFixture.homeData));
         return HomeBloc(mockUseCase);
       },
@@ -446,11 +434,10 @@ void main() {
 // test/presentation/bloc/login_bloc_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'package:mockito/mockito.dart';
-import 'package:mockito/annotations.dart';
-import 'login_bloc_test.mocks.dart';
+import 'package:mocktail/mocktail.dart';
 
-@GenerateMocks([AuthRepository])
+class MockAuthRepository extends Mock implements AuthRepository {}
+
 void main() {
   late MockAuthRepository mockAuthRepo;
 
@@ -462,7 +449,7 @@ void main() {
     test('로그인 성공 시 NavigateToHome Effect 발행', () async {
       // Arrange
       final user = User(id: '1', name: 'Test User', email: 'test@example.com');
-      when(mockAuthRepo.login(any, any))
+      when(() => mockAuthRepo.login(any(), any()))
           .thenAnswer((_) async => Right(user));
 
       final bloc = LoginBloc(authRepository: mockAuthRepo);
@@ -480,7 +467,7 @@ void main() {
 
     test('로그인 실패 시 ShowErrorDialog Effect 발행', () async {
       // Arrange
-      when(mockAuthRepo.login(any, any))
+      when(() => mockAuthRepo.login(any(), any()))
           .thenAnswer((_) async => const Left(AuthFailure.invalidCredentials()));
 
       final bloc = LoginBloc(authRepository: mockAuthRepo);
@@ -566,14 +553,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bloc_test/bloc_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:home/presentation/presentation.dart';
 
-import '../../mocks/mocks.mocks.dart';
 import '../../fixtures/home_fixture.dart';
 
-// 💡 권장: bloc_test의 MockBloc과 함께 사용 시 mockito 대신 mocktail 사용
-// - bloc_test의 MockBloc은 mocktail 스타일을 따름
-// - mockito의 when()은 작동하지 않음 → whenListen() 사용 필요
+// 💡 bloc_test의 MockBloc은 mocktail 기반이므로 whenListen()과 verify()를 함께 사용합니다.
 
 class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
 
@@ -669,7 +654,7 @@ void main() {
       await tester.pump();
 
       // Assert
-      verify(mockBloc.add(const HomeEvent.refresh())).called(1);
+      verify(() => mockBloc.add(const HomeEvent.refresh())).called(1);
     });
   });
 }
@@ -794,7 +779,7 @@ blocTest<HomeBloc, HomeState>(
 test('로그인 성공 시 사용자 정보 반환', () async {
   // Arrange (준비)
   final expected = User(id: '1', name: 'Test');
-  when(mockRepo.login(any, any))
+  when(() => mockRepo.login(any(), any()))
       .thenAnswer((_) async => Right(expected));
 
   // Act (실행)
@@ -802,7 +787,7 @@ test('로그인 성공 시 사용자 정보 반환', () async {
 
   // Assert (검증)
   expect(result, Right(expected));
-  verify(mockRepo.login('test@test.com', '1234')).called(1);
+  verify(() => mockRepo.login('test@test.com', '1234')).called(1);
 });
 ```
 
@@ -1240,7 +1225,7 @@ Patrol은 Flutter의 Integration Test를 강화한 프레임워크로, 네이티
 ```yaml
 # pubspec.yaml
 dev_dependencies:
-  patrol: ^3.14.1
+  patrol: ^4.0.0
 ```
 
 ### 14.2 기본 Patrol Test
@@ -1286,7 +1271,7 @@ void main() {
     await $('카메라').tap();
 
     // 네이티브 권한 다이얼로그 자동 허용
-    await $.native.grantPermissionWhenInUse();
+    await $.platform.grantPermissionWhenInUse();
 
     // 카메라 화면 확인
     expect($('Camera Preview'), findsOneWidget);
@@ -1299,7 +1284,7 @@ void main() {
     await $('내 위치').tap();
 
     // 위치 권한 항상 허용
-    await $.native.grantPermissionOnlyThisTime();
+    await $.platform.grantPermissionOnlyThisTime();
 
     // 지도 화면 확인
     expect($('지도'), findsOneWidget);
@@ -1317,7 +1302,7 @@ patrolTest('네이티브 알림 다이얼로그 처리', ($) async {
   await $('알림 설정').tap();
 
   // 네이티브 다이얼로그의 "허용" 버튼 탭
-  await $.native.tap(Selector(text: '허용'));
+  await $.platform.tap(Selector(text: '허용'));
 
   // 설정 완료 확인
   expect($('알림이 활성화되었습니다'), findsOneWidget);
@@ -1331,7 +1316,7 @@ patrolTest('스크린샷 캡처 테스트', ($) async {
   await $.pumpWidgetAndSettle(const MyApp());
 
   // 로그인 화면 스크린샷
-  await $.native.takeScreenshot('login_screen');
+  await $.platform.takeScreenshot('login_screen');
 
   // 로그인
   await $('이메일').enterText('test@example.com');
@@ -1339,7 +1324,7 @@ patrolTest('스크린샷 캡처 테스트', ($) async {
   await $('로그인 버튼').tap();
 
   // 홈 화면 스크린샷
-  await $.native.takeScreenshot('home_screen');
+  await $.platform.takeScreenshot('home_screen');
 });
 ```
 
@@ -1399,7 +1384,7 @@ jobs:
   patrol_test:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -1466,14 +1451,12 @@ Property-based Testing은 랜덤 입력값으로 함수의 불변성(invariant)�
 
 ### 16.1 의존성 설치
 
-> **주의:** `fake: ^2.5.0`은 실제로 존재하지 않는 패키지입니다. Fake 객체는 `mocktail` 또는 직접 구현으로 생성하세요.
-
 ```yaml
 # pubspec.yaml
 dev_dependencies:
   test: ^1.25.0
   glados: ^2.0.0  # Property-based testing
-  fake: ^2.5.0    # 랜덤 데이터 생성
+  # 💡 Fake 객체는 mocktail 또는 직접 구현으로 생성합니다. (별도 패키지 불필요)
 ```
 
 ### 16.2 기본 개념
@@ -2148,41 +2131,46 @@ void main() {
 
 UI 변경사항을 자동으로 감지하고 의도하지 않은 변경을 방지합니다.
 
-### 20.1 Percy 통합 (Cloud 기반)
+### 20.1 Alchemist를 활용한 Visual Regression
 
-> **주의:** `percy_flutter`는 실제로 존재하지 않는 패키지입니다. 시각적 회귀 테스트에는 `golden_toolkit` 또는 `alchemist` 패키지를 사용하세요.
+> **참고:** Cloud 기반 Visual Regression 서비스(Percy 등) 대신 로컬에서 동작하는 `alchemist` 패키지를 사용합니다.
 
 ```yaml
-# pubspec.yaml
+# pubspec.yaml (17.1에서 이미 추가됨)
 dev_dependencies:
-  percy_cli: ^1.0.0  # Percy CLI wrapper
+  flutter_test:
+    sdk: flutter
+  golden_toolkit: ^0.15.0
+  alchemist: ^0.7.0
 ```
 
 ```dart
 // test/visual/home_screen_visual_test.dart
-import 'package:flutter_test/flutter_test.dart';
+import 'package:alchemist/alchemist.dart';
+import 'package:flutter/material.dart';
 import 'package:my_app/features/home/presentation/home_screen.dart';
-import 'package:percy_flutter/percy_flutter.dart';
 
 void main() {
-  testWidgets('HomeScreen visual regression', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(home: HomeScreen()),
-    );
-
-    // Percy 스냅샷
-    await Percy.screenshot(
-      tester,
-      name: 'HomeScreen - Default State',
-    );
-
-    // 상태 변경
-    await tester.tap(find.byIcon(Icons.menu));
-    await tester.pumpAndSettle();
-
-    await Percy.screenshot(
-      tester,
-      name: 'HomeScreen - Menu Opened',
+  group('HomeScreen Visual Regression', () {
+    goldenTest(
+      'should render all home screen states',
+      fileName: 'home_screen_states',
+      builder: () => GoldenTestGroup(
+        scenarioConstraints: const BoxConstraints(maxWidth: 400),
+        children: [
+          GoldenTestScenario(
+            name: 'default state',
+            child: const MaterialApp(home: HomeScreen()),
+          ),
+          GoldenTestScenario(
+            name: 'dark theme',
+            child: MaterialApp(
+              theme: ThemeData.dark(),
+              home: const HomeScreen(),
+            ),
+          ),
+        ],
+      ),
     );
   });
 }
@@ -2530,7 +2518,7 @@ void main() {
       await $.pumpAndSettle();
 
       // 2. 네이티브 권한 처리
-      await $.native.grantPermissionWhenInUse();
+      await $.platform.grantPermissionWhenInUse();
 
       // 3. 상품 검색 및 선택
       await $(#searchField).enterText('아이폰');
@@ -2704,7 +2692,7 @@ Level 5: E2E + Visual Regression → 릴리스 전 필수
 
 ### 과제 1: UseCase + Repository 유닛 테스트
 `GetUserProfileUseCase`와 `UserRepositoryImpl`에 대한 테스트를 작성하세요.
-- Mockito로 `MockUserRemoteDataSource` 생성
+- mocktail로 `MockUserRemoteDataSource` 생성
 - 성공 시 `User` Entity 반환, 네트워크 에러 시 `Failure` 반환 검증
 - AAA 패턴(Arrange-Act-Assert)을 준수하세요.
 

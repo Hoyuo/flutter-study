@@ -250,7 +250,7 @@ linter:
 ```yaml
 # pubspec.yaml
 dev_dependencies:
-  very_good_analysis: ^5.1.0
+  very_good_analysis: ^9.0.0
 
 # analysis_options.yaml
 include: package:very_good_analysis/analysis_options.yaml
@@ -319,8 +319,10 @@ Widget build(BuildContext context) {
 
 // 특정 규칙만 선택적 무시
 // 단, 주석으로 이유 설명 필수
-// ignore: avoid_dynamic_calls, reason: Legacy API 호환성
-dynamic.call();
+// ignore: avoid_dynamic_calls
+// Legacy API 호환성을 위한 예외 케이스
+final dynamic legacyApi = getLegacyService();
+legacyApi.call();  // ignore: avoid_dynamic_calls
 ```
 
 ---
@@ -1201,8 +1203,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          # ⚠️ **참고:** 이 문서의 다른 부분에서는 Flutter 3.27+를 기준으로 하고 있으므로, CI 설정의 Flutter 버전도 일관되게 업데이트를 고려하세요.
-          flutter-version: '3.19.0'
+          flutter-version: '3.27.0'
       - run: flutter pub get
       - run: flutter analyze
       - run: dart format --set-exit-if-changed .

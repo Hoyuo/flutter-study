@@ -48,7 +48,7 @@ core/
 ### 2.1 의존성 추가
 
 ```yaml
-# core/core_network/pubspec.yaml (2026년 1월 기준)
+# core/core_network/pubspec.yaml (2026년 2월 기준)
 dependencies:
   dio: ^5.9.0
   pretty_dio_logger: ^1.4.0
@@ -478,7 +478,7 @@ class RetryInterceptor extends Interceptor {
           final response = await _dio.fetch(err.requestOptions);
           return handler.resolve(response);
         } catch (e) {
-          // 재시도 실패 시 다음 인터셉터로 전달
+          debugPrint('Retry attempt failed: $e');
         }
       }
     }
@@ -631,18 +631,19 @@ class DioClientImpl implements DioClient {
 #### 4.6.2 인증서 해시 추출 방법
 
 ```bash
-# OpenSSL로 서버 인증서 다운로드
-openssl s_client -servername api.example.com -connect api.example.com:443 < /dev/null | openssl x509 -outform DER > cert.der
-
-# SHA-256 해시 계산
-openssl x509 -in cert.der -inform DER -pubkey -noout | openssl pkey -pubin -outform DER | openssl dgst -sha256 -binary | openssl enc -base64
+# OpenSSL로 서버 인증서의 DER 해시 추출 (4.6.3 Dart 코드와 동일 방식)
+# 1. 인증서 DER 다운로드 후 SHA-256 해시 계산
+openssl s_client -servername api.example.com -connect api.example.com:443 < /dev/null \
+  | openssl x509 -outform DER \
+  | openssl dgst -sha256 -binary \
+  | openssl enc -base64
 ```
 
 #### 4.6.3 수동 SSL Pinning (패키지 없이 직접 구현)
 
 ```dart
 import 'dart:io';
-import 'dart:convert'; // for utf8
+import 'dart:convert'; // for base64
 import 'package:crypto/crypto.dart'; // for sha256
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
@@ -652,14 +653,19 @@ void _configureSslPinning(Dio dio) {
     final client = HttpClient();
 
     client.badCertificateCallback = (cert, host, port) {
-      // 인증서 공개키 추출
-      // 주의: X509Certificate는 .pem 속성만 제공
-      // SHA256 핀 비교를 위해서는 pem을 파싱하거나 전체 인증서 체인 검증 필요
+      // PEM에서 DER 바이트 추출 후 SHA-256 해시 계산
+      // (4.6.2의 OpenSSL 명령과 동일한 해시 결과)
       final certPem = cert.pem;
-      final certSha256 = sha256.convert(utf8.encode(certPem));
+      final pemLines = certPem
+          .split('\n')
+          .where((line) =>
+              !line.startsWith('-----') && line.trim().isNotEmpty)
+          .join();
+      final derBytes = base64.decode(pemLines);
+      final certSha256 = sha256.convert(derBytes);
       final certPin = base64.encode(certSha256.bytes);
 
-      // 등록된 핀 목록
+      // 등록된 핀 목록 (4.6.2 OpenSSL 명령으로 추출한 해시)
       const validPins = [
         'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
         'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=',
@@ -1410,8 +1416,8 @@ class PerformanceInterceptor extends Interceptor {
 ```yaml
 # pubspec.yaml
 dependencies:
-  dio_cache_interceptor: ^3.5.0
-  dio_cache_interceptor_hive_store: ^3.2.0
+  dio_cache_interceptor: ^4.0.5
+  dio_cache_interceptor_hive_store: ^4.0.0
 ```
 
 ```dart
@@ -1451,7 +1457,7 @@ class CachedDioClient {
       options: _cacheOptions
           .copyWith(
             policy: cachePolicy,
-            maxStale: maxStale != null ? Nullable(maxStale) : null,
+            maxStale: maxStale, // 4.x에서는 Nullable 래퍼 불필요 (직접 nullable 전달)
           )
           .toOptions(),
     );
@@ -1581,5 +1587,5 @@ BaseOptions, 환경별 baseUrl 설정, 타임아웃 정책, SSL Pinning을 포�
 
 - [ ] Dio 인스턴스를 설정하고 GET/POST/PUT/DELETE 요청을 구현할 수 있다
 - [ ] Interceptor를 작성하고 요청/응답/에러 파이프라인을 구성할 수 있다
-- [ ] 토큰 갱신 로직과 동시성 처리(QueuedInterceptor)를 구현할 수 있다
+- [ ] 토큰 갱신 동시성 처리(Mutex/Lock)를 구현할 수 있다
 - [ ] SSL Pinning 설정과 네트워크 보안 기본 사항을 적용할 수 있다

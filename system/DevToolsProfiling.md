@@ -68,17 +68,16 @@ Flutter DevTools는 Flutter/Dart 앱의 성능, 메모리, 네트워크를 분�
 ### 설치 및 실행
 
 ```bash
-# 권장: dart devtools (Dart SDK 내장)
+# Flutter 3.16+ 이후 별도 설치 불필요
+# Dart SDK에 내장되어 있음
 dart devtools
-
-# 또는 수동 설치
-dart pub global activate devtools
 
 # 앱 실행 (Debug 모드)
 flutter run
 
-# DevTools 자동 실행 (또는 수동 실행)
-flutter pub global run devtools
+# DevTools는 flutter run 시 자동으로 사용 가능
+# 또는 별도로 실행:
+# dart devtools
 
 # 브라우저에서 접속
 # http://localhost:9100
@@ -575,7 +574,7 @@ class MemoryLeakPatterns {
   void addListener() {
     ChangeNotifier notifier = MyNotifier();
     notifier.addListener(() {
-      print('Changed');
+      debugPrint('Changed');
     });
     // removeListener() 호출 안함 → 메모리 릭
   }
@@ -584,7 +583,7 @@ class MemoryLeakPatterns {
   void subscribeStream() {
     Stream<int> stream = Stream.periodic(Duration(seconds: 1), (i) => i);
     stream.listen((data) {
-      print(data);
+      debugPrint(data.toString());
     });
     // subscription.cancel() 호출 안함 → 메모리 릭
   }
@@ -633,8 +632,8 @@ class NetworkExample extends StatelessWidget {
     // - Response body
     // - Duration (예: 245ms)
     // - Size (예: 1.2 KB)
-    
-    print(response.body);
+
+    debugPrint(response.body);
   }
 
   @override
@@ -1153,13 +1152,13 @@ class CachedApiClient {
     if (_cache.containsKey(url)) {
       final cacheAge = DateTime.now().difference(_cacheTime[url]!);
       if (cacheAge < cacheDuration) {
-        print('Cache hit: $url');
+        debugPrint('Cache hit: $url');
         return _cache[url];
       }
     }
 
     // 실제 요청
-    print('Cache miss: $url');
+    debugPrint('Cache miss: $url');
     final response = await http.get(Uri.parse(url));
     final data = json.decode(response.body);
 

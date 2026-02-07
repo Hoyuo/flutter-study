@@ -1299,8 +1299,6 @@ end
     <string>automatic</string>
     <key>stripSwiftSymbols</key>
     <true/>
-    <key>compileBitcode</key>
-    <false/>
 </dict>
 </plist>
 
@@ -1322,8 +1320,6 @@ end
     </dict>
     <key>stripSwiftSymbols</key>
     <true/>
-    <key>compileBitcode</key>
-    <false/>
 </dict>
 </plist>
 
@@ -1345,8 +1341,6 @@ end
     </dict>
     <key>stripSwiftSymbols</key>
     <true/>
-    <key>uploadBitcode</key>
-    <false/>
     <key>uploadSymbols</key>
     <true/>
 </dict>
@@ -1849,7 +1843,7 @@ jobs:
           myToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           name: Release v${{ steps.version.outputs.VERSION }}
           body: ${{ steps.changelog.outputs.changelog }}
@@ -2585,7 +2579,7 @@ Feature Flag를 활용하면 코드 배포와 기능 출시를 분리할 수 있
 ```yaml
 # pubspec.yaml
 dependencies:
-  launchdarkly_flutter_client_sdk: ^5.2.0
+  launchdarkly_flutter_client_sdk: ^4.0.0
 ```
 
 ```dart
@@ -2618,8 +2612,9 @@ class LaunchDarklyService {
         .build();
 
     final config = LDConfig(
-      mobileKey,
+      CredentialSource.fromEnvironment(),
       AutoEnvAttributes.enabled,
+      applicationInfo: ApplicationInfo(applicationId: 'your-app-id'),
       events: LDEventsConfig(
         capacity: 100,
         flushIntervalMs: 30000,
@@ -2673,13 +2668,30 @@ class LaunchDarklyService {
   }
 
   /// Track custom event
-  // 주의: LDValueObjectBuilder에는 addAll() 메서드가 없습니다.
-  // 실제로는 .addBool(), .addString() 등 개별 빌더 메서드를 사용해야 합니다.
   void track(String eventName, {Map<String, dynamic>? data}) {
     if (!_initialized) return;
-    _client.track(eventName, data: LDValue.buildObject()
-      ..addString('timestamp', DateTime.now().toIso8601String())
-      ..addAll(data ?? {}));
+
+    final builder = LDValue.buildObject()
+      ..addString('timestamp', DateTime.now().toIso8601String());
+
+    // Add custom data fields individually
+    if (data != null) {
+      data.forEach((key, value) {
+        if (value is bool) {
+          builder.addBool(key, value);
+        } else if (value is int) {
+          builder.addNum(key, value);
+        } else if (value is double) {
+          builder.addNum(key, value);
+        } else if (value is String) {
+          builder.addString(key, value);
+        } else {
+          builder.addString(key, value.toString());
+        }
+      });
+    }
+
+    _client.track(eventName, data: builder);
   }
 
   /// Flush events immediately
@@ -3200,16 +3212,17 @@ shorebird patch android \
 import 'package:shorebird_code_push/shorebird_code_push.dart';
 
 class ShorebirdUpdater {
-  final ShorebirdCodePush _shorebird = ShorebirdCodePush();
+  final ShorebirdUpdater _updater = ShorebirdUpdater();
 
   Future<void> checkForUpdates() async {
-    final isUpdateAvailable = await _shorebird.isNewPatchAvailableForDownload();
+    // Check if an update is available
+    final updateAvailable = await _updater.checkForUpdate();
 
-    if (isUpdateAvailable) {
-      // 백그라운드에서 다운로드
-      await _shorebird.downloadUpdateIfAvailable();
+    if (updateAvailable.isAvailable) {
+      // Download and install the update
+      await _updater.update();
 
-      // 사용자에게 알림
+      // Notify user
       showUpdateSnackbar();
     }
   }
@@ -3493,7 +3506,7 @@ jobs:
 
       - name: Build
         run: |
-          flutter build apk --release --cache-dir=build/cache
+          flutter build apk --release
 ```
 
 ### 19.2 Codemagic 빌드 최적화
@@ -3566,7 +3579,6 @@ echo "org.gradle.configureondemand=true" >> android/gradle.properties
 # Flutter 빌드
 flutter build apk \
   --release \
-  --cache-dir="$FLUTTER_BUILD_CACHE_DIR" \
   --target-platform android-arm64
 
 # 빌드 시간 측정
@@ -3931,7 +3943,7 @@ jobs:
 
       - name: Parse timeline
         run: |
-          flutter pub run dev/tools/parse_timeline.dart \
+          dart run dev/tools/parse_timeline.dart \
             build/perf_timeline.json \
             --output=performance_metrics.json
 

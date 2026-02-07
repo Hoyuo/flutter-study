@@ -2,10 +2,10 @@
 
 > **난이도**: 중급 | **카테고리**: fundamentals
 > **선행 학습**: 없음
-> **예상 학습 시간**: 2h
+> **예상 학습 시간**: 6h
 
 > Flutter Clean Architecture + Bloc 패턴 기반 교육 자료
-> Package versions: flutter_bloc ^9.1.1, freezed ^3.2.4, fpdart ^1.2.0, go_router ^17.0.1, get_it ^9.2.0, injectable ^2.5.0
+> Package versions: flutter_bloc ^9.1.1, freezed ^3.2.5, fpdart ^1.2.0, go_router ^17.1.0, get_it ^9.2.0, injectable ^2.7.1
 
 > **학습 목표**:
 > - Dart의 고급 타입 시스템(Generics, Sealed Class, Records)을 실전에서 활용할 수 있다
@@ -16,15 +16,16 @@
 
 1. [Generics 심화](#1-generics-심화)
 2. [Extension Methods](#2-extension-methods)
-3. [Mixin](#3-mixin)
-4. [Sealed Class & Pattern Matching](#4-sealed-class--pattern-matching)
-5. [Records & Destructuring](#5-records--destructuring)
-6. [비동기 심화](#6-비동기-심화)
-7. [메타프로그래밍](#7-메타프로그래밍)
-8. [메모리 관리](#8-메모리-관리)
-9. [Isolate 기초](#9-isolate-기초)
-10. [실습 과제](#실습-과제)
-11. [Self-Check](#self-check)
+3. [Extension Types (Dart 3.3+)](#3-extension-types-dart-33)
+4. [Mixin](#4-mixin)
+5. [Sealed Class & Pattern Matching](#5-sealed-class--pattern-matching)
+6. [Records & Destructuring](#6-records--destructuring)
+7. [비동기 심화](#7-비동기-심화)
+8. [메타프로그래밍](#8-메타프로그래밍)
+9. [메모리 관리](#9-메모리-관리)
+10. [Isolate 기초](#10-isolate-기초)
+11. [실습 과제](#실습-과제)
+12. [Self-Check](#self-check)
 
 ---
 
@@ -223,7 +224,163 @@ extension NullableExtensions<T> on T? {
 
 ---
 
-## 3. Mixin
+## 3. Extension Types (Dart 3.3+)
+
+Extension Types는 Dart 3.3에서 도입된 기능으로, 기존 타입을 zero-cost로 래핑하여 새로운 타입처럼 사용할 수 있게 합니다. Extension Methods와 달리, Extension Types는 완전히 새로운 정적 타입을 생성합니다.
+
+### 3.1 기본 개념
+
+Extension Types는 컴파일 타임에만 존재하며, 런타임에는 완전히 사라집니다. 이를 통해 성능 오버헤드 없이 타입 안전성을 강화할 수 있습니다.
+
+```dart
+// 기본 Extension Type
+extension type UserId(String value) {
+  // 추가 메서드 정의 가능
+  String get displayValue => 'User#$value';
+
+  bool get isValid => value.isNotEmpty && value.length >= 3;
+}
+
+// 사용
+void processUser(UserId id) {
+  print(id.displayValue);
+}
+
+void main() {
+  final id = UserId('user_123');
+  processUser(id);
+
+  // ❌ 컴파일 에러: String을 UserId로 전달 불가
+  // processUser('user_123');
+}
+```
+
+### 3.2 Extension Types vs Extension Methods
+
+```dart
+// Extension Method: 기존 타입에 메서드 추가
+extension StringUtils on String {
+  String toTitleCase() => /* ... */;
+}
+
+// Extension Type: 새로운 타입 생성 (zero-cost wrapper)
+extension type EmailAddress(String value) {
+  bool get isValid => value.contains('@');
+}
+
+void example() {
+  // Extension Method: String 타입 그대로
+  String name = 'hello';
+  name.toTitleCase(); // OK
+
+  // Extension Type: EmailAddress는 String과 다른 타입
+  EmailAddress email = EmailAddress('test@example.com');
+  // String email2 = email; // ❌ 컴파일 에러 (implements 없이는)
+}
+```
+
+### 3.3 implements를 통한 인터페이스 노출
+
+`implements` 키워드를 사용하면 representation type의 인터페이스를 노출할 수 있습니다.
+
+```dart
+// implements String: String의 모든 메서드를 사용 가능
+extension type EmailAddress(String value) implements String {
+  EmailAddress.create(String email) : this(email.toLowerCase());
+
+  bool get isValid {
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$');
+    return emailRegex.hasMatch(value);
+  }
+
+  String get domain => split('@').last;
+}
+
+void main() {
+  final email = EmailAddress.create('User@Example.COM');
+
+  // implements String 덕분에 String 메서드 사용 가능
+  print(email.toLowerCase()); // user@example.com
+  print(email.length); // 16
+  print(email.domain); // example.com
+
+  // String 타입으로 할당 가능
+  String str = email; // OK!
+}
+```
+
+### 3.4 실전 활용: Type-safe IDs
+
+```dart
+// 타입 안전한 ID 시스템
+extension type UserId(String value) implements String {
+  UserId.generate() : this('user_${DateTime.now().millisecondsSinceEpoch}');
+}
+
+extension type ProductId(String value) implements String {
+  ProductId.generate() : this('prod_${DateTime.now().millisecondsSinceEpoch}');
+}
+
+class UserRepository {
+  // UserId만 받음 - ProductId 전달 시 컴파일 에러
+  Future<User?> findById(UserId id) async {
+    return null; // 실제 구현
+  }
+}
+
+class ProductRepository {
+  Future<Product?> findById(ProductId id) async {
+    return null;
+  }
+}
+
+void main() {
+  final userId = UserId('u123');
+  final productId = ProductId('p456');
+
+  final userRepo = UserRepository();
+  final productRepo = ProductRepository();
+
+  userRepo.findById(userId); // ✅ OK
+  // userRepo.findById(productId); // ❌ 컴파일 에러!
+
+  productRepo.findById(productId); // ✅ OK
+  // productRepo.findById(userId); // ❌ 컴파일 에러!
+}
+```
+
+### 3.5 Extension Types와 Sealed Class 조합
+
+```dart
+// API 응답 래퍼
+extension type ApiResponse<T>(({int status, T? data, String? error}) value) {
+  int get statusCode => value.status;
+  T? get data => value.data;
+  String? get error => value.error;
+
+  bool get isSuccess => statusCode >= 200 && statusCode < 300;
+  bool get isError => statusCode >= 400;
+}
+
+// 사용
+Future<ApiResponse<User>> fetchUser(String id) async {
+  try {
+    final user = User(id: id, name: 'Alice', email: 'alice@example.com');
+    return ApiResponse((status: 200, data: user, error: null));
+  } catch (e) {
+    return ApiResponse((status: 500, data: null, error: e.toString()));
+  }
+}
+```
+
+> **핵심 차이점**:
+> - **Extension Methods**: 기존 타입에 메서드만 추가 (타입은 그대로)
+> - **Extension Types**: 새로운 타입을 생성 (컴파일 타임 타입 안전성 강화)
+> - **런타임 비용**: Extension Types는 zero-cost abstraction (런타임에 완전히 사라짐)
+
+---
+
+## 4. Mixin
 
 Mixin은 클래스의 코드를 다른 클래스에서 재사용하는 방법입니다.
 
@@ -344,7 +501,7 @@ class AdminUser extends Identifiable {
 
 ---
 
-## 4. Sealed Class & Pattern Matching
+## 5. Sealed Class & Pattern Matching
 
 Dart 3.0에서 도입된 Sealed Class는 타입 안전한 상태 관리와 패턴 매칭을 가능하게 합니다.
 
@@ -409,7 +566,7 @@ double calculateArea(Shape shape) {
 
 ---
 
-## 5. Records & Destructuring
+## 6. Records & Destructuring
 
 Dart 3.0에서 도입된 Records는 여러 값을 묶어 반환하거나 전달하는 간단한 방법을 제공합니다.
 
@@ -464,7 +621,7 @@ print('Mean: $mean, Median: $median');
 
 ---
 
-## 6. 비동기 심화
+## 7. 비동기 심화
 
 ### 6.1 Future 고급 패턴
 
@@ -554,7 +711,7 @@ Future<T> retryWithExponentialBackoff<T>(
 
 ---
 
-## 7. 메타프로그래밍
+## 8. 메타프로그래밍
 
 ### 7.1 Annotation 기초
 
@@ -639,7 +796,7 @@ class AppSettings {
 
 ---
 
-## 8. 메모리 관리
+## 9. 메모리 관리
 
 ### 8.1 Garbage Collection 이해
 
@@ -711,7 +868,7 @@ class CacheWithWeakReference {
 
 ---
 
-## 9. Isolate 기초
+## 10. Isolate 기초
 
 ### 9.1 Isolate.run() (권장)
 

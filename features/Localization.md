@@ -696,11 +696,6 @@ Text('welcome_to'.tr())  // "Welcome to 마이앱!"
 ```
 
 ```dart
-// ⚠️ 주의: easy_localization의 tr()에는 gender 파라미터가 없습니다.
-// 성별 처리는 ICU MessageFormat의 select 구문을 사용하세요:
-// JSON: "{gender, select, male{Mr.} female{Ms.} other{}} {name}"
-// 호출: 'greeting'.tr(namedArgs: {'name': '...', 'gender': 'male'})
-
 // gender 확장 메서드 사용
 Text('greeting'.tr(gender: 'male', namedArgs: {'name': '철수'}))
 // 결과: "안녕하세요, 철수씨"

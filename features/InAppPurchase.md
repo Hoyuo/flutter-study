@@ -27,7 +27,7 @@
 ### 의존성 추가
 
 ```yaml
-# pubspec.yaml (2026년 1월 기준)
+# pubspec.yaml (2026년 2월 기준)
 dependencies:
   # 공식 Flutter 인앱 결제 패키지
   in_app_purchase: ^3.2.0

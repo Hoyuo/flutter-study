@@ -40,7 +40,7 @@ Observability(가시성)는 시스템의 내부 상태를 외부에서 이해할
 ### 2.1 의존성 추가
 
 ```yaml
-# pubspec.yaml (2026년 1월 기준)
+# pubspec.yaml (2026년 2월 기준)
 dependencies:
   # Firebase 모니터링
   firebase_core: ^4.4.0
@@ -52,8 +52,8 @@ dependencies:
   logger: ^2.5.0
 
   # Sentry (선택사항)
-  sentry_flutter: ^8.12.0
-  sentry_dio: ^8.12.0
+  sentry_flutter: ^9.12.0
+  sentry_dio: ^9.12.0
 
   # 네트워크 & 유틸
   dio: ^5.9.0
@@ -205,7 +205,7 @@ class AppLogger {
       lineLength: 120,
       colors: true,
       printEmojis: true,
-      dateTimeFormat: DateTimeFormat.onlyTimeAndSinceMillis,
+      dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
     ),
     level: kDebugMode ? Level.trace : Level.warning,
   );

@@ -78,7 +78,7 @@ flutter create todo_app
 cd todo_app
 
 # FVM 설정
-fvm use 3.19.0
+fvm use 3.27.0
 
 # Git 초기화
 git init
@@ -497,14 +497,14 @@ Bloc의 error 상태에서 사용자 친화적인 메시지를 표시합니다.
 ```dart
 test('should return list of todos from repository', () async {
   // Arrange
-  when(mockRepository.getTodos()).thenAnswer((_) async => Right(todos));
+  when(() => mockRepository.getTodos()).thenAnswer((_) async => Right(todos));
 
   // Act
   final result = await useCase();
 
   // Assert
   expect(result, Right(todos));
-  verify(mockRepository.getTodos()).called(1);
+  verify(() => mockRepository.getTodos()).called(1);
 });
 ```
 
@@ -514,7 +514,7 @@ test('should return list of todos from repository', () async {
 blocTest<TodoBloc, TodoState>(
   'emits [loading, loaded] when started',
   build: () {
-    when(mockUseCase()).thenAnswer((_) async => Right([]));
+    when(() => mockUseCase()).thenAnswer((_) async => Right([]));
     return bloc;
   },
   act: (bloc) => bloc.add(const TodoEvent.started()),
@@ -545,7 +545,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
       - run: flutter pub get
       - run: flutter analyze

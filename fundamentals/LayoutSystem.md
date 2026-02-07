@@ -1,8 +1,8 @@
 # Flutter 레이아웃 시스템 가이드
 
-> **난이도**: 초급 | **카테고리**: fundamentals
+> **난이도**: 중급 | **카테고리**: fundamentals
 > **선행 학습**: [WidgetFundamentals](./WidgetFundamentals.md)
-> **예상 학습 시간**: 3h
+> **예상 학습 시간**: 5h
 
 Flutter의 Constraints 기반 레이아웃 원리와 고급 레이아웃 패턴을 다루는 가이드입니다.
 

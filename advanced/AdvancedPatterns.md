@@ -206,6 +206,8 @@ class SqliteOrderRepository implements OrderRepository {
 ### 2.4 테스트 용이성
 
 ```dart
+import 'package:mocktail/mocktail.dart';
+
 // Mock을 사용한 테스트
 class MockOrderRepository extends Mock implements OrderRepository {}
 
@@ -292,7 +294,7 @@ class SagaOrchestrator {
       
       executedSteps.add(step);
     }
-    return Right(null);
+    return const Right(null);
   }
   
   Future<void> _compensate() async {

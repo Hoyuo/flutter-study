@@ -119,7 +119,7 @@ dev_dependencies:
 
 ## 3. SharedPreferences
 
-> **⚠️ 중요 (2025년 업데이트)**: 기존 동기(synchronous) API(`SharedPreferences.getInstance()`)는 deprecated 되었습니다.
+> **⚠️ 중요 (2026년 2월 기준)**: 기존 동기(synchronous) API(`SharedPreferences.getInstance()`)는 deprecated 되었습니다.
 > 새 프로젝트는 **SharedPreferencesAsync** 또는 **SharedPreferencesWithCache**를 사용하세요.
 
 ### 3.0 새로운 Async API (권장)
@@ -931,16 +931,12 @@ final usersNamedKim = await (select(users)
       ..where((tbl) => tbl.name.like('김%')))
     .get();
 
-// ⚠️ 주의: Expression에 static .and() 메서드가 없습니다.
-// 실제로는 & 연산자를 사용하세요: (condition1) & (condition2)
-// Custom Expression
+// 올바른 방법: & 연산자로 조건 결합
 final results5 = await (select(users)
       ..where((tbl) =>
-          Expression<bool>.and([
-            tbl.isActive.equals(true),
-            tbl.createdAt.isBiggerOrEqualValue(DateTime(2024)),
-            tbl.email.like('%@gmail.com'),
-          ])))
+          (tbl.isActive.equals(true)) &
+          (tbl.createdAt.isBiggerOrEqualValue(DateTime(2024))) &
+          (tbl.email.like('%@gmail.com'))))
     .get();
 ```
 
@@ -1405,6 +1401,9 @@ MigrationStrategy get migration {
 #### 4.11.1 인덱스 정의
 
 ```dart
+// 올바른 인덱스 정의 - @TableIndex 어노테이션 사용
+@TableIndex(name: 'idx_users_email_name', columns: {#email, #name})
+@TableIndex(name: 'idx_users_created', columns: {#createdAt})
 class Users extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get userId => text().unique()();  // 자동으로 인덱스 생성
@@ -1417,27 +1416,16 @@ class Users extends Table {
     {email},  // email에 UNIQUE 인덱스
   ];
 }
-
-// ⚠️ 주의: Drift의 Table 클래스에는 indexes getter가 없습니다.
-// 실제로는 @TableIndex 어노테이션을 사용하거나
-// customStatement()로 인덱스를 생성하세요.
-// 복합 인덱스 (Custom Index)
-@override
-List<Index> get indexes => [
-  Index('user_email_name_idx', [email, name]),
-  Index('user_created_idx', [createdAt]),
-];
 ```
 
 #### 4.11.2 쿼리 성능 분석 (EXPLAIN)
 
 ```dart
 Future<void> analyzeQuery() async {
-  final query = select(users)..where((tbl) => tbl.email.equals('test@test.com'));
-
-  // EXPLAIN QUERY PLAN
+  // EXPLAIN QUERY PLAN - customSelect()로 직접 SQL 실행
   final explanation = await customSelect(
-    'EXPLAIN QUERY PLAN ${query.constructQuery().sql}',
+    "EXPLAIN QUERY PLAN SELECT * FROM users WHERE email = ?",
+    variables: [Variable.withString('test@test.com')],
     readsFrom: {users},
   ).get();
 
@@ -1498,19 +1486,33 @@ Future<List<User>> getUsers({int page = 0, int pageSize = 20}) {
 #### 4.12.1 FTS5 테이블 생성
 
 ```dart
-// ⚠️ 주의: @UseDriftFts 어노테이션은 Drift에 존재하지 않습니다.
-// 실제 FTS 구현은 customStatement('CREATE VIRTUAL TABLE ... USING fts5(...)')을
-// 마이그레이션에서 사용하세요.
-// FTS 전용 가상 테이블
-@UseDriftFts(tokenizer: TokenizerType.porter)
-class ArticlesFts extends Table {
-  TextColumn get title => text()();
-  TextColumn get content => text()();
-}
+// FTS5 전문 검색 - customStatement()를 사용하여 가상 테이블 생성
+// Drift에서는 FTS 전용 어노테이션이 없으며,
+// 반드시 SQL로 직접 FTS5 가상 테이블을 생성해야 합니다.
 
-@DriftDatabase(tables: [Articles, ArticlesFts])
+@DriftDatabase(tables: [Articles])
 class AppDatabase extends _$AppDatabase {
   // ...
+
+  /// FTS5 가상 테이블 생성 (마이그레이션에서 호출)
+  Future<void> createFtsTable() async {
+    await customStatement('''
+      CREATE VIRTUAL TABLE IF NOT EXISTS articles_fts
+      USING fts5(title, content, content='articles', content_rowid='id')
+    ''');
+  }
+
+  /// FTS5를 활용한 전문 검색
+  Future<List<Article>> searchArticles(String query) async {
+    final results = await customSelect(
+      'SELECT a.* FROM articles a '
+      'INNER JOIN articles_fts fts ON a.id = fts.rowid '
+      'WHERE articles_fts MATCH ?',
+      variables: [Variable.withString(query)],
+      readsFrom: {articles},
+    ).get();
+    return results.map((row) => Article.fromData(row.data)).toList();
+  }
 }
 ```
 
@@ -1957,7 +1959,7 @@ void main() {
 
 ### 5.0 Isar Plus 소개
 
-> **ℹ️ Isar Plus (2026년 1월 기준)**:
+> **ℹ️ Isar Plus (2026년 2월 기준)**:
 > - 원본 Isar가 2024년 이후 개발 중단됨에 따라 커뮤니티에서 **Isar Plus**를 포크하여 유지보수하고 있습니다.
 > - `isar_plus: ^1.2.1` 사용을 권장합니다.
 > - 기존 Isar API와 호환되며, 버그 수정 및 Flutter 최신 버전 지원이 이루어지고 있습니다.
@@ -2827,12 +2829,10 @@ void main() {
 ```dart
 // test/mocks/mock_secure_storage.dart
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:mockito/mockito.dart';
-import 'package:mockito/annotations.dart';
+import 'package:mocktail/mocktail.dart';
 
-import 'mock_secure_storage.mocks.dart';
+class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 
-@GenerateMocks([FlutterSecureStorage])
 void main() {
   late MockFlutterSecureStorage mockStorage;
   late TokenStorageImpl tokenStorage;
@@ -2844,9 +2844,9 @@ void main() {
 
   test('토큰 저장 및 조회', () async {
     // Arrange
-    when(mockStorage.write(key: anyNamed('key'), value: anyNamed('value')))
+    when(() => mockStorage.write(key: any(named: 'key'), value: any(named: 'value')))
         .thenAnswer((_) async {});
-    when(mockStorage.read(key: SecureStorageKeys.accessToken))
+    when(() => mockStorage.read(key: SecureStorageKeys.accessToken))
         .thenAnswer((_) async => 'test_token');
 
     // Act
@@ -3098,7 +3098,7 @@ class StorageMigration {
 
 ## 14. 2026년 1월 업데이트 요약
 
-이 문서는 2026년 1월 기준 최신 Flutter 로컬 저장소 베스트 프랙티스를 반영합니다.
+이 문서는 2026년 2월 기준 최신 Flutter 로컬 저장소 베스트 프랙티스를 반영합니다.
 
 ### 주요 변경사항
 

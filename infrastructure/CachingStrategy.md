@@ -11,6 +11,8 @@
 > 2. HTTP Cache-Control, ETag, dio_cache_interceptor를 활용하여 HTTP 캐싱을 구현하고, Repository 패턴과 통합할 수 있다
 > 3. Cache-First, Network-First, Stale-While-Revalidate 전략을 이해하고, Bloc 패턴과 통합하여 오프라인 지원을 구현할 수 있다
 
+> 📅 **2026년 2월 기준** - Flutter 3.x, Dart 3.x 환경에서 작성되었습니다.
+
 ---
 
 ## 목차
@@ -424,7 +426,7 @@ class HttpClientFactory {
 
     final cacheOptions = CacheOptions(
       store: cacheStore,
-      policy: CachePolicy.forceCache, // 기본 정책
+      policy: CachePolicy.forceCache, // 기본 정책: 네트워크 무시하고 캐시만 사용 (캐시 없으면 네트워크 요청)
       maxStale: const Duration(days: 7), // 최대 7일 동안 stale 데이터 사용 가능
       priority: CachePriority.high,
       hitCacheOnErrorExcept: [401, 403], // 인증 오류는 캐시 사용 안 함
@@ -605,6 +607,9 @@ class CustomCacheInterceptor extends Interceptor {
 dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+
+⚠️ 참고: Hive는 현재 유지보수 모드입니다. 새 프로젝트에서는 Drift(https://drift.simonbinder.eu/)를
+고려하세요. 이 문서는 학습 목적으로 Hive 예제를 유지합니다.
 */
 
 import 'package:hive_flutter/hive_flutter.dart';

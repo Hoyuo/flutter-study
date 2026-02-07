@@ -185,7 +185,7 @@ BuildContext는 **Widget Tree에서의 위치를 나타내는 핸들**입니다.
 class MyWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    print(context.runtimeType); // StatelessElement 등
+    debugPrint('${context.runtimeType}'); // StatelessElement 등
     return Container();
   }
 }
@@ -367,7 +367,7 @@ class _ColoredBoxState extends State<_ColoredBox> {
 class LifecycleDemo extends StatefulWidget {
   @override
   State<LifecycleDemo> createState() {
-    print('1. createState()'); // Framework이 위젯을 처음 삽입할 때
+    debugPrint('1. createState()'); // Framework이 위젯을 처음 삽입할 때
     return _LifecycleDemoState();
   }
 }
@@ -378,42 +378,42 @@ class _LifecycleDemoState extends State<LifecycleDemo> {
   @override
   void initState() {
     super.initState();
-    print('3. initState()'); // State 초기화 (1회만 호출)
+    debugPrint('3. initState()'); // State 초기화 (1회만 호출)
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    print('4. didChangeDependencies()'); // InheritedWidget 변경 시에도 호출
+    debugPrint('4. didChangeDependencies()'); // InheritedWidget 변경 시에도 호출
   }
 
   @override
   Widget build(BuildContext context) {
-    print('5. build()'); // UI 구성 (setState 호출 시마다)
+    debugPrint('5. build()'); // UI 구성 (setState 호출 시마다)
     return Container();
   }
 
   @override
   void didUpdateWidget(LifecycleDemo oldWidget) {
     super.didUpdateWidget(oldWidget);
-    print('6. didUpdateWidget()'); // 부모가 같은 runtimeType으로 리빌드 시
+    debugPrint('6. didUpdateWidget()'); // 부모가 같은 runtimeType으로 리빌드 시
   }
 
   @override
   void reassemble() {
     super.reassemble();
-    print('7. reassemble()'); // hot reload 시 호출 (디버그 전용)
+    debugPrint('7. reassemble()'); // hot reload 시 호출 (디버그 전용)
   }
 
   @override
   void deactivate() {
-    print('8. deactivate()'); // 트리에서 제거될 때 (재삽입 가능)
+    debugPrint('8. deactivate()'); // 트리에서 제거될 때 (재삽입 가능)
     super.deactivate();
   }
 
   @override
   void dispose() {
-    print('9. dispose()'); // 영구 제거 시 리소스 해제
+    debugPrint('9. dispose()'); // 영구 제거 시 리소스 해제
     super.dispose();
   }
 }
@@ -702,7 +702,7 @@ class _StaticHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('_StaticHeader rebuilt');
+    debugPrint('_StaticHeader rebuilt');
 
     return Container(
       padding: EdgeInsets.all(16),

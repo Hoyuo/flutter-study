@@ -90,7 +90,7 @@ flutterfire configure
 flutterfire configure --platforms=ios,android
 ```
 
-### 2.2 pubspec.yaml 의존성 (2026년 기준)
+### 2.2 pubspec.yaml 의존성 (2026년 2월 기준)
 
 ```yaml
 dependencies:
@@ -98,16 +98,16 @@ dependencies:
     sdk: flutter
 
   # Firebase Core
-  firebase_core: ^3.1.0
+  firebase_core: ^4.4.0
 
   # Firebase Services
-  firebase_auth: ^5.1.0
-  cloud_firestore: ^5.0.1
-  firebase_storage: ^12.0.1
+  firebase_auth: ^6.1.4
+  cloud_firestore: ^6.1.2
+  firebase_storage: ^13.0.6
   cloud_functions: ^5.0.1
-  firebase_messaging: ^15.0.1
-  firebase_crashlytics: ^4.0.1
-  firebase_analytics: ^11.0.1
+  firebase_messaging: ^16.1.1
+  firebase_crashlytics: ^5.0.7
+  firebase_analytics: ^12.1.1
   firebase_remote_config: ^5.0.1
 
   # State Management & DI
@@ -470,7 +470,7 @@ class FirebaseAuthRepository implements AuthRepository {
 ```yaml
 # pubspec.yaml
 dependencies:
-  google_sign_in: ^6.1.5
+  google_sign_in: ^7.2.0
 ```
 
 ```dart
@@ -844,18 +844,10 @@ class FirestorePostRepository implements PostRepository {
         );
       }
     })
-    // ⚠️ 주의: handleError의 콜백은 void를 반환하므로 아래 return left(...) 값은
-    // 실제로 스트림에 전달되지 않습니다. 실제 프로젝트에서는 StreamTransformer를
-    // 사용하거나 .map() 내부에서 try-catch로 에러를 Either.left로 변환해야 합니다.
     .handleError((error) {
-      if (error is FirebaseException) {
-        return left<FirestoreFailure, List<PostEntity>>(
-          _mapFirebaseException(error),
-        );
-      }
-      return left<FirestoreFailure, List<PostEntity>>(
-        FirestoreFailure.unknown(error.toString()),
-      );
+      // handleError 콜백의 return 값은 스트림에 전달되지 않으므로
+      // 에러 로깅만 수행
+      debugPrint('Stream error: $error');
     });
   }
 
@@ -2141,11 +2133,18 @@ Future<void> setupFirebaseEmulators() async {
 }
 
 Future<void> clearFirestoreData() async {
-  final firestore = FirebaseFirestore.instance;
-  final collections = await firestore.listCollections();
+  // Flutter client SDK에서는 listCollections()를 사용할 수 없으며,
+  // 별도의 메타데이터 컬렉션이나 Cloud Functions를 통해 구현해야 합니다.
+  // 테스트 환경에서는 알려진 컬렉션 목록을 직접 지정하거나
+  // Firebase Emulator의 REST API를 사용할 수 있습니다.
 
-  for (final collection in collections) {
-    final docs = await collection.get();
+  final firestore = FirebaseFirestore.instance;
+
+  // 예시: 알려진 컬렉션들을 명시적으로 정리
+  final knownCollections = ['users', 'posts', 'comments'];
+
+  for (final collectionName in knownCollections) {
+    final docs = await firestore.collection(collectionName).get();
     for (final doc in docs.docs) {
       await doc.reference.delete();
     }
@@ -2159,7 +2158,7 @@ Future<void> clearFirestoreData() async {
 // test/core/data/repositories/firebase_auth_repository_test.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import '../../../helpers/test_firebase.dart';
 
 void main() {

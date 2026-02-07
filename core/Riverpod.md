@@ -112,12 +112,12 @@ dependencies:
 
 dev_dependencies:
   # Build Runner
-  build_runner: ^2.4.15
+  build_runner: ^2.10.5
 
   # Code Generation
   riverpod_generator: ^3.0.0
   freezed: ^3.2.4
-  json_serializable: ^6.9.5
+  json_serializable: ^6.11.4
 
   # Lint
   riverpod_lint: ^3.0.0  # Riverpod 전용 린트

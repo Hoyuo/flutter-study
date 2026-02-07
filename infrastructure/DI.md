@@ -42,9 +42,9 @@ class HomeBloc {
 ### 2.1 의존성 추가
 
 ```yaml
-# pubspec.yaml (2026년 1월 기준)
+# pubspec.yaml (2026년 2월 기준)
 dependencies:
-  get_it: ^9.2.0          # 2026년 1월 기준 최신
+  get_it: ^9.2.0          # 2026년 2월 기준 최신
   injectable: ^2.5.0      # 프로젝트 표준 버전
 
 dev_dependencies:

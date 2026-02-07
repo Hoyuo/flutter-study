@@ -3,7 +3,7 @@
 > **난이도**: 시니어 | **카테고리**: system
 > **선행 학습**: [FlutterInternals](../fundamentals/FlutterInternals.md) | **예상 학습 시간**: 3h
 >
-> **대상**: Flutter 3.27+ | Dart 3.10+ | Impeller 렌더링 엔진
+> **대상**: Flutter 3.27+ | Dart 3.6+ | Impeller 렌더링 엔진
 
 ## 학습 목표
 
@@ -826,7 +826,7 @@ class MemoryMonitor {
     // DevTools에서 메모리 모니터링 활용
     // import 'package:flutter/foundation.dart';
     if (kDebugMode) {
-      print('Memory usage: ${await _getMemoryUsage()}');
+      debugPrint('Memory usage: ${await _getMemoryUsage()}');
     }
   }
 
@@ -934,7 +934,7 @@ class _JsonParsingExampleState extends State<JsonParsingExample> {
         _isLoading = false;
       });
     } catch (e) {
-      print('파싱 실패: $e');
+      debugPrint('파싱 실패: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -1415,7 +1415,7 @@ final state2 = GoodProductState(
   isLoading: false,
 );
 
-print(state1 == state2);  // true (내용 기반 비교)
+debugPrint('${state1 == state2}');  // true (내용 기반 비교)
 ```
 
 ### 3. 상태 정규화

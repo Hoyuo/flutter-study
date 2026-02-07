@@ -4,7 +4,7 @@
 > **선행 학습**: [FlutterInternals](../fundamentals/FlutterInternals.md)
 > **예상 학습 시간**: 3h
 
-> **Flutter 3.27+ / Dart 3.6+** | pigeon ^22.0.0 | ffigen ^13.0.0 | ffi ^2.1.3
+> **Flutter 3.27+ / Dart 3.6+** (2026년 2월 기준) | pigeon ^22.0.0 | ffigen ^13.0.0 | ffi ^2.1.3
 
 > 네이티브 플랫폼과의 심층 통합을 위한 고급 패턴 및 최적화 전략
 
@@ -905,11 +905,9 @@ class NativeHeavyComputation {
     return _heavyComputation(input);
   }
 
-  // 비동기 호출 (Isolate 사용)
-  Future<int> computeAsync(int input) async {
-    // ⚠️ 주의: 이 클로저는 this를 캡처하므로 DynamicLibrary 등 non-sendable 객체가 포함되면
-    // 런타임 에러가 발생합니다. 실제 구현에서는 static 메서드를 사용하거나 데이터만 전달하세요.
-    return Isolate.run(() => _heavyComputation(input));
+  // 비동기 호출 (Isolate 사용) - static 함수로 non-sendable 캡처 방지
+  static Future<int> computeAsync(int input) async {
+    return Isolate.run(() => _computeInIsolate(input));
   }
 
   // 스트림으로 여러 작업 처리
@@ -918,6 +916,17 @@ class NativeHeavyComputation {
       yield await computeAsync(input);
     }
   }
+}
+
+// top-level 함수: Isolate 내에서 DynamicLibrary를 직접 로드
+int _computeInIsolate(int input) {
+  final lib = Platform.isAndroid
+      ? ffi.DynamicLibrary.open('libheavy_computation.so')
+      : ffi.DynamicLibrary.process();
+  final func = lib.lookupFunction<HeavyComputationFunc, HeavyComputationDart>(
+    'heavy_computation',
+  );
+  return func(input);
 }
 
 // 사용 예
@@ -1012,23 +1021,23 @@ import 'package:pigeon/pigeon.dart';
   swiftOptions: SwiftOptions(),
 ))
 
-// ============= 데이터 클래스 정의 =============
+// ============= 데이터 클래스 정의 (Pigeon v17+: non-nullable 기본) =============
 class User {
-  String? id;
-  String? name;
-  String? email;
-  int? age;
+  late String id;
+  late String name;
+  late String email;
+  int? age;  // 선택 필드만 nullable
 }
 
 class LoginRequest {
-  String? email;
-  String? password;
+  late String email;
+  late String password;
 }
 
 class LoginResponse {
-  User? user;
-  String? token;
-  String? refreshToken;
+  late User user;
+  late String token;
+  String? refreshToken;  // 선택 필드만 nullable
 }
 
 // ============= API 인터페이스 정의 =============
@@ -1587,7 +1596,7 @@ class NativeMapView: NSObject, FlutterPlatformView, MKMapViewDelegate {
 }
 
 // AppDelegate.swift에서 등록
-@UIApplicationMain
+@main
 @objc class AppDelegate: FlutterAppDelegate {
     override func application(
         _ application: UIApplication,

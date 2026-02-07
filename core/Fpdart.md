@@ -4,7 +4,7 @@
 > **선행 학습**: [Architecture](./Architecture.md)
 > **예상 학습 시간**: 1.5h
 
-> **Package Versions (2025-01 기준)**
+> **Package Versions (2026년 2월 기준)**
 > - fpdart: ^1.2.0
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:

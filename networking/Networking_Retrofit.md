@@ -43,11 +43,11 @@ Retrofit은 어노테이션 기반으로 HTTP API를 정의하는 타입 안전�
 ### 2.1 의존성 추가
 
 ```yaml
-# pubspec.yaml (2026년 1월 기준)
+# pubspec.yaml (2026년 2월 기준)
 dependencies:
   dio: ^5.9.0
   retrofit: ^4.9.2
-  json_annotation: ^4.9.0
+  json_annotation: ^4.10.0
   fpdart: ^1.2.0
 
 dev_dependencies:
@@ -568,14 +568,11 @@ class HomeRepositoryImpl implements HomeRepository {
 
 ```dart
 // test/mocks/mocks.dart
-// ⚠️ 주의: 이 프로젝트의 표준 모킹 라이브러리는 mocktail입니다 (mockito가 아님).
-// mocktail 사용 시: class MockHomeApi extends Mock implements HomeApi {}
-// when(() => mockApi.getUsers()).thenAnswer((_) async => [...]);
-import 'package:mockito/mockito.dart';
-import 'package:mockito/annotations.dart';
+// ⚠️ 주의: 이 프로젝트의 표준 모킹 라이브러리는 mocktail입니다.
+import 'package:mocktail/mocktail.dart';
 
-@GenerateMocks([HomeApi, HomeRemoteDataSource])
-import 'mocks.mocks.dart';
+class MockHomeApi extends Mock implements HomeApi {}
+class MockHomeRemoteDataSource extends Mock implements HomeRemoteDataSource {}
 ```
 
 ### 8.2 DataSource 테스트
@@ -583,7 +580,7 @@ import 'mocks.mocks.dart';
 ```dart
 // test/data/datasources/home_remote_datasource_test.dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 
 import '../../fixtures/home_fixture.dart';
 import '../../mocks/mocks.dart';
@@ -601,7 +598,7 @@ void main() {
     test('API 호출 성공 시 HomeDto 반환', () async {
       // Arrange
       final expected = HomeFixture.homeDto;
-      when(mockApi.getHomeData())
+      when(() => mockApi.getHomeData())
           .thenAnswer((_) async => expected);
 
       // Act
@@ -609,7 +606,7 @@ void main() {
 
       // Assert
       expect(result, expected);
-      verify(mockApi.getHomeData()).called(1);
+      verify(() => mockApi.getHomeData()).called(1);
     });
   });
 
@@ -617,7 +614,7 @@ void main() {
     test('페이지네이션 파라미터가 올바르게 전달됨', () async {
       // Arrange
       final expected = HomeFixture.homeItemsResponse;
-      when(mockApi.getHomeItems(any, any))
+      when(() => mockApi.getHomeItems(any(), any()))
           .thenAnswer((_) async => expected);
 
       // Act
@@ -625,7 +622,7 @@ void main() {
 
       // Assert
       expect(result, expected);
-      verify(mockApi.getHomeItems(2, 10)).called(1);
+      verify(() => mockApi.getHomeItems(2, 10)).called(1);
     });
   });
 }
@@ -690,6 +687,8 @@ class EventDto {
   factory EventDto.fromJson(Map<String, dynamic> json) =>
       _$EventDtoFromJson(json);
 }
+
+part 'event_dto.g.dart';
 ```
 
 ### 9.3 Enum 처리

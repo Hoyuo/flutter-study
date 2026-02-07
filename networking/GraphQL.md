@@ -1,6 +1,6 @@
 # Flutter GraphQL 가이드
 
-> **난이도**: 고급 | **카테고리**: networking
+> **난이도**: 고급 | **카테고리**: networking | **작성 기준**: 2026년 2월
 > **선행 학습**: [Networking_Dio](./Networking_Dio.md) | **예상 학습 시간**: 2h
 
 > GraphQL을 활용한 효율적인 데이터 페칭과 실시간 통신 구현 가이드. Clean Architecture, Bloc 패턴, 타입 안전성을 갖춘 현대적인 Flutter GraphQL 애플리케이션 개발 방법을 다룹니다.
@@ -108,7 +108,7 @@ dev_dependencies:
 
   # Testing
   mocktail: ^1.0.4
-  bloc_test: ^9.1.7
+  bloc_test: ^10.0.0
 ```
 
 ### 2.2 프로젝트 구조
@@ -1603,8 +1603,6 @@ class PostBloc extends Bloc<PostEvent, PostState> {
   final CreatePost _createPost;
   final SubscribeToPosts _subscribeToPosts;
 
-  StreamSubscription? _subscription;
-
   PostBloc(
     this._getPosts,
     this._createPost,
@@ -1652,24 +1650,11 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     SubscribeToNewPosts event,
     Emitter<PostState> emit,
   ) async {
-    await _subscription?.cancel();
-
-    // ⚠️ 주의: listen 콜백 내에서 emit을 직접 호출하면 StateError가 발생합니다.
-    // 올바른 패턴: await emit.forEach(stream, onData: (data) => NewState(data))
-    _subscription = _subscribeToPosts().listen(
-      (post) {
-        emit(PostState.postCreated(post));
-      },
-      onError: (error) {
-        emit(PostState.error(error.toString()));
-      },
+    await emit.forEach(
+      _subscribeToPosts(),
+      onData: (Post post) => PostState.postCreated(post),
+      onError: (error, stackTrace) => PostState.error(error.toString()),
     );
-  }
-
-  @override
-  Future<void> close() {
-    _subscription?.cancel();
-    return super.close();
   }
 }
 ```
@@ -1953,11 +1938,9 @@ class ErrorView extends StatelessWidget {
 ```dart
 // test/helpers/mock_graphql_client.dart
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 
-@GenerateMocks([GraphQLClient])
-import 'mock_graphql_client.mocks.dart';
+class MockGraphQLClient extends Mock implements GraphQLClient {}
 
 class MockGraphQLProvider {
   static MockGraphQLClient createMockClient() {
@@ -1970,10 +1953,9 @@ class MockGraphQLProvider {
     Map<String, dynamic> data, {
     Map<String, dynamic>? variables,
   }) {
-    // ⚠️ 주의: graphql_flutter ^5.2.0에서 QueryResult 생성자는 options 파라미터가 필수입니다.
-    // 실제 코드: QueryResult(options: QueryOptions(document: gql('...')), data: ..., source: ...)
-    when(client.query(any)).thenAnswer((_) async {
+    when(() => client.query(any())).thenAnswer((_) async {
       return QueryResult(
+        options: QueryOptions(document: gql(query)),
         data: data,
         source: QueryResultSource.network,
       );
@@ -1985,8 +1967,9 @@ class MockGraphQLProvider {
     String mutation,
     Map<String, dynamic> data,
   ) {
-    when(client.mutate(any)).thenAnswer((_) async {
+    when(() => client.mutate(any())).thenAnswer((_) async {
       return QueryResult(
+        options: MutationOptions(document: gql(mutation)),
         data: data,
         source: QueryResultSource.network,
       );
@@ -2000,7 +1983,7 @@ class MockGraphQLProvider {
 ```dart
 // test/features/posts/data/repositories/post_repository_impl_test.dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -2030,10 +2013,9 @@ void main() {
         ],
       };
 
-      // ⚠️ 주의: graphql_flutter ^5.2.0에서 QueryResult 생성자는 options 파라미터가 필수입니다.
-      // 실제 코드: QueryResult(options: QueryOptions(document: gql('...')), data: ..., source: ...)
-      when(mockClient.query(any)).thenAnswer((_) async {
+      when(() => mockClient.query(any())).thenAnswer((_) async {
         return QueryResult(
+          options: QueryOptions(document: gql(getPostsQuery)),
           data: mockData,
           source: QueryResultSource.network,
         );
@@ -2055,10 +2037,9 @@ void main() {
 
     test('네트워크 오류 시 Left(NetworkFailure) 반환', () async {
       // Arrange
-      // ⚠️ 주의: graphql_flutter ^5.2.0에서 QueryResult 생성자는 options 파라미터가 필수입니다.
-      // 실제 코드: QueryResult(options: QueryOptions(document: gql('...')), data: ..., source: ...)
-      when(mockClient.query(any)).thenAnswer((_) async {
+      when(() => mockClient.query(any())).thenAnswer((_) async {
         return QueryResult(
+          options: QueryOptions(document: gql(getPostsQuery)),
           exception: OperationException(
             linkException: NetworkException(),
           ),
@@ -2088,7 +2069,7 @@ void main() {
 // test/features/posts/presentation/bloc/post_bloc_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:fpdart/fpdart.dart';
 
 void main() {
@@ -2114,24 +2095,22 @@ void main() {
   });
 
   group('LoadPosts', () {
-    // ⚠️ 주의: Post 모델의 createdAt/updatedAt은 DateTime 타입입니다.
-    // 실제 코드: createdAt: DateTime(2026, 1, 1), updatedAt: DateTime(2026, 1, 1)
     final testPosts = [
-      const Post(
+      Post(
         id: '1',
         title: 'Test',
         content: 'Content',
-        author: User(id: '1', name: 'Author', email: 'test@test.com'),
-        comments: [],
-        createdAt: '2026-01-01',
-        updatedAt: '2026-01-01',
+        author: const User(id: '1', name: 'Author', email: 'test@test.com'),
+        comments: const [],
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
       ),
     ];
 
     blocTest<PostBloc, PostState>(
       '성공 시 loading → loaded 상태 전환',
       build: () {
-        when(mockGetPosts(limit: anyNamed('limit'), offset: anyNamed('offset')))
+        when(() => mockGetPosts(limit: any(named: 'limit'), offset: any(named: 'offset')))
             .thenAnswer((_) async => Right(testPosts));
         return bloc;
       },
@@ -2141,14 +2120,14 @@ void main() {
         PostState.loaded(testPosts),
       ],
       verify: (_) {
-        verify(mockGetPosts(limit: null, offset: null)).called(1);
+        verify(() => mockGetPosts(limit: null, offset: null)).called(1);
       },
     );
 
     blocTest<PostBloc, PostState>(
       '실패 시 loading → error 상태 전환',
       build: () {
-        when(mockGetPosts(limit: anyNamed('limit'), offset: anyNamed('offset')))
+        when(() => mockGetPosts(limit: any(named: 'limit'), offset: any(named: 'offset')))
             .thenAnswer((_) async => const Left(Failure.network('Network error')));
         return bloc;
       },
@@ -2169,7 +2148,7 @@ void main() {
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 
 void main() {
   late MockPostBloc mockBloc;
@@ -2189,7 +2168,7 @@ void main() {
 
   testWidgets('loading 상태일 때 CircularProgressIndicator 표시', (tester) async {
     // Arrange
-    when(mockBloc.state).thenReturn(const PostState.loading());
+    when(() => mockBloc.state).thenReturn(const PostState.loading());
 
     // Act
     await tester.pumpWidget(createWidgetUnderTest());
@@ -2200,21 +2179,19 @@ void main() {
 
   testWidgets('loaded 상태일 때 포스트 목록 표시', (tester) async {
     // Arrange
-    // ⚠️ 주의: Post 모델의 createdAt/updatedAt은 DateTime 타입입니다.
-    // 실제 코드: createdAt: DateTime(2026, 1, 1), updatedAt: DateTime(2026, 1, 1)
     final testPosts = [
-      const Post(
+      Post(
         id: '1',
         title: 'Test Post',
         content: 'Content',
-        author: User(id: '1', name: 'Author', email: 'test@test.com'),
-        comments: [],
-        createdAt: '2026-01-01',
-        updatedAt: '2026-01-01',
+        author: const User(id: '1', name: 'Author', email: 'test@test.com'),
+        comments: const [],
+        createdAt: DateTime(2026, 1, 1),
+        updatedAt: DateTime(2026, 1, 1),
       ),
     ];
 
-    when(mockBloc.state).thenReturn(PostState.loaded(testPosts));
+    when(() => mockBloc.state).thenReturn(PostState.loaded(testPosts));
 
     // Act
     await tester.pumpWidget(createWidgetUnderTest());
@@ -2226,7 +2203,7 @@ void main() {
 
   testWidgets('error 상태일 때 에러 메시지 표시', (tester) async {
     // Arrange
-    when(mockBloc.state).thenReturn(const PostState.error('Network error'));
+    when(() => mockBloc.state).thenReturn(const PostState.error('Network error'));
 
     // Act
     await tester.pumpWidget(createWidgetUnderTest());
@@ -2366,26 +2343,33 @@ if (!await rateLimiter.allow()) {
 
 ### 14.4 디버깅 팁
 
-**1. GraphQL Logging:**
+**1. GraphQL Logging (커스텀 Link 구현):**
+
+graphql_flutter에는 내장 LoggingLink이 없으므로, Link를 상속하여 직접 구현합니다.
+
 ```dart
-final link = HttpLink(
-  endpoint,
-  defaultHeaders: {'Content-Type': 'application/json'},
-).concat(
-  LoggingLink(
-    requestSerializer: (request) {
-      print('GraphQL Request: ${request.operation.operationName}');
-      print('Variables: ${request.variables}');
-      return request;
-    },
-    responseParser: (response) {
-      print('GraphQL Response: ${response.data}');
+// lib/core/network/logging_link.dart
+import 'package:flutter/foundation.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
+
+class LoggingLink extends Link {
+  @override
+  Stream<Response> request(Request request, [NextLink? forward]) {
+    debugPrint('GraphQL Request: ${request.operation.operationName}');
+    debugPrint('Variables: ${request.variables}');
+    return forward!(request).map((response) {
+      debugPrint('GraphQL Response: ${response.data}');
       if (response.errors != null) {
-        print('Errors: ${response.errors}');
+        debugPrint('Errors: ${response.errors}');
       }
       return response;
-    },
-  ),
+    });
+  }
+}
+
+// 사용법
+final link = LoggingLink().concat(
+  authLink.concat(httpLink),
 );
 ```
 

@@ -1,6 +1,6 @@
 # Flutter WebSocket & 실시간 통신 가이드
 
-> **난이도**: 고급 | **카테고리**: networking
+> **난이도**: 고급 | **카테고리**: networking | **작성 기준**: 2026년 2월
 > **선행 학습**: [Networking_Dio](./Networking_Dio.md) | **예상 학습 시간**: 2h
 
 > Flutter에서 WebSocket과 Socket.IO를 사용한 실시간 양방향 통신 구현 가이드입니다. Clean Architecture, Bloc 패턴, fpdart의 Either를 활용한 실전 예제를 포함합니다.
@@ -80,7 +80,7 @@ dependencies:
 
   # WebSocket & 실시간 통신
   web_socket_channel: ^3.0.2      # 기본 WebSocket 클라이언트
-  socket_io_client: ^2.0.3         # Socket.IO 클라이언트
+  socket_io_client: ^3.1.4         # Socket.IO 클라이언트
 
   # 상태 관리 & 아키텍처
   flutter_bloc: ^9.1.1
@@ -101,6 +101,8 @@ dependencies:
   logger: ^2.0.2
   connectivity_plus: ^7.0.0        # 네트워크 상태 확인
   shared_preferences: ^2.2.2       # 로컬 저장소
+  rxdart: ^0.28.0                  # Reactive Extensions (BehaviorSubject 등)
+  battery_plus: ^6.1.0             # 배터리 상태 확인
 
 dev_dependencies:
   flutter_test:
@@ -114,7 +116,7 @@ dev_dependencies:
 
   # 테스트
   mocktail: ^1.0.4
-  bloc_test: ^9.1.6
+  bloc_test: ^10.0.0
 ```
 
 ### 2.2 프로젝트 구조
@@ -1496,7 +1498,9 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   void dispose() {
-    context.read<ChatBloc>().add(const ChatEvent.leaveRoom());
+    // ⚠️ 주의: dispose()에서 context.read()를 직접 호출하지 않습니다.
+    // initState()에서 bloc 참조를 캐시하여 사용하거나,
+    // BlocProvider가 자동으로 정리하도록 합니다.
     super.dispose();
   }
 
@@ -2024,7 +2028,7 @@ class BatteryAwareWebSocket {
 ```dart
 // test/mocks/mock_websocket_client.dart
 import 'dart:async';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:fpdart/fpdart.dart';
 import '../../lib/core/core_network/websocket/websocket_client.dart';
 import '../../lib/core/core_network/websocket/connection_state.dart';
@@ -2076,7 +2080,7 @@ class MockWebSocketClient extends Mock implements WebSocketClient {
 // test/features/chat/presentation/bloc/chat_bloc_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 
 void main() {
   group('ChatBloc', () {
@@ -2108,7 +2112,7 @@ void main() {
     blocTest<ChatBloc, ChatState>(
       '룸 참가 시 메시지 구독 시작',
       build: () {
-        when(mockSubscribeMessages(any)).thenAnswer(
+        when(() => mockSubscribeMessages(any())).thenAnswer(
           (_) async => right(Stream.value(testMessage)),
         );
         return chatBloc;
@@ -2122,14 +2126,14 @@ void main() {
         ),
       ],
       verify: (_) {
-        verify(mockSubscribeMessages('room123')).called(1);
+        verify(() => mockSubscribeMessages('room123')).called(1);
       },
     );
 
     blocTest<ChatBloc, ChatState>(
       '메시지 전송 성공',
       build: () {
-        when(mockSendMessage(any)).thenAnswer(
+        when(() => mockSendMessage(any())).thenAnswer(
           (_) async => right(null),
         );
         return chatBloc;
@@ -2298,9 +2302,9 @@ void main() {
 
 ---
 
-**작성일**: 2026-02-06
+**작성일**: 2026년 2월 기준
 **버전**: 1.0.0
-**대상**: Flutter 3.19+, Dart 3.3+
+**대상**: Flutter 3.32+, Dart 3.5+
 
 ---
 

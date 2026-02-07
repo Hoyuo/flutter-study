@@ -405,8 +405,6 @@ flutter build ipa --release \
     <string>upload</string>
     <key>signingStyle</key>
     <string>automatic</string>
-    <key>uploadBitcode</key>
-    <false/>
     <key>uploadSymbols</key>
     <true/>
     <key>teamID</key>
@@ -423,20 +421,20 @@ flutter build ipa --release \
 # 2. Window > Organizer
 # 3. Distribute App > App Store Connect > Upload
 
-# Option 2: Using Transporter app
+# Option 2: Using Transporter app (Recommended)
 # 1. Download Transporter from Mac App Store
 # 2. Sign in with Apple ID
 # 3. Drag and drop .ipa file
 # 4. Click Deliver
 
-# Option 3: Using altool (command line)
-# ⚠️ 주의: xcrun altool은 Xcode 14부터 deprecated입니다.
-# 실제로는 xcrun notarytool submit을 사용하세요.
-xcrun altool --upload-app \
-  --type ios \
-  --file build/ios/ipa/your_app.ipa \
-  --apiKey YOUR_API_KEY \
-  --apiIssuer YOUR_ISSUER_ID
+# Option 3: Using App Store Connect API (command line)
+# Modern approach for CI/CD automation
+# Note: xcrun altool was deprecated in Xcode 13.
+# For iOS uploads, use Transporter app or App Store Connect API directly.
+# Reference: https://developer.apple.com/documentation/appstoreconnectapi
+
+# Using fastlane for automated uploads (recommended for CI/CD):
+# fastlane deliver --ipa build/ios/ipa/your_app.ipa
 ```
 
 ### 6. App Store Connect Configuration
@@ -634,7 +632,7 @@ import 'package:device_frame/device_frame.dart';
 
 Widget buildScreenshotMockup(Widget screenshot) {
   return DeviceFrame(
-    device: Devices.ios.iPhone13ProMax,
+    device: Devices.ios.iPhone16ProMax,
     screen: screenshot,
   );
 }

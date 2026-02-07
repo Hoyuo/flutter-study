@@ -1877,7 +1877,10 @@ class IncidentClassifier:
         Respond in JSON format.
         """
 
-        response = openai.ChatCompletion.create(
+        from openai import OpenAI
+        client = OpenAI()
+
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3

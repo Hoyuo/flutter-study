@@ -22,13 +22,13 @@
 dependencies:
   cached_network_image: ^3.4.1
   image_picker: ^1.0.0
-  image_cropper: ^8.0.0  # 2026년 1월 기준 최신 버전
+  image_cropper: ^8.0.0  # 2026년 2월 기준 최신 버전
   flutter_image_compress: ^2.1.0
   http_parser: ^4.0.0  # multipart 업로드용
   shimmer: ^3.0.0
-  permission_handler: ^13.0.0  # 2026년 1월 기준 최신 버전
+  permission_handler: ^13.0.0  # 2026년 2월 기준 최신 버전
   path: ^1.8.0  # 경로 처리용
-  device_info_plus: ^12.3.0  # 2026년 1월 기준 최신 버전
+  device_info_plus: ^12.3.0  # 2026년 2월 기준 최신 버전
 ```
 
 **주요 변경사항:**
@@ -1361,8 +1361,6 @@ class OptimizedImageList extends StatelessWidget {
 
 ### 11.2 대용량 이미지 처리
 
-> ⚠️ **경고:** instantiateImageCodec는 최신 Flutter에서 제거되었습니다. 대신 ui.instantiateImageCodecWithSize 또는 ui.instantiateImageCodecFromBuffer를 사용하세요.
-
 ```dart
 class LargeImageHandler {
   /// 이미지 로드 전 유효성 검사
@@ -1375,7 +1373,7 @@ class LargeImageHandler {
     }
 
     // 이미지 디코딩하여 해상도 확인
-    final codec = await instantiateImageCodec(await file.readAsBytes());
+    final codec = await ui.instantiateImageCodecFromBuffer(await ui.ImmutableBuffer.fromUint8List(await file.readAsBytes()));
     final frame = await codec.getNextFrame();
     final image = frame.image;
 
@@ -1436,10 +1434,7 @@ class BlurHashImage extends StatelessWidget {
     return CachedNetworkImage(
       imageUrl: imageUrl,
       placeholder: (_, __) {
-        if (blurHash != null) {
-          return BlurHash(hash: blurHash!);
-        }
-        return const ShimmerPlaceholder();
+        return BlurHash(hash: blurHash);
       },
       errorWidget: (_, __, ___) => const Icon(Icons.error),
     );

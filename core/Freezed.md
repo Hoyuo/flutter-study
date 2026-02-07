@@ -6,7 +6,7 @@
 
 Dart에서 불변(immutable) 데이터 클래스를 쉽게 생성하기 위한 Freezed 패키지 사용 가이드입니다.
 
-> **Package Versions (2025-01 기준)**
+> **Package Versions (2026년 2월 기준)**
 > - freezed: ^3.2.4 | freezed_annotation: ^3.1.0
 > - json_serializable: ^6.11.4 | json_annotation: ^4.9.0
 > - build_runner: ^2.10.5
@@ -127,7 +127,7 @@ class User with _$User {
 
 ### 의존성 추가
 
-> **⚠️ 버전 선택 가이드 (2026년 1월 기준)**
+> **⚠️ 버전 선택 가이드 (2026년 2월 기준)**
 >
 > Freezed는 현재 두 가지 버전이 공존하고 있습니다:
 > - **Freezed 2.5.x**: 기존 프로젝트에 적합한 안정 버전

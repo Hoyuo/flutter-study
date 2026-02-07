@@ -4,6 +4,12 @@
 > **선행 학습**: [Fpdart](./Fpdart.md)
 > **예상 학습 시간**: 2h
 
+> **Package Versions (2026년 2월 기준)**
+> - fpdart: ^1.2.0
+> - dio: ^5.9.0
+> - freezed: ^3.2.4 | freezed_annotation: ^3.1.0
+> - connectivity_plus: ^7.0.0
+
 ## 학습 목표
 
 이 문서를 학습하면 다음을 할 수 있습니다:
@@ -364,12 +370,8 @@ Future<Either<Failure, T>> safeApiCall<T>(
   } on FormatException catch (e) {
     return Left(Failure.parsing(message: e.message));
   } catch (e, stack) {
-    // ⚠️ 주의: AppLogger 클래스는 이 문서에서 정의되지 않았습니다.
-    // 실제 사용 시: debugPrint('Unexpected error: $e\n$stack') 또는 Logging.md의 AppLogger 참조
-    // 로깅
-    // import 'package:your_app/core/utils/app_logger.dart';
-    // 또는 debugPrint 사용: debugPrint('Unexpected error: $e');
-    AppLogger.error('Unexpected error', error: e, stackTrace: stack);
+    // 실제 프로젝트에서는 Logger 패키지 사용 권장 (예: logger, talker 등)
+    debugPrint('Unexpected error: $e\n$stack');
     return Left(Failure.unknown(message: e.toString(), error: e));
   }
 }
@@ -858,33 +860,36 @@ mixin RetryMixin {
     while (attempts < maxAttempts) {
       final result = await operation();
 
+      // 성공 시 즉시 반환
       if (result.isRight()) {
         return result;
       }
 
-      // fold를 사용한 안전한 접근
-      return result.fold(
-        (failure) async {
-          // 재시도 불가능한 에러
-          if (shouldRetry != null && !shouldRetry(failure)) {
-            return result;
-          }
-          if (!failure.isRetryable) {
-            return result;
-          }
+      // 실패 시 재시도 가능 여부 확인
+      final failure = result.fold((f) => f, (_) => null);
+      if (failure == null) {
+        return result; // 이론상 도달 불가능하지만 안전성을 위해 추가
+      }
 
-          attempts++;
+      // 재시도 불가능한 에러
+      if (shouldRetry != null && !shouldRetry(failure)) {
+        return result;
+      }
+      if (!failure.isRetryable) {
+        return result;
+      }
 
-          if (attempts < maxAttempts) {
-            // 지수 백오프
-            await Future.delayed(delay * attempts);
-            return await operation();
-          }
+      attempts++;
 
-          return result;
-        },
-        (success) => result,
-      );
+      if (attempts < maxAttempts) {
+        // 지수 백오프
+        await Future.delayed(delay * attempts);
+        // 다음 반복에서 다시 시도
+        continue;
+      }
+
+      // 최대 재시도 횟수 도달
+      return result;
     }
 
     return Left(const Failure.network(message: '여러 번 시도했지만 실패했습니다'));

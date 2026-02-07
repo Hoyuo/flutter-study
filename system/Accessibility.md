@@ -524,9 +524,9 @@ import 'dart:math';
 class AccessibilityColorUtils {
   /// 상대 휘도 계산 (WCAG)
   static double _getRelativeLuminance(Color color) {
-    final r = _getLinearRGB(color.red / 255.0);
-    final g = _getLinearRGB(color.green / 255.0);
-    final b = _getLinearRGB(color.blue / 255.0);
+    final r = _getLinearRGB(color.r);
+    final g = _getLinearRGB(color.g);
+    final b = _getLinearRGB(color.b);
 
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   }
@@ -898,7 +898,7 @@ class AdaptiveLayout extends StatelessWidget {
 class LimitedTextScale extends StatelessWidget {
   final Widget child;
 
-  const LimitedTextScale({required this.child});
+  const LimitedTextScale({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
