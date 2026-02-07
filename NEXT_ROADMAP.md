@@ -320,7 +320,7 @@
 | **파일 경로** | `infrastructure/FlutterMultiPlatform.md` |
 | **난이도** | ★★★ |
 | **학습 시간** | 10-12시간 |
-| **선행 학습** | PlatformIntegration, AdvancedCICD |
+| **선행 학습** | PlatformIntegration, CICD (심화) |
 
 **핵심 패키지:**
 - `flutter_web`
@@ -355,7 +355,7 @@
 | **파일 경로** | `infrastructure/PackageDevelopment.md` |
 | **난이도** | ★★ |
 | **학습 시간** | 6-8시간 |
-| **선행 학습** | ModularArchitecture, AdvancedCICD |
+| **선행 학습** | ModularArchitecture, CICD (심화) |
 
 **핵심 개념:**
 - Pure Dart Package
@@ -473,7 +473,6 @@ flutter-study/
 │   ├── LocalStorage.md
 │   ├── CICD.md
 │   ├── StoreSubmission.md
-│   ├── AdvancedCICD.md
 │   ├── Firebase.md                    ✨ NEW
 │   ├── FlutterMultiPlatform.md        ✨ NEW
 │   └── PackageDevelopment.md          ✨ NEW
@@ -513,8 +512,6 @@ flutter-study/
 │   ├── Accessibility.md
 │   ├── Logging.md
 │   ├── Monitoring.md
-│   ├── AdvancedPerformance.md
-│   ├── AdvancedTesting.md
 │   ├── Security.md (통합)
 │   └── ProductionOperations.md
 │
@@ -598,8 +595,8 @@ flutter-study/
 | **Camera** | Permission, ImageHandling | 미디어 처리 심화 |
 | **Custom Painting** | Animation, Performance | 그래픽 심화 |
 | **Isolate** | AppLifecycle, Performance | 성능 최적화 심화 |
-| **Web & Desktop** | PlatformIntegration, AdvancedCICD | 크로스플랫폼 확장 |
-| **Package Dev** | ModularArchitecture, AdvancedCICD | 오픈소스 기여 |
+| **Web & Desktop** | PlatformIntegration, CICD (심화) | 크로스플랫폼 확장 |
+| **Package Dev** | ModularArchitecture, CICD (심화) | 오픈소스 기여 |
 | **GraphQL** | Networking_Dio, AdvancedPatterns | API 방식 변경 |
 
 ---

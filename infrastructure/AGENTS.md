@@ -14,9 +14,8 @@
 | `DI.md` | GetIt + Injectable을 활용한 의존성 주입 설정, 모듈 등록, 환경별 구성 |
 | `Environment.md` | 환경 설정 관리, Flavor 구성, 빌드 변수, 다중 환경(dev/stg/prod) 지원 |
 | `LocalStorage.md` | SharedPreferences, Hive, SecureStorage를 활용한 로컬 데이터 저장 |
-| `CICD.md` | CI/CD 파이프라인 설정, GitHub Actions, Codemagic, Fastlane, 코드 서명 |
+| `CICD.md` | CI/CD 파이프라인 설정 (기본+심화 통합), GitHub Actions, Codemagic, Fastlane, Trunk-based, Canary Release, Shorebird OTA, Feature Flags |
 | `StoreSubmission.md` | 앱스토어 제출 가이드, Play Store, App Store, 스크린샷, ASO |
-| `AdvancedCICD.md` | Trunk-based 개발, Canary Release, Shorebird OTA, Feature Flags |
 | `Firebase.md` | Firebase 통합 (Auth, Firestore, Storage, FCM, Crashlytics, Analytics, Security Rules) |
 | `FlutterMultiPlatform.md` | Web/Desktop 멀티플랫폼 확장, 플랫폼별 조건부 렌더링, Responsive Design |
 | `PackageDevelopment.md` | Dart/Flutter 패키지 개발, Pub.dev 배포, 버전 관리, API 문서화 |

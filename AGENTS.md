@@ -17,13 +17,13 @@ Flutter 개발팀을 위한 포괄적인 개발 가이드 문서 저장소입니
 | Directory | Purpose | Documents |
 |-----------|---------|-----------|
 | `core/` | 핵심 아키텍처 - Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, ModularArchitecture, PlatformIntegration, AdvancedStateManagement, Riverpod, Isolates | 10개 (see `core/AGENTS.md`) |
-| `infrastructure/` | 인프라 - DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD, Firebase, FlutterMultiPlatform, PackageDevelopment, CachingStrategy | 10개 (see `infrastructure/AGENTS.md`) |
+| `infrastructure/` | 인프라 - DI, Environment, LocalStorage, CICD (기본+심화 통합), StoreSubmission, Firebase, FlutterMultiPlatform, PackageDevelopment, CachingStrategy | 9개 (see `infrastructure/AGENTS.md`) |
 | `networking/` | 네트워킹 - Dio, Retrofit, WebSocket, GraphQL | 4개 (see `networking/AGENTS.md`) |
 | `features/` | 기능별 - Navigation, Localization, Permission, PushNotification, DeepLinking, MapsGeolocation, CameraMedia | 7개 (see `features/AGENTS.md`) |
 | `patterns/` | 필수 패턴 - Analytics, ImageHandling, Pagination, FormValidation, OfflineSupport, InAppPurchase, Animation, AdvancedPatterns, CustomPainting, ResponsiveDesign, DesignSystem, ServerDrivenUI | 12개 (see `patterns/AGENTS.md`) |
-| `system/` | 시스템 - ErrorHandling, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring, AdvancedPerformance, AdvancedTesting, ProductionOperations | 11개 (see `system/AGENTS.md`) |
+| `system/` | 시스템 - ErrorHandling, AppLifecycle, Testing (기본+심화 통합), Performance (기본+심화 통합), Security, Accessibility, Logging, Monitoring, ProductionOperations | 9개 (see `system/AGENTS.md`) |
 
-**총 62개 문서**
+**총 60개 문서**
 
 ## Directory Structure
 
@@ -49,7 +49,6 @@ flutter-study/
 │   ├── LocalStorage.md
 │   ├── CICD.md
 │   ├── StoreSubmission.md
-│   ├── AdvancedCICD.md
 │   ├── Firebase.md
 │   ├── FlutterMultiPlatform.md
 │   └── PackageDevelopment.md
@@ -92,8 +91,6 @@ flutter-study/
     ├── Accessibility.md
     ├── Logging.md
     ├── Monitoring.md
-    ├── AdvancedPerformance.md
-    ├── AdvancedTesting.md
     └── ProductionOperations.md
 ```
 
@@ -218,9 +215,9 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 32. `core/ModularArchitecture.md` - Mono-repo, Melos, Micro Frontend
 33. `core/AdvancedStateManagement.md` - CQRS, Event Sourcing, Undo/Redo
 34. `core/PlatformIntegration.md` - Platform Channel, FFI, Pigeon
-35. `system/AdvancedPerformance.md` - Custom RenderObject, Impeller, Memory Profiling
-36. `system/AdvancedTesting.md` - Property-based, Golden Test, E2E
-37. `infrastructure/AdvancedCICD.md` - Trunk-based, Canary Release, Shorebird
+35. `system/Performance.md` - 기본+심화 통합 (Custom RenderObject, Impeller, Memory Profiling 포함)
+36. `system/Testing.md` (심화) - 기본+심화 통합 (Property-based, Golden Test, Mutation, Contract, Fuzz Testing 포함)
+37. `infrastructure/CICD.md` (심화) - 기본+심화 통합 (Trunk-based, Canary Release, Shorebird 포함)
 38. `system/ProductionOperations.md` - SLO/SLI, Crash-free Rate, Incident Management
 39. `patterns/AdvancedPatterns.md` - DDD, Hexagonal, Saga, Specification
 

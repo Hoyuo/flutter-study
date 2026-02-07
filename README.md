@@ -1,6 +1,6 @@
 # Flutter Clean Architecture Reference Guide
 
-Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 64개의 문서와 실제 구현 예제를 제공합니다.
+Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 63개의 문서와 실제 구현 예제를 제공합니다.
 
 ## Overview
 
@@ -21,11 +21,11 @@ flutter-study/
 ├── networking/     # 네트워킹 (4개)
 ├── features/       # 기능별 가이드 (7개)
 ├── patterns/       # 필수 패턴 (12개)
-├── system/         # 시스템 (14개)
+├── system/         # 시스템 (13개)
 └── projects/       # 실전 프로젝트 (1개) ← NEW
 ```
 
-**총 64개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
+**총 63개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
 
 ## Quick Start
 
@@ -53,7 +53,7 @@ Dart 언어와 Flutter 기본기
 
 ### Infrastructure (10개)
 인프라 설정
-- DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD, Firebase, FlutterMultiPlatform, PackageDevelopment, **CachingStrategy**
+- DI, Environment, LocalStorage, CICD (기본+심화 통합), StoreSubmission, Firebase, FlutterMultiPlatform, PackageDevelopment, **CachingStrategy**
 
 ### Networking (4개)
 네트워크 통신
@@ -67,9 +67,9 @@ Dart 언어와 Flutter 기본기
 공통 패턴
 - Analytics, ImageHandling, Pagination, FormValidation, InAppPurchase, Animation, OfflineSupport, AdvancedPatterns, CustomPainting, **ResponsiveDesign**, **DesignSystem**, **ServerDrivenUI**
 
-### System (14개)
+### System (13개)
 시스템 품질
-- ErrorHandling, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring, AdvancedPerformance, AdvancedTesting, ProductionOperations, **TeamCollaboration**
+- ErrorHandling, AppLifecycle, Testing (기본+심화 통합), Performance (기본+심화 통합), Security, Accessibility, Logging, Monitoring, ProductionOperations, **TeamCollaboration**
 
 ### Projects (1개) - NEW
 실전 프로젝트 튜토리얼
@@ -80,9 +80,9 @@ Dart 언어와 Flutter 기본기
 - [ModularArchitecture](./core/ModularArchitecture.md) - Mono-repo, Melos, Micro Frontend
 - [AdvancedStateManagement](./core/AdvancedStateManagement.md) - CQRS, Event Sourcing, Undo/Redo
 - [PlatformIntegration](./core/PlatformIntegration.md) - Platform Channel, FFI, Pigeon
-- [AdvancedPerformance](./system/AdvancedPerformance.md) - Custom RenderObject, Impeller, Memory Profiling
-- [AdvancedTesting](./system/AdvancedTesting.md) - Property-based, Golden Test, E2E
-- [AdvancedCICD](./infrastructure/AdvancedCICD.md) - Trunk-based, Canary Release, Shorebird
+- [Performance](./system/Performance.md) - 기본+심화 통합 (Custom RenderObject, Impeller, Memory Profiling 포함)
+- [Testing](./system/Testing.md) - 기본+심화 통합 (Property-based, Golden Test, Mutation, Contract, Fuzz Testing 포함)
+- [CICD](./infrastructure/CICD.md) - 기본+심화 통합 (Trunk-based, Canary Release, Shorebird 포함)
 - [ProductionOperations](./system/ProductionOperations.md) - SLO/SLI, Crash-free Rate, Incident Management
 - [AdvancedPatterns](./patterns/AdvancedPatterns.md) - DDD, Hexagonal, Saga, Specification
 

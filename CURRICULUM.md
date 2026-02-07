@@ -1,12 +1,12 @@
 # Flutter 팀 교육 커리큘럼
 
-> 63개 학습 문서 기반 레벨별 교육 과정
+> 62개 학습 문서 기반 레벨별 교육 과정
 
 ---
 
 ## 개요
 
-이 커리큘럼은 flutter-study 저장소의 63개 문서를 기반으로, 개발자 경력 수준에 맞춘 체계적 학습 경로를 제공합니다.
+이 커리큘럼은 flutter-study 저장소의 62개 문서를 기반으로, 개발자 경력 수준에 맞춘 체계적 학습 경로를 제공합니다.
 
 | 레벨 | 대상 | 기간 | 문서 수 | 핵심 목표 |
 |------|------|------|---------|-----------|
@@ -15,7 +15,7 @@
 | Mid-level | 6-12개월 | 12주 | 18개 | 실무 수준의 기능 구현과 품질 관리 역량 확보 |
 | Senior | 1년+ | 자율 | 13개 | 아키텍처 설계, 성능 최적화, 프로덕션 운영 주도 |
 
-**전체 문서 분류 (63개)**
+**전체 문서 분류 (62개)**
 
 ```
 Beginner 기초 (5) ──> Junior 필수 (10) ──> Mid-level 실무 (18) ──> Senior 심화 (13)
@@ -231,9 +231,9 @@ Junior 과정 완료를 전제로 합니다. 실무 프로젝트에서 자주 �
 | 2 | `core/ModularArchitecture.md` | Core | Mono-repo, Melos, Micro Frontend | ★★★ |
 | 3 | `patterns/AdvancedPatterns.md` | Patterns | DDD, Hexagonal, Saga, Specification | ★★★ |
 | 4 | `core/PlatformIntegration.md` | Core | Platform Channel, FFI, Pigeon | ★★★ |
-| 5 | `system/AdvancedTesting.md` | System | Property-based, Golden Test, E2E Patrol | ★★★ |
-| 6 | `system/AdvancedPerformance.md` | System | Custom RenderObject, Impeller, Memory Profiling | ★★★ |
-| 7 | `infrastructure/AdvancedCICD.md` | Infra | Trunk-based, Canary Release, Shorebird OTA | ★★★ |
+| 5 | `system/Testing.md` (심화) | System | Property-based, Golden Test, Mutation, Contract, Fuzz, E2E Patrol | ★★★ |
+| 6 | `system/Performance.md` (심화) | System | Custom RenderObject, Impeller, Memory Profiling | ★★★ |
+| 7 | `infrastructure/CICD.md` (심화) | Infra | Trunk-based, Canary Release, Shorebird OTA | ★★★ |
 | 8 | `system/ProductionOperations.md` | System | SLO/SLI, Crash-free Rate, Incident Management | ★★★ |
 | 9 | `patterns/OfflineSupport.md` | Patterns | Offline-first, Drift ORM, Sync Queue, Conflict Resolution | ★★★ |
 
@@ -261,7 +261,7 @@ Senior 개발자는 코드 작성뿐 아니라 설계 의사결정을 주도해�
 
 | 항목 | 내용 |
 |------|------|
-| 관련 문서 | AdvancedPerformance, Performance, Monitoring |
+| 관련 문서 | Performance (기본+심화 통합), Monitoring |
 | 과제 내용 | 실제 앱의 성능 병목을 분석하고 최적화 수행 |
 | 산출물 | 성능 최적화 리포트 (Before/After 비교 데이터 포함) |
 | 평가 기준 | 프레임 드롭 감소율, 메모리 사용량 개선, 앱 시작 시간 단축 |
@@ -277,7 +277,7 @@ Senior 개발자는 코드 작성뿐 아니라 설계 의사결정을 주도해�
 
 | 항목 | 내용 |
 |------|------|
-| 관련 문서 | Security, AdvancedCICD, ProductionOperations |
+| 관련 문서 | Security, CICD (심화), ProductionOperations |
 | 과제 내용 | 보안 체크리스트 기반 감사 + CI/CD 파이프라인 전체 설계 |
 | 산출물 | 보안 감사 보고서 + CI/CD 파이프라인 설계 문서 |
 | 평가 기준 | OWASP Mobile Top 10 대응, Canary Release 전략, SLO 정의 |
@@ -299,7 +299,7 @@ Senior 개발자는 코드 작성뿐 아니라 설계 의사결정을 주도해�
 
 | 항목 | 내용 |
 |------|------|
-| 관련 문서 | AdvancedPerformance, Performance, Monitoring |
+| 관련 문서 | Performance (기본+심화 통합), Monitoring |
 | 발표 내용 | Rendering Pipeline 이해, Custom RenderObject 활용, Impeller vs Skia, 실제 프로파일링 데모 |
 | 청중 | Junior 이상 전체 |
 | 준비물 | DevTools 라이브 데모, Before/After 성능 비교 영상 |
@@ -454,7 +454,7 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
 
 ---
 
-## 5. 전체 문서 매핑 (63개)
+## 5. 전체 문서 매핑 (62개)
 
 모든 문서가 어느 레벨에 배정되었는지 한눈에 확인할 수 있는 표입니다.
 
@@ -465,7 +465,7 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
 | **Beginner 기초** (5) | DartAdvanced (fund), WidgetFundamentals (fund), LayoutSystem (fund), DevToolsProfiling (fund), FlutterInternals (fund) |
 | **Junior 필수** (10) | Architecture (core), DI (infra), Bloc (core), Freezed (core), Networking_Dio (net), Networking_Retrofit (net), ErrorHandling (sys), Navigation (feat), DesignSystem (pat), FormValidation (pat) |
 | **Mid-level 필수** (18) | Fpdart (core), BlocUiEffect (core), Environment (infra), LocalStorage (infra), Localization (feat), Permission (feat), PushNotification (feat), Pagination (pat), ImageHandling (pat), Analytics (pat), Animation (pat), Testing (sys), Performance (sys), Security (sys), Logging (sys), **ResponsiveDesign (pat)**, **DesignSystem (pat)**, **CachingStrategy (infra)** |
-| **Senior 심화** (11) | AdvancedStateManagement (core), ModularArchitecture (core), AdvancedPatterns (pat), PlatformIntegration (core), AdvancedTesting (sys), AdvancedPerformance (sys), AdvancedCICD (infra), ProductionOperations (sys), OfflineSupport (pat), **TeamCollaboration (sys)**, **FullStackProject (proj)** |
+| **Senior 심화** (10) | AdvancedStateManagement (core), ModularArchitecture (core), AdvancedPatterns (pat), PlatformIntegration (core), Testing 심화 (sys), Performance 심화 (sys), CICD 심화 (infra), ProductionOperations (sys), OfflineSupport (pat), **TeamCollaboration (sys)**, **FullStackProject (proj)** |
 | **프로젝트별 선택** (10) | Riverpod (core), WebSocket (net), Firebase (infra), InAppPurchase (pat), AppLifecycle (sys), Accessibility (sys), Monitoring (sys), CICD (infra), StoreSubmission (infra), **ServerDrivenUI (pat)** |
 | **NEXT_ROADMAP** (8) | Isolates (core), FlutterMultiPlatform (infra), PackageDevelopment (infra), GraphQL (net), DeepLinking (feat), MapsGeolocation (feat), CameraMedia (feat), CustomPainting (pat) |
 
@@ -483,14 +483,14 @@ Architecture ─┬─> DI ──> Bloc ──> Freezed ──> Networking_Dio �
               │                     │
               │                     └──> Navigation ──> DeepLinking (*)
               │
-              ├─> Environment ──> CICD ──> AdvancedCICD ──> StoreSubmission
+              ├─> Environment ──> CICD (기본+심화 통합) ──> StoreSubmission
               │
               ├─> DesignSystem ──> ResponsiveDesign
               │          └──> Accessibility
               │
-              ├─> Testing ──> AdvancedTesting
+              ├─> Testing (기본+심화 통합)
               │
-              ├─> Performance ──> AdvancedPerformance ──> DevToolsProfiling
+              ├─> Performance (기본+심화 통합) ──> DevToolsProfiling
               │
               ├─> Security (통합: 기본 + 고급 보안)
               │
@@ -540,4 +540,4 @@ Architecture ─┬─> DI ──> Bloc ──> Freezed ──> Networking_Dio �
 ---
 
 **마지막 업데이트:** 2026-02-07
-**기반 문서 수:** 63개 (DatabaseAdvanced.md → LocalStorage.md 통합)
+**기반 문서 수:** 62개 (DatabaseAdvanced.md → LocalStorage.md, AdvancedTesting.md → Testing.md 통합)

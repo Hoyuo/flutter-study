@@ -13,14 +13,12 @@
 |------|-------------|
 | `ErrorHandling.md` | Failure sealed class 설계, Dio 에러 인터셉터, ErrorView 위젯, 재시도 패턴 |
 | `AppLifecycle.md` | 앱 생명주기 관리, WidgetsBindingObserver, 상태 유지, 백그라운드 처리 |
-| `Testing.md` | Unit/Widget/Integration 테스트 전략, Mocktail, BlocTest 활용 |
-| `Performance.md` | 렌더링 최적화, 메모리 관리, Isolate 활용, DevTools 프로파일링, Bloc 성능 |
+| `Testing.md` | 기본+심화 통합: Unit/Widget/Integration 테스트, Mocktail, BlocTest, Property-based, Golden Test, Mutation, Contract, Fuzz, E2E Patrol |
+| `Performance.md` | 기본+심화 통합: 렌더링/메모리/비동기 최적화, Bloc 성능, Custom RenderObject, Impeller, Fragment Shader, Memory Profiling |
 | `Security.md` | 데이터 암호화, Certificate Pinning, 코드 난독화, 인증 보안, 플랫폼별 설정, RASP, mTLS, Jailbreak Detection |
 | `Accessibility.md` | Semantics 설정, 스크린 리더 지원, 색상 대비, 모터 접근성, 테스트 |
 | `Logging.md` | 구조화된 로깅, BlocObserver, 네트워크 로깅, Crashlytics/Sentry 연동 |
 | `Monitoring.md` | 앱 모니터링, Crashlytics, Sentry, Firebase Performance, 인시던트 대응 |
-| `AdvancedPerformance.md` | Custom RenderObject, Impeller 최적화, Fragment Shader, Memory Profiling |
-| `AdvancedTesting.md` | Property-based Testing, Golden Test, E2E Patrol, Visual Regression |
 | `ProductionOperations.md` | SLO/SLI 모니터링, Crash-free Rate, Incident Management, A/B Testing |
 
 ## For AI Agents
