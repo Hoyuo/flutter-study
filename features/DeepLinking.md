@@ -73,17 +73,17 @@ dependencies:
   json_annotation: ^4.9.0
 
   # Deep Linking
-  uni_links: ^0.5.1
+  uni_links: ^0.5.1  # ⚠️ deprecated - app_links: ^6.4.0 사용 권장  # ⚠️ deprecated - app_links: ^6.4.0 사용 권장
   app_links: ^6.4.0
 
   # Firebase (Optional)
   firebase_core: ^3.8.1
-  firebase_dynamic_links: ^6.0.11
+  firebase_dynamic_links: ^6.0.11  # ⚠️ 2025년 8월 서비스 종료됨 - Branch.io 또는 app_links 대안 사용  # ⚠️ 2025년 8월 서비스 종료됨 - Branch.io 또는 app_links 대안 사용
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^5.0.0  # ⚠️ 이 버전은 존재하지 않음 - flutter_lints: ^3.0.2 또는 very_good_analysis 사용  # ⚠️ 이 버전은 존재하지 않음 - flutter_lints: ^3.0.2 또는 very_good_analysis 사용
 
   # Code Generation
   build_runner: ^2.4.15
@@ -255,6 +255,8 @@ class DeepLinkLocalDataSourceImpl implements DeepLinkLocalDataSource {
   }
 
   @override
+  // ⚠️ 주의: 이 코드는 무한 재귀 버그가 있습니다. getInitialUri()가 자기 자신을 호출합니다.
+  // 올바른 코드: final uri = await appLinks.getInitialLink(); (app_links 패키지 사용)
   Future<Uri?> getInitialUri() async {
     try {
       final uri = await getInitialUri();

@@ -475,6 +475,8 @@ Future<void> main() async {
       // 자동 세션 추적
       options.autoSessionTrackingInterval = const Duration(milliseconds: 30000);
 
+> ⚠️ **주의:** `anrEnabled`, `anrTimeoutInterval` 속성명은 Sentry SDK 버전에 따라 다를 수 있습니다. 최신 `sentry_flutter` 문서를 확인하세요.
+
       // 앱 행 감지
       options.anrEnabled = true;
       options.anrTimeoutInterval = const Duration(seconds: 5);
@@ -682,6 +684,8 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 
 class SentryPerformance {
   /// API 호출 성능 측정
+> ⚠️ **경고:** `SpanStatus.ok()`, `SpanStatus.internalError()` 등은 factory constructor이므로 `const`로 사용할 수 없습니다. `const`를 제거하세요.
+
   static Future<T> measureApiCall<T>({
     required String operation,
     required String description,
@@ -828,6 +832,8 @@ Dio createDioWithSentry({String? baseUrl}) {
   );
 
   // Sentry 자동 추적 추가
+> ⚠️ **경고:** `SentryStatusCode.range()`는 실제 Sentry SDK에 존재하지 않는 가공된 API입니다. 상태 코드 필터링은 `beforeSend` 또는 `beforeSendTransaction` 콜백에서 직접 구현해야 합니다.
+
   dio.addSentry(
     captureFailedRequests: true,
     failedRequestStatusCodes: [
@@ -840,6 +846,8 @@ Dio createDioWithSentry({String? baseUrl}) {
 }
 
 // 또는 수동 인터셉터
+> ⚠️ **주의:** 이 클래스명은 `sentry_dio` 패키지의 기존 클래스와 충돌할 수 있습니다. 실제 프로젝트에서는 다른 이름을 사용하세요.
+
 class SentryDioInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
@@ -1049,6 +1057,8 @@ class TraceManager {
         trace.putAttribute(entry.key, entry.value);
       }
     }
+
+> ⚠️ **주의:** `unawaited()`를 사용하려면 `import 'dart:async';`가 필요합니다.
 
     unawaited(trace.start());
     final stopwatch = Stopwatch()..start();

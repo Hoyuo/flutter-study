@@ -1549,10 +1549,13 @@ class RevenueCatService {
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../revenuecat_service.dart';
+
+part 'revenuecat_bloc.freezed.dart';
 
 @freezed
 class RevenueCatEvent with _$RevenueCatEvent {
@@ -1568,8 +1571,12 @@ class RevenueCatState with _$RevenueCatState {
   const factory RevenueCatState({
     @Default(false) bool isInitialized,
     @Default(false) bool isLoading,
+    @Default(false) bool isPremium,
+    @Default(false) bool isPurchasing,
+    @Default(false) bool isRestoring,
     Offerings? offerings,
     CustomerInfo? customerInfo,
+    String? error,
     String? errorMessage,
   }) = _RevenueCatState;
 }

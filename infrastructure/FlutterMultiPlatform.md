@@ -141,7 +141,7 @@ dependencies:
 
   # Web Specific
   url_strategy: ^0.3.0
-  js: ^0.7.1
+  js: ^0.7.1  # ⚠️ deprecated - dart:js_interop 사용 권장
 
   # Desktop Specific
   window_manager: ^0.4.2
@@ -151,7 +151,7 @@ dependencies:
 
   # Storage
   shared_preferences: ^2.3.2
-  isar: ^3.1.0+1
+  isar: ^3.1.0+1  # ⚠️ 개발 중단 - drift, objectbox 사용 권장
   isar_flutter_libs: ^3.1.0+1
 
 dev_dependencies:
@@ -360,6 +360,9 @@ class MyApp extends StatelessWidget {
 
 ```cpp
 // windows/runner/main.cpp - 윈도우 설정
+// ⚠️ 주의: FlutterWindowController는 Flutter Windows embedding API에 존재하지 않는 클래스입니다.
+// 실제로는 flutter::FlutterEngine + flutter::FlutterViewController를 사용하거나,
+// window_manager 패키지를 사용하세요.
 #include <flutter/flutter_window_controller.h>
 #include <windows.h>
 
@@ -517,6 +520,9 @@ class PlatformService {
 
 ```dart
 // lib/core/platform/conditional_imports/platform_web.dart
+// ⚠️ 주의: dart:html은 Dart 3.4/Flutter 3.22부터 deprecated입니다.
+// 실제 프로젝트에서는 package:web을 사용하세요.
+// import 'package:web/web.dart' as web;
 import 'dart:html' as html;
 import 'dart:convert';
 
@@ -762,6 +768,9 @@ class HomePageDesktop extends StatelessWidget {
                 ),
               ],
               selectedIndex: 0,
+              onDestinationSelected: (index) {
+                setState(() { _selectedIndex = index; });
+              },
             ),
           ),
 
@@ -1089,6 +1098,9 @@ class _FluentHomePageState extends State<FluentHomePage> {
 
 ```dart
 // lib/features/storage/data/datasources/web_storage_datasource.dart
+// ⚠️ 주의: dart:html은 Dart 3.4/Flutter 3.22부터 deprecated입니다.
+// 실제 프로젝트에서는 package:web을 사용하세요.
+// import 'package:web/web.dart' as web;
 import 'dart:html' as html;
 import 'dart:convert';
 import 'package:injectable/injectable.dart';
@@ -1425,6 +1437,8 @@ self.addEventListener('activate', (event) => {
 
 ```dart
 // lib/core/platform/web_interop.dart
+// ⚠️ 주의: dart:js는 Dart 3.4부터 deprecated입니다.
+// 실제 프로젝트에서는 dart:js_interop를 사용하세요.
 import 'dart:js' as js;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -1485,6 +1499,9 @@ class WebInterop {
 
 ```dart
 // lib/features/multi_window/window_controller.dart
+// ⚠️ 주의: WindowController 클래스는 Flutter에 존재하지 않습니다.
+// 실제로는 window_manager 패키지의 windowManager 싱글톤을 사용하세요.
+// 예: await windowManager.setTitle('...');
 import 'package:window_manager/window_manager.dart';
 
 class MultiWindowController {

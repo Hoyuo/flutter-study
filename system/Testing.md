@@ -53,6 +53,12 @@ dev_dependencies:
   mocktail: ^1.0.4
   mockito: ^5.6.3
   build_runner: ^2.4.15  # mockito 코드 생성용
+
+# ⚠️ 주의: 이 문서의 테스트 예제는 mockito를 사용하지만, 이 프로젝트의 표준 모킹 라이브러리는 mocktail입니다.
+# mocktail 사용 시: import 'package:mocktail/mocktail.dart';
+# Mock 클래스: class MockRepo extends Mock implements Repository {} (코드 생성 불필요)
+# when 구문: when(() => mock.method()).thenAnswer(...)
+# verify 구문: verify(() => mock.method()).called(1)
 ```
 
 ### 2.2 테스트 폴더 구조

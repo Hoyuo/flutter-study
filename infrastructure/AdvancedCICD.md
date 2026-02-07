@@ -324,6 +324,8 @@ class LaunchDarklyService {
   }
 
   /// Track custom event
+  // ⚠️ 주의: LDValueObjectBuilder에는 addAll() 메서드가 없습니다.
+  // 실제로는 .addBool(), .addString() 등 개별 빌더 메서드를 사용해야 합니다.
   void track(String eventName, {Map<String, dynamic>? data}) {
     if (!_initialized) return;
     _client.track(eventName, data: LDValue.buildObject()
@@ -678,7 +680,7 @@ class ProductCard extends StatelessWidget {
 
 ### 3.4 BigQuery로 분석 데이터 전송
 
-```yaml
+```typescript
 # Cloud Functions (Node.js)
 # functions/src/exportAnalyticsToBigQuery.ts
 import * as functions from 'firebase-functions';

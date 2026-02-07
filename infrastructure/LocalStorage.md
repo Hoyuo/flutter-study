@@ -1498,7 +1498,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:sqlcipher_flutter_libs/sqlcipher_flutter_libs.dart';
 import 'package:sqlite3/open.dart';
-// import 'package:path/path.dart' as p;
+import 'package:path/path.dart' as p;
 
 LazyDatabase openEncryptedDatabase(String name, String password) {
   return LazyDatabase(() async {
@@ -1528,6 +1528,8 @@ LazyDatabase openEncryptedDatabase(String name, String password) {
 // import 'dart:convert';
 class DatabaseKeyManager {
   final FlutterSecureStorage _secureStorage;
+
+  DatabaseKeyManager(this._secureStorage);
 
   /// 암호화 키 생성 또는 로드
   Future<String> getOrCreateKey() async {

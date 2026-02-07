@@ -337,6 +337,8 @@ class NotificationService {
   }
 
   /// 테스트용: private 메서드 접근
+  // ⚠️ 주의: _showLocalNotification은 private 메서드로, 테스트 파일에서 접근 불가합니다.
+  // 해결 방법: 메서드를 public으로 변경하거나, public API를 통해 간접 테스트하세요.
   @visibleForTesting
   Future<void> showLocalNotificationForTest({
     required String title,

@@ -262,7 +262,7 @@ class AppColorExtension extends ThemeExtension<AppColorExtension> {
 
   @override
   AppColorExtension lerp(AppColorExtension? other, double t) {
-    if (other is! AppColorExtension) return this;
+    if (other == null) return this;
     return AppColorExtension(
       success: Color.lerp(success, other.success, t)!,
       warning: Color.lerp(warning, other.warning, t)!,

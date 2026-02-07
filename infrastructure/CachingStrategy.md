@@ -207,10 +207,11 @@ class CacheStrategyExecutor {
     final cached = cacheLayer.memoryCache.get<T>(key) ??
         await cacheLayer.diskCache.get<T>(key);
 
-    // 백그라운드에서 갱신 (await 안 함)
-    unawaited(_refreshCache(key, fetch, ttl));
-
-    if (cached != null) return cached;
+    if (cached != null) {
+      // 백그라운드에서 갱신 (await 안 함)
+      unawaited(_refreshCache(key, fetch, ttl));
+      return cached;
+    }
 
     // 캐시가 없으면 네트워크 요청 대기
     return fetch();
@@ -697,6 +698,9 @@ import 'package:hive/hive.dart';
 
 part 'cache_entity.g.dart';
 
+// ⚠️ 주의: 실제 프로젝트에서는 generic 클래스에 @HiveType을 사용할 수 없습니다.
+// hive_generator가 T 타입을 직렬화할 수 없으므로, 구체적인 타입별 어댑터를 작성하거나
+// dynamic/String(JSON) 방식을 사용해야 합니다.
 @HiveType(typeId: 0)
 class CacheEntity<T> {
   @HiveField(0)
@@ -1093,6 +1097,8 @@ class ImageCacheManager {
   /// 이미지 캐시 크기 확인
   Future<int> getImageCacheSize() async {
     final cacheManager = DefaultCacheManager();
+    // ⚠️ 주의: retrieveCacheData()는 flutter_cache_manager의 공식 API가 아닙니다.
+    // 실제 캐시 크기 확인은 getFileFromCache() 또는 store의 다른 메서드를 사용해야 합니다.
     final files = await cacheManager.store.retrieveCacheData();
     return files.fold<int>(0, (sum, file) => sum + (file.length ?? 0));
   }
@@ -1449,14 +1455,14 @@ class ConnectivityService {
   bool get isOnline => _isOnline;
 
   Future<void> init() async {
-    final result = await _connectivity.checkConnectivity();
-    _updateStatus(result);
+    final results = await _connectivity.checkConnectivity();
+    _updateStatus(results);
 
     _subscription = _connectivity.onConnectivityChanged.listen(_updateStatus);
   }
 
-  void _updateStatus(ConnectivityResult result) {
-    _isOnline = result != ConnectivityResult.none;
+  void _updateStatus(List<ConnectivityResult> results) {
+    _isOnline = !results.contains(ConnectivityResult.none);
     _controller.add(_isOnline);
   }
 

@@ -1274,6 +1274,10 @@ Future<void> configureAnalyticsConsent() async {
 
 ```dart
 // test/mocks/mock_permission_service.dart
+// ⚠️ 주의: 이 프로젝트의 표준 모킹 라이브러리는 mocktail입니다 (mockito가 아님).
+// mocktail 사용 시: import 'package:mocktail/mocktail.dart';
+// Mock 클래스: class MockPermissionService extends Mock implements PermissionService {}
+// when 구문: when(() => mock.method()).thenAnswer(...)
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:permission_handler/permission_handler.dart';

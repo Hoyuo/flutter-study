@@ -1557,7 +1557,7 @@ class _ScannerOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.5),
+        color: Colors.black.withValues(alpha: 0.5),
       ),
       child: Stack(
         children: [
@@ -1589,7 +1589,7 @@ class _ScannerOverlay extends StatelessWidget {
                 fontSize: 16,
                 shadows: [
                   Shadow(
-                    color: Colors.black.withOpacity(0.8),
+                    color: Colors.black.withValues(alpha: 0.8),
                     blurRadius: 8,
                   ),
                 ],

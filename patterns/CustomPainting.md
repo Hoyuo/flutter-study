@@ -45,7 +45,8 @@ CustomPainter는 Flutter에서 저수준 그래픽 렌더링을 제공하는 추
 | `drawCircle()` | 원 그리기 | 아바타, 인디케이터 |
 | `drawPath()` | 경로 그리기 | 복잡한 도형, 차트 |
 | `drawImage()` | 이미지 렌더링 | 아이콘, 텍스처 |
-| `drawText()` | 텍스트 렌더링 | 라벨, 축 레이블 |
+
+> ⚠️ **경고**: `Canvas.drawText()`는 Flutter에서 존재하지 않습니다. 텍스트를 그리려면 `TextPainter.paint()`를 사용하세요. (섹션 6 참조)
 
 ### 1.3 사용 시나리오
 
@@ -675,7 +676,7 @@ class PaintPropertiesPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // 1. Color
     final paint1 = Paint()
-      ..color = Colors.blue.withOpacity(0.5) // 투명도
+      ..color = Colors.blue.withValues(alpha: 0.5) // 투명도
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(Offset(60, 60), 50, paint1);
@@ -880,7 +881,7 @@ class BlendModePainter extends CustomPainter {
       // 배경 (빨강)
       canvas.drawRect(
         Rect.fromLTWH(x, y, cellSize, cellSize),
-        Paint()..color = Colors.red.withOpacity(0.7),
+        Paint()..color = Colors.red.withValues(alpha: 0.7),
       );
 
       // 전경 (파랑) - BlendMode 적용
@@ -888,7 +889,7 @@ class BlendModePainter extends CustomPainter {
         Offset(x + cellSize / 2, y + cellSize / 2),
         cellSize / 3,
         Paint()
-          ..color = Colors.blue.withOpacity(0.7)
+          ..color = Colors.blue.withValues(alpha: 0.7)
           ..blendMode = blendModes[i],
       );
     }
@@ -1117,7 +1118,7 @@ class TextAlignmentPainter extends CustomPainter {
       canvas.drawRect(
         Rect.fromLTWH(10, y + 25, maxWidth, textPainter.height),
         Paint()
-          ..color = Colors.blue.withOpacity(0.1)
+          ..color = Colors.blue.withValues(alpha: 0.1)
           ..style = PaintingStyle.fill,
       );
     }
@@ -1279,7 +1280,7 @@ class ImagePainter extends CustomPainter {
         size.width / 3 - 20,
         size.height / 2 - 20,
       ),
-      paint..color = Colors.white.withOpacity(0.5),
+      paint..color = Colors.white.withValues(alpha: 0.5),
     );
   }
 
@@ -1480,7 +1481,7 @@ class LineChartPainter extends CustomPainter {
     // 그리드 그리기
     if (showGrid) {
       final gridPaint = Paint()
-        ..color = Colors.grey.withOpacity(0.3)
+        ..color = Colors.grey.withValues(alpha: 0.3)
         ..strokeWidth = 1;
 
       for (int i = 0; i <= 5; i++) {
@@ -1637,7 +1638,7 @@ class BarChartPainter extends CustomPainter {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            barColor.withOpacity(0.8),
+            barColor.withValues(alpha: 0.8),
             barColor,
           ],
         ).createShader(rect);
@@ -1873,7 +1874,7 @@ class AnimatedCirclePainter extends CustomPainter {
       center,
       radius,
       Paint()
-        ..color = color.withOpacity(1 - progress * 0.5)
+        ..color = color.withValues(alpha: 1 - progress * 0.5)
         ..style = PaintingStyle.fill,
     );
 
@@ -2033,7 +2034,7 @@ class AnimatedLineChartPainter extends CustomPainter {
         currentPoint,
         8,
         Paint()
-          ..color = lineColor.withOpacity(0.3)
+          ..color = lineColor.withValues(alpha: 0.3)
           ..style = PaintingStyle.fill,
       );
     }
@@ -2081,7 +2082,7 @@ class WavePainter extends CustomPainter {
     canvas.drawPath(
       path,
       Paint()
-        ..color = color.withOpacity(0.5)
+        ..color = color.withValues(alpha: 0.5)
         ..style = PaintingStyle.fill,
     );
 
@@ -2468,7 +2469,7 @@ class InteractiveChartPainter extends CustomPainter {
         canvasPoint,
         12,
         Paint()
-          ..color = Colors.red.withOpacity(0.3)
+          ..color = Colors.red.withValues(alpha: 0.3)
           ..style = PaintingStyle.fill,
       );
 
@@ -3185,7 +3186,7 @@ class DebugPainter extends CustomPainter {
       canvas.drawRect(
         Offset.zero & size,
         Paint()
-          ..color = Colors.red.withOpacity(0.2)
+          ..color = Colors.red.withValues(alpha: 0.2)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2,
       );
@@ -3241,8 +3242,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
-  bloc_test: ^10.0.0
+  flutter_lints: ^5.0.0  # ⚠️ flutter_lints는 deprecated되었습니다. 최신 프로젝트에서는 lints 패키지를 사용하세요.
+  bloc_test: ^9.1.0  # flutter_bloc ^9.1.1과 호환됩니다
 
 flutter:
   uses-material-design: true

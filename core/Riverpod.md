@@ -555,10 +555,8 @@ class HomeScreen extends ConsumerWidget {
       body: Center(child: Text('Count: $counter')),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // ❌ 잘못된 사용: build 메서드에서 read 사용하면 재빌드 안됨
-          // ref.read(counterProvider.notifier).state++;
-
-          // ✅ 올바른 사용: 이벤트 핸들러에서 read 사용
+          // ✅ 올바른 사용: 이벤트 핸들러(콜백)에서 read 사용
+          // build 메서드 본문에서 직접 read하면 재빌드되지 않음
           ref.read(counterProvider.notifier).state++;
         },
         child: const Icon(Icons.add),
@@ -688,7 +686,7 @@ class UserProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userProfileAsync = ref.watch(userProfileProvider('user123'));
+    final userProfileAsync = ref.watch(userProfileNotifierProvider('user123'));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
@@ -2133,7 +2131,7 @@ class UserProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userAsync = ref.watch(userProfileProvider('user123'));
+    final userAsync = ref.watch(userProfileNotifierProvider('user123'));
 
     return userAsync.when(
       loading: () => const CircularProgressIndicator(),

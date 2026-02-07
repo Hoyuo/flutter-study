@@ -66,7 +66,6 @@ dependencies:
 
   # State Management
   flutter_bloc: ^9.1.1
-  bloc: ^8.1.4
 
   # GraphQL
   graphql_flutter: ^5.2.0
@@ -105,11 +104,8 @@ dev_dependencies:
   gql_code_builder: ^0.8.0
 
   # Testing
-  mockito: ^5.4.4
+  mocktail: ^1.0.4
   bloc_test: ^9.1.7
-
-  # Linting
-  flutter_lints: ^5.0.0
 ```
 
 ### 2.2 프로젝트 구조
@@ -687,7 +683,7 @@ query GetPost($id: ID!) {
 ### 5.3 Code Generation 실행
 
 ```bash
-flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 ### 5.4 생성된 코드 사용
@@ -1655,6 +1651,8 @@ class PostBloc extends Bloc<PostEvent, PostState> {
   ) async {
     await _subscription?.cancel();
 
+    // ⚠️ 주의: listen 콜백 내에서 emit을 직접 호출하면 StateError가 발생합니다.
+    // 올바른 패턴: await emit.forEach(stream, onData: (data) => NewState(data))
     _subscription = _subscribeToPosts().listen(
       (post) {
         emit(PostState.postCreated(post));
@@ -1969,6 +1967,8 @@ class MockGraphQLProvider {
     Map<String, dynamic> data, {
     Map<String, dynamic>? variables,
   }) {
+    // ⚠️ 주의: graphql_flutter ^5.2.0에서 QueryResult 생성자는 options 파라미터가 필수입니다.
+    // 실제 코드: QueryResult(options: QueryOptions(document: gql('...')), data: ..., source: ...)
     when(client.query(any)).thenAnswer((_) async {
       return QueryResult(
         data: data,
@@ -2027,6 +2027,8 @@ void main() {
         ],
       };
 
+      // ⚠️ 주의: graphql_flutter ^5.2.0에서 QueryResult 생성자는 options 파라미터가 필수입니다.
+      // 실제 코드: QueryResult(options: QueryOptions(document: gql('...')), data: ..., source: ...)
       when(mockClient.query(any)).thenAnswer((_) async {
         return QueryResult(
           data: mockData,
@@ -2050,6 +2052,8 @@ void main() {
 
     test('네트워크 오류 시 Left(NetworkFailure) 반환', () async {
       // Arrange
+      // ⚠️ 주의: graphql_flutter ^5.2.0에서 QueryResult 생성자는 options 파라미터가 필수입니다.
+      // 실제 코드: QueryResult(options: QueryOptions(document: gql('...')), data: ..., source: ...)
       when(mockClient.query(any)).thenAnswer((_) async {
         return QueryResult(
           exception: OperationException(
@@ -2107,6 +2111,8 @@ void main() {
   });
 
   group('LoadPosts', () {
+    // ⚠️ 주의: Post 모델의 createdAt/updatedAt은 DateTime 타입입니다.
+    // 실제 코드: createdAt: DateTime(2026, 1, 1), updatedAt: DateTime(2026, 1, 1)
     final testPosts = [
       const Post(
         id: '1',
@@ -2191,6 +2197,8 @@ void main() {
 
   testWidgets('loaded 상태일 때 포스트 목록 표시', (tester) async {
     // Arrange
+    // ⚠️ 주의: Post 모델의 createdAt/updatedAt은 DateTime 타입입니다.
+    // 실제 코드: createdAt: DateTime(2026, 1, 1), updatedAt: DateTime(2026, 1, 1)
     final testPosts = [
       const Post(
         id: '1',

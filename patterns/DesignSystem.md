@@ -323,7 +323,7 @@ class ShadowTokens {
 
   static final List<BoxShadow> shadowXs = [
     BoxShadow(
-      color: Colors.black.withOpacity(0.05),
+      color: Colors.black.withValues(alpha: 0.05),
       blurRadius: 2,
       offset: const Offset(0, 1),
     ),
@@ -331,7 +331,7 @@ class ShadowTokens {
 
   static final List<BoxShadow> shadowSm = [
     BoxShadow(
-      color: Colors.black.withOpacity(0.1),
+      color: Colors.black.withValues(alpha: 0.1),
       blurRadius: 4,
       offset: const Offset(0, 2),
     ),
@@ -339,7 +339,7 @@ class ShadowTokens {
 
   static final List<BoxShadow> shadowMd = [
     BoxShadow(
-      color: Colors.black.withOpacity(0.1),
+      color: Colors.black.withValues(alpha: 0.1),
       blurRadius: 8,
       offset: const Offset(0, 4),
     ),
@@ -347,7 +347,7 @@ class ShadowTokens {
 
   static final List<BoxShadow> shadowLg = [
     BoxShadow(
-      color: Colors.black.withOpacity(0.1),
+      color: Colors.black.withValues(alpha: 0.1),
       blurRadius: 16,
       offset: const Offset(0, 8),
     ),
@@ -355,7 +355,7 @@ class ShadowTokens {
 
   static final List<BoxShadow> shadowXl = [
     BoxShadow(
-      color: Colors.black.withOpacity(0.15),
+      color: Colors.black.withValues(alpha: 0.15),
       blurRadius: 24,
       offset: const Offset(0, 12),
     ),
@@ -609,7 +609,7 @@ class AppTheme {
         seedColor: ColorTokens.primary500,
         brightness: Brightness.light,
       ),
-      extensions: const [
+      extensions: [
         AppColors.light,
         AppSpacing.standard,
         AppRadius.standard,
@@ -629,7 +629,7 @@ class AppTheme {
         seedColor: ColorTokens.primary500,
         brightness: Brightness.dark,
       ),
-      extensions: const [
+      extensions: [
         AppColors.dark,
         AppSpacing.standard,
         AppRadius.standard,
@@ -801,7 +801,7 @@ class AppTheme {
     return CardTheme(
       color: isDark ? ColorTokens.neutral800 : ColorTokens.neutral0,
       elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.1),
+      shadowColor: Colors.black.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: RadiusTokens.borderRadiusLg,
         side: BorderSide(
@@ -898,6 +898,9 @@ extension ColorExtensions on Color {
   }
 
   /// 색상 투명도 조절
+  ///
+  /// > ⚠️ **경고:** Color.fromARGB는 향후 deprecated될 수 있습니다.
+  /// > 최신 Flutter에서는 Color.fromARGB 대신 copyWith(alpha: alpha)를 사용하는 것을 권장합니다.
   Color withAlpha(int alpha) {
     return Color.fromARGB(alpha, red, green, blue);
   }

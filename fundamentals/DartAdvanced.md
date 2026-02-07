@@ -320,7 +320,7 @@ class Duck extends Animal with Flyable, Swimmable {
 mixin class Identifiable {
   String id = '';
 
-  String get shortId => id.substring(0, 8);
+  String get shortId => id.length >= 8 ? id.substring(0, 8) : id;
 }
 
 // mixin으로 사용

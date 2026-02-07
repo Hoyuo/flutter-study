@@ -34,6 +34,7 @@
 Firebase Crashlytics 데이터를 자동으로 분석하고 Jira 이슈를 생성합니다.
 """
 
+import os
 import requests
 import json
 from datetime import datetime, timedelta
@@ -1037,6 +1038,7 @@ class ComputeHelper {
     required List<T> items,
     required T Function(T) processor,
   }) async {
+    // ⚠️ **경고:** `compute()`에는 최상위(top-level) 함수 또는 static 메서드만 전달할 수 있습니다. closure나 인스턴스 메서드는 사용할 수 없습니다. closure를 최상위 함수로 분리하세요.
     // 청크로 나누어 병렬 처리
     const chunkSize = 1000;
     final chunks = <List<T>>[];

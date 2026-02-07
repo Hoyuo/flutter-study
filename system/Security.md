@@ -1938,6 +1938,9 @@ dependencies:
   play_integrity: ^1.0.0
 
 // lib/services/integrity_service.dart
+// ⚠️ 주의: play_integrity 패키지는 pub.dev에 존재하지 않는 fabricated API입니다.
+// Play Integrity API는 네이티브 Android API로, MethodChannel을 통한 플랫폼 채널 구현이 필요합니다.
+// 이 코드는 개념적 의사코드(pseudo-code)로만 참고하세요.
 import 'package:play_integrity/play_integrity.dart';
 
 class IntegrityService {
@@ -1984,6 +1987,9 @@ dependencies:
   device_check: ^1.0.0
 
 // lib/services/device_check_service.dart
+// ⚠️ 주의: device_check 패키지는 pub.dev에 존재하지 않는 fabricated API입니다.
+// iOS DeviceCheck/App Attest는 네이티브 Swift/ObjC 코드가 필요하며 MethodChannel로 접근해야 합니다.
+// 이 코드는 개념적 의사코드(pseudo-code)로만 참고하세요.
 import 'package:device_check/device_check.dart';
 
 class DeviceCheckService {

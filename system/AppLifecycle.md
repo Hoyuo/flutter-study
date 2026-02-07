@@ -1098,7 +1098,7 @@ Future<void> requestBatteryOptimizationExemption() async {
   final isDisabled = await DisableBatteryOptimization
       .isBatteryOptimizationDisabled;
 
-  if (!isDisabled!) {
+  if (isDisabled != true) {
     await DisableBatteryOptimization
         .showDisableBatteryOptimizationSettings();
   }

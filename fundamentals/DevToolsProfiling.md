@@ -251,6 +251,7 @@ class _RepaintRainbowExampleState extends State<RepaintRainbowExample>
         // ❌ RepaintBoundary 없음: 전체 리페인트 (무지개색 깜빡임)
         ExpensiveStaticWidget(),
 
+        // ⚠️ 최적화 필요: child 파라미터를 사용하면 불필요한 리빌드를 방지할 수 있습니다
         AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
@@ -851,6 +852,8 @@ class _OptimizedListState extends State<OptimizedList> {
 // ✅ 해결 2: Isolate로 계산 오프로드 (Dart 2.19+)
 import 'dart:isolate';
 
+// ⚠️ 주의: Isolate.run()에 전달하는 함수는 반드시 top-level 함수 또는 static 메서드여야 합니다.
+// 인스턴스 메서드를 전달하면 this가 캡처되어 런타임 에러가 발생합니다.
 Future<int> _expensiveCalculationAsync(int index) async {
   return await Isolate.run(() => _expensiveCalculation(index));
 }

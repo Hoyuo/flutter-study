@@ -42,6 +42,8 @@ Property-based Testing은 랜덤 입력값으로 함수의 불변성(invariant)�
 
 ### 1.1 의존성 설치
 
+> ⚠️ **주의:** `fake: ^2.5.0`은 실제로 존재하지 않는 패키지입니다. Fake 객체는 `mocktail` 또는 직접 구현으로 생성하세요.
+
 ```yaml
 # pubspec.yaml
 dev_dependencies:
@@ -115,6 +117,7 @@ import 'package:glados/glados.dart';
 import 'package:test/test.dart';
 import 'package:my_app/domain/models/money.dart';
 
+// ⚠️ **참고:** `glados` 패키지의 generator API는 버전에 따라 다를 수 있습니다. 최신 문서를 확인하세요.
 // Custom Generator
 final moneyGenerator = Any.of([
   any.double.map((amount) => Money(amount, 'USD')),
@@ -834,6 +837,8 @@ void main() {
 UI 변경사항을 자동으로 감지하고 의도하지 않은 변경을 방지합니다.
 
 ### 5.1 Percy 통합 (Cloud 기반)
+
+> ⚠️ **주의:** `percy_flutter`는 실제로 존재하지 않는 패키지입니다. 시각적 회귀 테스트에는 `golden_toolkit` 또는 `alchemist` 패키지를 사용하세요.
 
 ```yaml
 # pubspec.yaml

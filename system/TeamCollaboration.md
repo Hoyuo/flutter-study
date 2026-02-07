@@ -1195,9 +1195,10 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
+          # ⚠️ **참고:** 이 문서의 다른 부분에서는 Flutter 3.27+를 기준으로 하고 있으므로, CI 설정의 Flutter 버전도 일관되게 업데이트를 고려하세요.
           flutter-version: '3.19.0'
       - run: flutter pub get
       - run: flutter analyze
@@ -1206,16 +1207,16 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
       - run: flutter pub get
       - run: flutter test --coverage
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
 
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
       - run: flutter pub get
       - run: flutter build apk --debug

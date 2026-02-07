@@ -116,6 +116,10 @@ abstract class RouteNames {
   static const home = 'home';
   static const profile = 'profile';
   static const settings = 'settings';
+  static const search = 'search';
+  static const notifications = 'notifications';
+  static const searchResults = 'search-results';
+  static const editProfile = 'edit-profile';
 
   // Product
   static const productList = 'product-list';

@@ -2180,11 +2180,11 @@ class StorageManager {
   /// 오래된 동기화 완료 데이터 정리
   Future<void> cleanup() async {
     // 1. 동기화 완료된 항목 중 30일 이상 된 것 삭제
-    await _db.delete(_db.diaryEntries)
+    await (_db.delete(_db.diaryEntries)
       ..where((t) => t.syncStatus.equals(SyncStatus.synced.index))
       ..where((t) => t.updatedAt.isSmallerThan(
         Variable(DateTime.now().subtract(const Duration(days: 30))),
-      ));
+      ))).go();
 
     // 2. 캐시 크기 확인 및 정리
     final cacheSize = await _getCacheSize();

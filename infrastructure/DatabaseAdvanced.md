@@ -315,8 +315,7 @@ try {
 // Limit, Offset
 final firstTen = await (select(users)..limit(10)).get();
 final nextTen = await (select(users)
-      ..limit(10)
-      ..offset(10))
+      ..limit(10, offset: 10))
     .get();
 
 // 정렬
@@ -425,6 +424,8 @@ final usersNamedKim = await (select(users)
       ..where((tbl) => tbl.name.like('김%')))
     .get();
 
+// ⚠️ 주의: Expression에 static .and() 메서드가 없습니다.
+// 실제로는 & 연산자를 사용하세요: (condition1) & (condition2)
 // Custom Expression
 final results5 = await (select(users)
       ..where((tbl) =>
@@ -920,6 +921,9 @@ class Users extends Table {
   ];
 }
 
+// ⚠️ 주의: Drift의 Table 클래스에는 indexes getter가 없습니다.
+// 실제로는 @TableIndex 어노테이션을 사용하거나
+// customStatement()로 인덱스를 생성하세요.
 // 복합 인덱스 (Custom Index)
 @override
 List<Index> get indexes => [
@@ -999,6 +1003,9 @@ Future<List<User>> getUsers({int page = 0, int pageSize = 20}) {
 ### 10.1 FTS5 테이블 생성
 
 ```dart
+// ⚠️ 주의: @UseDriftFts 어노테이션은 Drift에 존재하지 않습니다.
+// 실제 FTS 구현은 customStatement('CREATE VIRTUAL TABLE ... USING fts5(...)')을
+// 마이그레이션에서 사용하세요.
 // FTS 전용 가상 테이블
 @UseDriftFts(tokenizer: TokenizerType.porter)
 class ArticlesFts extends Table {
@@ -1138,6 +1145,8 @@ class DatabaseKeyManager {
 ### 12.1 배치 삽입
 
 ```dart
+import 'dart:math'; // min() 사용을 위해 필요
+
 // ❌ 비효율적 (각 삽입마다 트랜잭션)
 for (final user in users) {
   await into(users).insert(user);
@@ -1218,6 +1227,8 @@ final secondPage = await pagination.loadNextPage(() => select(users));
 ```dart
 import 'dart:isolate';
 
+// ⚠️ 주의: background isolate에서는 path_provider (Flutter 플러그인)를 사용할 수 없습니다.
+// 메인 isolate에서 먼저 경로를 해석한 후, String path를 background isolate에 전달하세요.
 Future<void> processLargeDataInBackground(List<Map<String, dynamic>> data) async {
   final result = await Isolate.run(() async {
     // Isolate 내에서 새 데이터베이스 연결 필요
@@ -1437,6 +1448,9 @@ void main() {
   late AppDatabase database;
 
   setUp(() {
+    // ⚠️ 주의: 아래 .connect() 생성자를 사용하려면 AppDatabase 클래스에
+    // AppDatabase.connect(DatabaseConnection connection) : super(connection)
+    // 명명된 생성자를 추가해야 합니다.
     // 메모리 데이터베이스 생성
     database = AppDatabase.connect(
       DatabaseConnection(NativeDatabase.memory()),

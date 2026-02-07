@@ -1071,30 +1071,34 @@ class MainAxisSizeDemo extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // MainAxisSize.max (기본값): 가능한 최대 공간 차지
-            Container(
-              color: Colors.blue.shade100,
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Text('MainAxisSize.max'),
-                  Container(width: 100, height: 50, color: Colors.red),
-                  Container(width: 100, height: 50, color: Colors.green),
-                ],
+            Expanded(
+              child: Container(
+                color: Colors.blue.shade100,
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Text('MainAxisSize.max'),
+                    Container(width: 100, height: 50, color: Colors.red),
+                    Container(width: 100, height: 50, color: Colors.green),
+                  ],
+                ),
               ),
             ),
 
             SizedBox(height: 20),
 
             // MainAxisSize.min: 자식 크기만큼만 차지
-            Container(
-              color: Colors.green.shade100,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('MainAxisSize.min'),
-                  Container(width: 100, height: 50, color: Colors.red),
-                  Container(width: 100, height: 50, color: Colors.green),
-                ],
+            Expanded(
+              child: Container(
+                color: Colors.green.shade100,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('MainAxisSize.min'),
+                    Container(width: 100, height: 50, color: Colors.red),
+                    Container(width: 100, height: 50, color: Colors.green),
+                  ],
+                ),
               ),
             ),
           ],

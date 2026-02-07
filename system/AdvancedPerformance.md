@@ -199,7 +199,7 @@ class RenderCustomCircularProgress extends RenderBox {
 
     // 배경 원
     final bgPaint = Paint()
-      ..color = _color.withOpacity(0.2)
+      ..color = _color.withValues(alpha: 0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = _strokeWidth;
 
@@ -236,6 +236,8 @@ class RenderCustomCircularProgress extends RenderBox {
 
 ```dart
 class ProgressDemo extends StatefulWidget {
+  const ProgressDemo({super.key});
+
   @override
   State<ProgressDemo> createState() => _ProgressDemoState();
 }
@@ -318,6 +320,8 @@ class CustomFlexLayout extends MultiChildRenderObjectWidget {
 }
 
 /// ParentDataWidget: 자식의 flex 설정
+> ⚠️ **주의:** `Flexible`은 Flutter 내장 위젯 이름과 충돌합니다. 실제 프로젝트에서는 `FlexibleLayout` 등 다른 이름을 사용하세요.
+
 class Flexible extends ParentDataWidget<FlexParentData> {
   const Flexible({
     super.key,
@@ -1231,6 +1235,8 @@ class IsolateImageDecoder {
   }
 
   /// Isolate worker
+> ⚠️ **경고:** `ui.Image`는 직렬화할 수 없어 Isolate SendPort를 통해 전달이 불가능합니다. 대신 `Uint8List` 등 원시 바이트 데이터를 전달하고 메인 Isolate에서 `ui.Image`로 디코딩해야 합니다.
+
   static void _imageDecoderWorker(SendPort mainSendPort) async {
     final receivePort = ReceivePort();
     mainSendPort.send(receivePort.sendPort);
@@ -1438,6 +1444,8 @@ class SettingsPage extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () async {
+> ⚠️ **경고:** Dart는 JavaScript의 `await import()`와 같은 동적 모듈 임포트를 지원하지 않습니다. `deferred as`를 사용한 지연 임포트(deferred import)가 Dart의 올바른 접근법입니다.
+
             // Dynamic import (지연 로딩)
             final module = await import('package:my_app/features/advanced/advanced_settings.dart');
             Navigator.push(
@@ -1473,6 +1481,8 @@ flutter:
     - family: NotoSans
       fonts:
         - asset: fonts/NotoSansKR-Regular.otf
+> ⚠️ **주의:** `subset: korean`은 실제 Flutter pubspec.yaml에서 지원하지 않는 속성입니다. Google Fonts 패키지를 사용하거나 폰트 파일을 직접 포함하세요.
+
           # 한글만 포함 (파일 크기 90% 감소)
           subset: korean
 ```

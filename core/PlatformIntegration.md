@@ -830,10 +830,11 @@ class NativeImageProcessor {
       imagePointer.ref.channels = channels;
 
       // 색상 구조체 설정
-      colorPointer.ref.r = tintColor.red / 255.0;
-      colorPointer.ref.g = tintColor.green / 255.0;
-      colorPointer.ref.b = tintColor.blue / 255.0;
-      colorPointer.ref.a = tintColor.alpha / 255.0;
+      // Flutter 3.27+에서는 .r, .g, .b, .a 사용 (.red, .green, .blue, .alpha는 deprecated)
+      colorPointer.ref.r = tintColor.r;
+      colorPointer.ref.g = tintColor.g;
+      colorPointer.ref.b = tintColor.b;
+      colorPointer.ref.a = tintColor.a;
 
       // C 함수 호출
       _applyFilter(imagePointer, colorPointer);
@@ -902,6 +903,8 @@ class NativeHeavyComputation {
 
   // 비동기 호출 (Isolate 사용)
   Future<int> computeAsync(int input) async {
+    // ⚠️ 주의: 이 클로저는 this를 캡처하므로 DynamicLibrary 등 non-sendable 객체가 포함되면
+    // 런타임 에러가 발생합니다. 실제 구현에서는 static 메서드를 사용하거나 데이터만 전달하세요.
     return Isolate.run(() => _heavyComputation(input));
   }
 

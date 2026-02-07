@@ -250,7 +250,7 @@ class AsyncContextExample extends StatelessWidget {
       onPressed: () async {
         await Future.delayed(Duration(seconds: 2));
 
-        if (!context.mounted) return; // Dart 3.0+
+        if (!context.mounted) return; // Flutter 3.7+
 
         Navigator.of(context).pop();
       },

@@ -448,11 +448,13 @@ class SecurityPolicy {
 
       case SecurityAction.block:
         _showBlockDialog('보안상의 이유로 이 기기에서는 앱을 사용할 수 없습니다.');
+        // ⚠️ **주의:** `exit(0)`은 Flutter 앱에서 권장되지 않는 안티패턴입니다. iOS에서는 앱이 거부될 수 있으며, Android에서는 `SystemNavigator.pop()`을 대신 사용하세요.
         exit(0);
 
       case SecurityAction.reportAndBlock:
         await _reportToServer(status);
         _showBlockDialog('보안 위반이 감지되었습니다.');
+        // ⚠️ **주의:** `exit(0)`은 Flutter 앱에서 권장되지 않는 안티패턴입니다. iOS에서는 앱이 거부될 수 있으며, Android에서는 `SystemNavigator.pop()`을 대신 사용하세요.
         exit(0);
     }
   }
@@ -825,6 +827,7 @@ class MultiPinStrategy {
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class HardwareSecurityManager {
+  // ⚠️ **주의:** `AndroidOptions`의 일부 파라미터는 실제 `flutter_secure_storage` 패키지에서 지원하지 않을 수 있습니다. 최신 문서를 확인하세요.
   static final _storage = FlutterSecureStorage(
     aOptions: AndroidOptions(
       encryptedSharedPreferences: true,
@@ -1171,6 +1174,8 @@ class RequestSigner {
 
 ### 8.1 서버 검증과 결합
 
+> ⚠️ **경고:** `static` 메서드에서 인스턴스 필드 `_auth`에 접근하고 있습니다. `static` 메서드는 인스턴스 멤버에 접근할 수 없으므로, `_auth`를 `static`으로 선언하거나 메서드를 인스턴스 메서드로 변경해야 합니다.
+
 ```dart
 // lib/core/auth/biometric_auth_service.dart
 import 'package:local_auth/local_auth.dart';
@@ -1318,6 +1323,7 @@ class EncryptionService {
 
   /// 키 생성 (PBKDF2)
   static encrypt.Key deriveKey(String password, String salt) {
+    // ⚠️ **경고:** 이 코드의 암호화 패키지 import가 올바르지 않습니다. Dart에서 AES 암호화를 사용하려면 `encrypt` 패키지(^5.0.3) 또는 `cryptography` 패키지(^2.7.0)를 사용하세요. `package:crypto`는 해시 함수만 제공합니다.
     final codec = Utf8Codec();
     final key = Pbkdf2(
       macAlgorithm: Hmac.sha256(),

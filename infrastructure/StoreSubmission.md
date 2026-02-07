@@ -426,6 +426,8 @@ flutter build ipa --release \
 # 4. Click Deliver
 
 # Option 3: Using altool (command line)
+# ⚠️ 주의: xcrun altool은 Xcode 14부터 deprecated입니다.
+# 실제로는 xcrun notarytool submit을 사용하세요.
 xcrun altool --upload-app \
   --type ios \
   --file build/ios/ipa/your_app.ipa \

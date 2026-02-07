@@ -27,7 +27,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'failure.freezed.dart';
 
 @freezed
-abstract class Failure with _$Failure {
+class Failure with _$Failure {
   const Failure._();
 
   /// 네트워크 연결 없음
@@ -357,6 +357,8 @@ Future<Either<Failure, T>> safeApiCall<T>(
   } on FormatException catch (e) {
     return Left(Failure.parsing(message: e.message));
   } catch (e, stack) {
+    // ⚠️ 주의: AppLogger 클래스는 이 문서에서 정의되지 않았습니다.
+    // 실제 사용 시: debugPrint('Unexpected error: $e\n$stack') 또는 Logging.md의 AppLogger 참조
     // 로깅
     // import 'package:your_app/core/utils/app_logger.dart';
     // 또는 debugPrint 사용: debugPrint('Unexpected error: $e');
@@ -834,6 +836,9 @@ import 'package:fpdart/fpdart.dart';
 import '../error/failure.dart';
 
 mixin RetryMixin {
+  // ⚠️ 주의: 이 retryOperation의 while 루프는 첫 번째 반복에서 무조건 return합니다.
+  // result.fold()가 즉시 반환되어 재시도 로직이 작동하지 않습니다.
+  // 올바른 구현: while 내에서 isRight() 체크 후 조건부 return 사용
   /// 재시도 로직
   Future<Either<Failure, T>> withRetry<T>(
     Future<Either<Failure, T>> Function() operation, {
@@ -1036,7 +1041,7 @@ class ProductRepositoryImpl implements ProductRepository {
 ```dart
 // pubspec.yaml
 dependencies:
-  connectivity_plus: ^5.0.0
+  connectivity_plus: ^7.0.0
 
 // lib/core/network/network_info.dart
 import 'package:connectivity_plus/connectivity_plus.dart';

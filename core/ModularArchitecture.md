@@ -383,9 +383,10 @@ class IncrementalBuilder {
 
       // melos exec는 워크스페이스 루트에서 실행해야 합니다
       // --scope는 pubspec.yaml의 name 값을 기준으로 필터링합니다
+      final packageName = path.basename(pkg);
       final result = await Process.run(
         'melos',
-        ['exec', '--scope=$pkg', '--', 'flutter', 'test'],
+        ['exec', '--scope=$packageName', '--', 'flutter', 'test'],
       );
 
       if (result.exitCode != 0) {
@@ -1032,7 +1033,7 @@ class DeepLinkHandler {
     // 4. Analytics
     GetIt.I<AnalyticsService>().logEvent('deep_link_opened', {
       'path': uri.path,
-      'module': moduleName,
+      'module': router.moduleName,
     });
   }
 }

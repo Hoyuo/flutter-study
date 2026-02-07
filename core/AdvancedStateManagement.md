@@ -507,6 +507,12 @@ class CustomSearchBar extends StatefulWidget {
 class _CustomSearchBarState extends State<CustomSearchBar> {
   final _controller = TextEditingController();
   // 컴포넌트 내부 상태
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 }
 ```
 
@@ -684,7 +690,7 @@ class ProductListState with _$ProductListState {
 
     // 필터
     result = switch (filter) {
-      ProductFilter.all => result,
+      ProductFilter.all => List.of(result),
       ProductFilter.inStock => result.where((p) => p.stock > 0).toList(),
       ProductFilter.onSale => result.where((p) => p.isOnSale).toList(),
     };
@@ -1589,6 +1595,7 @@ class TodoState with _$TodoState {
   const factory TodoState({
     @Default([]) List<Todo> todos,
     @Default({}) Map<String, PendingOperation> pendingOperations,
+    String? error,
   }) = _TodoState;
 }
 

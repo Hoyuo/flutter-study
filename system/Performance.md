@@ -1663,7 +1663,7 @@ flutter build apk --analyze-size
 flutter build apk --split-debug-info=debug-info/
 
 # 미사용 리소스 제거
-flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 ### 14.4 시작 시간 목표

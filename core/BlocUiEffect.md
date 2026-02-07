@@ -1421,6 +1421,8 @@ class _AppWrapperState extends State<AppWrapper>
 
 #### 패턴 3: GetIt을 통한 Bloc 접근
 
+> ⚠️ **주의**: 이 패턴은 Architecture.md의 절대 규칙 "Bloc을 GetIt에 등록하면 안 됨"을 위반합니다. 교육 목적으로만 소개하며, 실제 프로젝트에서는 Pattern 1 또는 Pattern 2 사용을 권장합니다.
+
 ```dart
 // 어디서든 다른 Bloc에 접근 가능
 class OrderBloc extends BaseBloc<OrderEvent, OrderState, OrderEffect> {

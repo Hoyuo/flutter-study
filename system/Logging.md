@@ -592,6 +592,8 @@ class CrashlyticsService {
   }
 
   /// 에러 기록
+> ⚠️ **주의:** `logger` 패키지의 올바른 파라미터명은 `printDetails`가 아닌 `information`입니다.
+
   static Future<void> recordError(
     Object error,
     StackTrace? stackTrace, {

@@ -1830,7 +1830,7 @@ void main() {
 blocTest<DataBloc, DataState>(
   'Stream 데이터 처리',
   setUp: () {
-    when(mockRepository.dataStream).thenAnswer(
+    when(() => mockRepository.dataStream).thenAnswer(
       (_) => Stream.fromIterable([
         Data(id: '1'),
         Data(id: '2'),

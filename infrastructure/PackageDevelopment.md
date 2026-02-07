@@ -657,7 +657,7 @@ class MyFfiPlugin {
       // C array -> Dart List
       return List.generate(length, (i) => pointer[i]);
     } finally {
-      calloc.free(pointer);
+      malloc.free(pointer);
     }
   }
 
@@ -670,11 +670,11 @@ class MyFfiPlugin {
       final result = resultPointer.cast<Utf8>().toDartString();
 
       // C에서 malloc한 메모리 해제
-      calloc.free(resultPointer);
+      malloc.free(resultPointer);
 
       return result;
     } finally {
-      calloc.free(inputPointer);
+      malloc.free(inputPointer);
     }
   }
 }
@@ -1246,6 +1246,9 @@ void main() {
 ### 8.4 Mock을 사용한 테스트
 
 ```dart
+// ⚠️ 주의: 이 프로젝트의 표준 테스트 패키지는 mocktail: ^1.0.4 입니다.
+// mockito 대신 mocktail 사용을 권장합니다.
+// mocktail은 코드 생성(@GenerateMocks)이 필요 없고 when(() => ...) 문법을 사용합니다.
 // test/auth_service_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';

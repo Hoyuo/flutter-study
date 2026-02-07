@@ -839,7 +839,11 @@ class FirestorePostRepository implements PostRepository {
           FirestoreFailure.unknown(e.toString()),
         );
       }
-    }).handleError((error) {
+    })
+    // ⚠️ 주의: handleError의 콜백은 void를 반환하므로 아래 return left(...) 값은
+    // 실제로 스트림에 전달되지 않습니다. 실제 프로젝트에서는 StreamTransformer를
+    // 사용하거나 .map() 내부에서 try-catch로 에러를 Either.left로 변환해야 합니다.
+    .handleError((error) {
       if (error is FirebaseException) {
         return left<FirestoreFailure, List<PostEntity>>(
           _mapFirebaseException(error),
@@ -948,6 +952,9 @@ part 'posts_event.dart';
 part 'posts_state.dart';
 part 'posts_bloc.freezed.dart';
 
+// ⚠️ 주의: DI.md 가이드에서는 Bloc을 GetIt에 등록하지 않을 것을 권장합니다.
+// 실제 프로젝트에서는 BlocProvider를 통해 Bloc을 제공하세요.
+// 이 예제는 Firebase 연동 패턴 학습용으로만 참고하세요.
 @injectable
 class PostsBloc extends Bloc<PostsEvent, PostsState> {
   final PostRepository _postRepository;
@@ -1119,6 +1126,9 @@ part 'upload_event.dart';
 part 'upload_state.dart';
 part 'upload_bloc.freezed.dart';
 
+// ⚠️ 주의: DI.md 가이드에서는 Bloc을 GetIt에 등록하지 않을 것을 권장합니다.
+// 실제 프로젝트에서는 BlocProvider를 통해 Bloc을 제공하세요.
+// 이 예제는 Firebase 연동 패턴 학습용으로만 참고하세요.
 @injectable
 class UploadBloc extends Bloc<UploadEvent, UploadState> {
   final StorageRepository _storageRepository;

@@ -92,11 +92,11 @@ dependencies:
 
   # 코드 생성
   freezed_annotation: ^3.1.0
-  json_annotation: ^4.8.1
+  json_annotation: ^4.9.0
 
   # 유틸리티
   logger: ^2.0.2
-  connectivity_plus: ^5.0.2        # 네트워크 상태 확인
+  connectivity_plus: ^7.0.0        # 네트워크 상태 확인
   shared_preferences: ^2.2.2       # 로컬 저장소
 
 dev_dependencies:
@@ -110,7 +110,7 @@ dev_dependencies:
   injectable_generator: ^2.7.0
 
   # 테스트
-  mockito: ^5.4.4
+  mocktail: ^1.0.4
   bloc_test: ^9.1.6
 ```
 
@@ -222,7 +222,7 @@ void main() {
   final ws = BasicWebSocketExample();
 
   // 연결
-  ws.connect('wss://echo.websocket.org');
+  ws.connect('wss://ws.postman-echo.com/raw'); // echo.websocket.org는 서비스 종료됨
 
   // 메시지 전송
   Future.delayed(Duration(seconds: 1), () {
@@ -877,6 +877,9 @@ class MessageParser<T> {
   Stream<T> parseStream(Stream<String> input) {
     return input
         .map(parse)
+        // ⚠️ 주의: getRight().toNullable()!는 강제 언래핑 안티패턴입니다.
+        // 실제 프로젝트에서는 fold() 또는 match()를 사용하세요:
+        // either.fold((l) => throw l, (r) => r)
         .where((either) => either.isRight())
         .map((either) => either.getRight().toNullable()!)
         .handleError((error) {
@@ -1470,10 +1473,10 @@ class ChatPage extends StatefulWidget {
   final String roomName;
 
   const ChatPage({
-    Key? key,
+    super.key,
     required this.roomId,
     required this.roomName,
-  }) : super(key: key);
+  });
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -1484,6 +1487,8 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
     context.read<ChatBloc>().add(ChatEvent.joinRoom(widget.roomId));
+    // 참고: initState()에서 context.read는 flutter_bloc에서 동작하지만,
+    // didChangeDependencies()가 더 안전한 Flutter 표준 위치입니다.
   }
 
   @override
@@ -1566,9 +1571,9 @@ class MessageList extends StatefulWidget {
   final List<Message> messages;
 
   const MessageList({
-    Key? key,
+    super.key,
     required this.messages,
-  }) : super(key: key);
+  });
 
   @override
   State<MessageList> createState() => _MessageListState();
@@ -1638,10 +1643,10 @@ class MessageInput extends StatefulWidget {
   final void Function(bool isTyping) onTyping;
 
   const MessageInput({
-    Key? key,
+    super.key,
     required this.onSend,
     required this.onTyping,
-  }) : super(key: key);
+  });
 
   @override
   State<MessageInput> createState() => _MessageInputState();
@@ -1694,7 +1699,7 @@ class _MessageInputState extends State<MessageInput> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),
@@ -2152,7 +2157,7 @@ void main() {
     setUp(() {
       client = WebSocketClientImpl(
         config: WebSocketConfig(
-          url: 'wss://echo.websocket.org',
+          url: 'wss://ws.postman-echo.com/raw', // echo.websocket.org는 서비스 종료됨
         ),
         logger: Logger(),
       );

@@ -117,6 +117,7 @@ class ResponsiveChecklist {
   final Orientation orientation;
 
   // 2. 텍스트 스케일 팩터 (접근성)
+  // ⚠️ textScaleFactor는 deprecated되었습니다. MediaQuery.textScalerOf(context)를 사용하세요.
   final double textScaleFactor;
 
   // 3. 플랫폼별 여백 (노치, 상태바, 네비게이션 바)
@@ -198,6 +199,7 @@ class MediaQueryExample extends StatelessWidget {
           children: [
             Text('화면 크기: ${mediaQuery.size.width} x ${mediaQuery.size.height}'),
             Text('방향: ${mediaQuery.orientation}'),
+            // ⚠️ textScaleFactor는 deprecated - MediaQuery.textScalerOf(context) 사용 권장
             Text('텍스트 스케일: ${mediaQuery.textScaleFactor}'),
             Text('픽셀 밀도: ${mediaQuery.devicePixelRatio}'),
             Text('상단 안전 영역: ${mediaQuery.viewPadding.top}'),
@@ -1163,7 +1165,7 @@ class _HoverableCardState extends State<HoverableCard> {
           boxShadow: _isHovered
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -1187,6 +1189,7 @@ class _HoverableCardState extends State<HoverableCard> {
 ```dart
 class KeyboardShortcuts extends StatelessWidget {
   final Widget child;
+  // ⚠️ LogicalKeySet은 deprecated - SingleActivator 사용 권장
   final Map<LogicalKeySet, VoidCallback> shortcuts;
 
   const KeyboardShortcuts({
@@ -1229,6 +1232,8 @@ class KeyboardShortcutsExample extends StatelessWidget {
   Widget build(BuildContext context) {
     return KeyboardShortcuts(
       shortcuts: {
+        // ⚠️ LogicalKeySet은 deprecated - SingleActivator로 교체 권장:
+        // const SingleActivator(LogicalKeyboardKey.keyS, control: true)
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyS): () {
           print('Ctrl+S: Save');
         },
@@ -1295,6 +1300,7 @@ class AccessibleText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ⚠️ textScaleFactor는 deprecated - MediaQuery.textScalerOf(context) 사용 권장
     final textScaleFactor = MediaQuery.of(context).textScaleFactor;
 
     // 텍스트 스케일이 너무 크면 제한
@@ -1305,6 +1311,7 @@ class AccessibleText extends StatelessWidget {
       style: style,
       maxLines: maxLines,
       overflow: maxLines != null ? TextOverflow.ellipsis : null,
+      // ⚠️ Text의 textScaleFactor 파라미터도 deprecated - textScaler 사용 권장
       textScaleFactor: clampedTextScaleFactor,
     );
   }

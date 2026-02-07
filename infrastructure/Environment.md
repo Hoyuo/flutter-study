@@ -380,8 +380,8 @@ Future<void> bootstrap({
 }
 
 // main_dev_kr.dart에서 사용
-void main() {
-  bootstrap(
+Future<void> main() async {
+  await bootstrap(
     config: AppConfig(...),
     countryConfig: CountryConfig.kr(Environment.dev),
   );
@@ -559,7 +559,9 @@ class App extends StatelessWidget {
         }
 
         // 기본 언어
-        return Locale(config.defaultLanguage);
+        // defaultLanguage가 'zh-TW' 형태일 수 있으므로 분리
+        final parts = config.defaultLanguage.split('-');
+        return Locale(parts.first, parts.length > 1 ? parts.last : null);
       },
 
       home: const HomeScreen(),

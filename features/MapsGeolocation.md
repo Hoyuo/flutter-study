@@ -580,6 +580,8 @@ class MapHelpers {
     final image = await picture.toImage(size.toInt(), size.toInt());
     final bytes = await image.toByteData(format: ImageByteFormat.png);
 
+    // ⚠️ 주의: BitmapDescriptor.fromBytes()는 존재하지 않는 API입니다.
+    // Flutter 3.x+에서는 BitmapDescriptor.bytes() 사용
     return BitmapDescriptor.fromBytes(bytes!.buffer.asUint8List());
   }
 }
@@ -733,6 +735,8 @@ class MarkerBloc extends Bloc<MarkerEvent, MarkerState> {
       loaded: (markers, polylines, polygons, circles, selectedMarkerId) {
         final updatedMarkers = markers.map((marker) {
           if (marker.markerId.value == event.markerId) {
+            // ⚠️ 주의: Marker 클래스에는 copyWith() 메서드가 없습니다 (fabricated API).
+            // 올바른 방법: Marker(markerId: marker.markerId, position: event.newPosition, ...) 새 인스턴스 생성
             return marker.copyWith(
               positionParam: event.newPosition,
             );
@@ -896,7 +900,7 @@ class MapOverlayControls extends StatelessWidget {
       ],
       strokeColor: Colors.red,
       strokeWidth: 2,
-      fillColor: Colors.red.withOpacity(0.3),
+      fillColor: Colors.red.withValues(alpha: 0.3),
     );
 
     // Polygon 추가 로직
@@ -909,7 +913,7 @@ class MapOverlayControls extends StatelessWidget {
       radius: 500, // 500 meters
       strokeColor: Colors.green,
       strokeWidth: 2,
-      fillColor: Colors.green.withOpacity(0.2),
+      fillColor: Colors.green.withValues(alpha: 0.2),
     );
 
     // Circle 추가 로직
@@ -1033,6 +1037,8 @@ class LocationRepositoryImpl implements LocationRepository {
       }
 
       // 권한 확인
+      // ⚠️ 주의: fpdart ^1.2.0에서 getOrElse 시그니처는 B Function()입니다 (파라미터 없음).
+      // 올바른 코드: permissionResult.getOrElse(() => false)
       final permissionResult = await checkLocationPermission();
       final hasPermission = permissionResult.getOrElse((l) => false);
 
@@ -1042,6 +1048,8 @@ class LocationRepositoryImpl implements LocationRepository {
       }
 
       // 위치 스트림
+      // ⚠️ 주의: LocationSettings에는 timeLimit 파라미터가 없습니다.
+      // 타임아웃이 필요하면: Geolocator.getPositionStream().timeout(Duration(seconds: 30)) 사용
       final positionStream = Geolocator.getPositionStream(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
@@ -1833,7 +1841,7 @@ class GeofenceOverlay {
         strokeColor: geofence.isActive ? Colors.blue : Colors.grey,
         strokeWidth: 2,
         fillColor: (geofence.isActive ? Colors.blue : Colors.grey)
-            .withOpacity(0.2),
+            .withValues(alpha: 0.2),
       );
     }).toSet();
   }
@@ -1887,6 +1895,8 @@ class ClusterPlace with ClusterItem {
   LatLng get location => place.location;
 
   @override
+  // ⚠️ 주의: google_maps_cluster_manager에는 Geohash 클래스가 없습니다.
+  // geohash가 필요하면 geohash_plus 또는 dart_geohash 패키지를 별도로 임포트하세요.
   String get geohash => Geohash.encode(location);
 }
 ```
@@ -2046,6 +2056,8 @@ class _ClusteredMapPageState extends State<ClusteredMapPage> {
     final image = await picture.toImage(size.toInt(), size.toInt());
     final bytes = await image.toByteData(format: ImageByteFormat.png);
 
+    // ⚠️ 주의: BitmapDescriptor.fromBytes()는 존재하지 않는 API입니다.
+    // Flutter 3.x+에서는 BitmapDescriptor.bytes() 사용
     return BitmapDescriptor.fromBytes(bytes!.buffer.asUint8List());
   }
 

@@ -1355,6 +1355,8 @@ class OptimizedImageList extends StatelessWidget {
 
 ### 11.2 대용량 이미지 처리
 
+> ⚠️ **경고:** instantiateImageCodec는 최신 Flutter에서 제거되었습니다. 대신 ui.instantiateImageCodecWithSize 또는 ui.instantiateImageCodecFromBuffer를 사용하세요.
+
 ```dart
 class LargeImageHandler {
   /// 이미지 로드 전 유효성 검사

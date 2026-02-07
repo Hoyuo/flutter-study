@@ -901,7 +901,7 @@ result.fold(
 
 // ✅ 에러 타입을 도메인에 맞게 정의
 @freezed
-sealed class UserFailure with _$UserFailure {
+class UserFailure with _$UserFailure {
   const factory UserFailure.network() = NetworkFailure;
   const factory UserFailure.notFound() = NotFoundFailure;
   const factory UserFailure.unauthorized() = UnauthorizedFailure;

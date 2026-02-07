@@ -537,7 +537,7 @@ void setupTestDependencies() {
 
   // Mock 등록
   getIt.registerSingleton<HomeRepository>(MockHomeRepository());
-  getIt.registerFactory<GetHomeDataUseCase>(
+  getIt.registerLazySingleton<GetHomeDataUseCase>(
     () => MockGetHomeDataUseCase(),
   );
 }

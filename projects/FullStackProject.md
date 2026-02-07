@@ -211,6 +211,11 @@ UseCase 패턴에 대한 자세한 설명은 `core/Architecture.md`를 참조하
 
 ```dart
 // lib/features/todo/data/models/todo_dto.dart
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'todo_dto.freezed.dart';
+part 'todo_dto.g.dart';
+
 @freezed
 class TodoDto with _$TodoDto {
   const factory TodoDto({
