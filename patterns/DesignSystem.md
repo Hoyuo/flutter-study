@@ -1695,7 +1695,7 @@ class ThemeSettingsScreen extends StatelessWidget {
 dev_dependencies:
   widgetbook: ^3.7.0
   widgetbook_annotation: ^3.1.0
-  build_runner: ^2.4.6
+  build_runner: ^2.4.15
   widgetbook_generator: ^3.7.0
 */
 
@@ -1856,6 +1856,6 @@ Atomic Design 원칙에 따라 다음 컴포넌트를 구현하세요:
 
 **Package Versions**
 - flutter_bloc: ^9.1.1
-- freezed: ^3.1.0
-- fpdart: ^1.1.0
-- go_router: ^14.8.1
+- freezed: ^3.2.4
+- fpdart: ^1.2.0
+- go_router: ^17.0.1

@@ -1222,7 +1222,7 @@ dependencies:
 
 dev_dependencies:
   go_router_builder: ^2.7.0
-  build_runner: ^2.10.5
+  build_runner: ^2.4.15
 ```
 
 ### 라우트 정의

@@ -764,7 +764,7 @@ dependencies:
 
 # dev_dependencies:
 #   envied_generator: ^0.5.4+1
-#   build_runner: ^2.10.5
+#   build_runner: ^2.4.15
 ```
 
 **envied 패키지 (프로덕션 권장)**

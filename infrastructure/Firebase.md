@@ -108,7 +108,7 @@ dependencies:
 
   # State Management & DI
   flutter_bloc: ^9.1.1
-  injectable: ^2.7.1
+  injectable: ^2.5.0
   get_it: ^9.2.0
 
   # Functional Programming
@@ -119,10 +119,10 @@ dependencies:
   json_annotation: ^4.8.1
 
 dev_dependencies:
-  build_runner: ^2.4.6
+  build_runner: ^2.4.15
   freezed: ^3.2.4
-  json_serializable: ^6.7.1
-  injectable_generator: ^2.4.1
+  json_serializable: ^6.9.5
+  injectable_generator: ^2.7.0
 ```
 
 ### 2.3 firebase_options.dart 생성

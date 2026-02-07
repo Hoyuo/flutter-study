@@ -1,11 +1,15 @@
 # Flutter Functional Programming with fpdart
 
+> **Package Versions (2025-01 기준)**
+> - fpdart: ^1.2.0
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - Either<Failure, Success> 패턴을 사용하여 명시적으로 에러를 처리할 수 있습니다
 > - Repository와 UseCase에서 Either를 반환하고 Bloc에서 fold로 처리할 수 있습니다
 > - Option, TaskEither, Unit 등 함수형 타입을 실무에 적용할 수 있습니다
 > 이 문서는 fpdart 라이브러리를 사용한 함수형 프로그래밍 패턴을 설명합니다.
+
+---
 
 ## 1. 개요
 
@@ -59,7 +63,7 @@ Either 기반 에러 처리
 ### 2.1 의존성 추가
 
 ```yaml
-# pubspec.yaml (2026년 1월 기준)
+# pubspec.yaml
 dependencies:
   fpdart: ^1.2.0  # stable, v2.0 개발 중
 ```
@@ -274,6 +278,8 @@ Future<Either<UserFailure, Profile>> getUserProfile(String userId) async {
 ```
 
 ### 4.3 체이닝 예시
+
+> **⚠️ 아래 코드는 fold 중첩(콜백 지옥)을 보여주는 예시입니다.** 4.4에서 더 깔끔한 방법을 소개합니다.
 
 ```dart
 // features/order/lib/domain/usecases/create_order_usecase.dart
@@ -533,16 +539,20 @@ TaskEither<OrderFailure, Order> createOrder(CreateOrderParams params) {
       .flatMap((payment) => saveOrder(payment));
 }
 
+// TaskEither.tryCatch는 예외를 던지는 함수를 감쌉니다 (Either 반환 함수가 아님!)
+// _cartDataSource.getCart()는 Future<Cart>를 반환하고 실패 시 예외를 던집니다.
 TaskEither<OrderFailure, Cart> getCart(String cartId) {
   return TaskEither.tryCatch(
-    () => _cartRepository.getCart(cartId),
+    () => _cartDataSource.getCart(cartId),  // Future<Cart>, 예외 가능
     (error, stackTrace) => OrderFailure.cartError(error.toString()),
   );
 }
 
+// TaskEither.tryCatch는 예외를 던지는 함수를 감쌉니다 (Either 반환 함수가 아님!)
+// _orderDataSource.checkStock()는 Future<bool>를 반환하고 실패 시 예외를 던집니다.
 TaskEither<OrderFailure, Cart> validateStock(Cart cart) {
   return TaskEither.tryCatch(
-    () => _orderRepository.checkStock(cart.items),
+    () => _orderDataSource.checkStock(cart.items),  // Future<bool>, 예외 가능
     (error, stackTrace) {
       if (error is NetworkException) return OrderFailure.networkError();
       return const OrderFailure.outOfStock();
@@ -721,6 +731,13 @@ Future<Either<Failure, DashboardData>> getDashboardData() async {
   final notificationResult = results[1] as Either<Failure, int>;
   final ordersResult = results[2] as Either<Failure, List<Order>>;
 
+  // 💡 더 안전한 방법: Dart 3 record를 사용한 병렬 실행
+  // final (userResult, notificationResult, ordersResult) = await (
+  //   _userRepository.getCurrentUser(),
+  //   _notificationRepository.getUnreadCount(),
+  //   _orderRepository.getRecentOrders(),
+  // ).wait;
+
   // 결과 조합
   return Either.Do(($) {
     final user = $(userResult);
@@ -769,11 +786,9 @@ Future<Either<OrderFailure, Order>> createOrder(OrderParams params) async {
 // test/domain/usecases/get_user_usecase_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:mockito/mockito.dart';
-import 'package:mockito/annotations.dart';
+import 'package:mocktail/mocktail.dart';
 
-@GenerateMocks([UserRepository])
-import 'get_user_usecase_test.mocks.dart';
+class MockUserRepository extends Mock implements UserRepository {}
 
 void main() {
   late GetUserUseCase useCase;
@@ -788,7 +803,7 @@ void main() {
     test('성공 시 Right(User) 반환', () async {
       // Arrange
       final user = User(id: '1', name: 'Test');
-      when(mockRepository.getUser(any))
+      when(() => mockRepository.getUser(any()))
           .thenAnswer((_) async => Right(user));
 
       // Act
@@ -796,7 +811,7 @@ void main() {
 
       // Assert
       expect(result.isRight(), true);
-      expect(result.getOrElse(() => throw Exception()), user);
+      expect(result.getOrElse((_) => throw Exception()), user);
 
       // 또는
       result.fold(
@@ -807,7 +822,7 @@ void main() {
 
     test('실패 시 Left(UserFailure) 반환', () async {
       // Arrange
-      when(mockRepository.getUser(any))
+      when(() => mockRepository.getUser(any()))
           .thenAnswer((_) async => const Left(UserFailure.notFound()));
 
       // Act
@@ -830,7 +845,7 @@ void main() {
 test('캐시에 사용자가 있으면 Some 반환', () {
   // Arrange
   final cachedUser = CachedUser()..odId = '1'..name = 'Test';
-  when(mockDatabase.getCachedUser('1'))
+  when(() => mockDatabase.getCachedUser('1'))
       .thenReturn(Some(cachedUser));
 
   // Act
@@ -846,7 +861,7 @@ test('캐시에 사용자가 있으면 Some 반환', () {
 
 test('캐시에 사용자가 없으면 None 반환', () {
   // Arrange
-  when(mockDatabase.getCachedUser('999'))
+  when(() => mockDatabase.getCachedUser('999'))
       .thenReturn(const None());
 
   // Act
@@ -885,16 +900,12 @@ result.fold(
 );
 
 // ✅ 에러 타입을 도메인에 맞게 정의
-sealed class UserFailure {
-  const UserFailure();
-}
-
-final class NetworkFailure extends UserFailure {
-  const NetworkFailure();
-}
-
-final class NotFoundFailure extends UserFailure {
-  const NotFoundFailure();
+@freezed
+sealed class UserFailure with _$UserFailure {
+  const factory UserFailure.network() = NetworkFailure;
+  const factory UserFailure.notFound() = NotFoundFailure;
+  const factory UserFailure.unauthorized() = UnauthorizedFailure;
+  const factory UserFailure.unknown() = UnknownFailure;
 }
 ```
 
@@ -902,7 +913,7 @@ final class NotFoundFailure extends UserFailure {
 
 ```dart
 // ❌ Either를 무시하고 getOrElse만 사용
-final user = (await getUser(id)).getOrElse(() => User.empty());
+final user = (await getUser(id)).getOrElse((_) => User.empty());
 // 에러 처리가 누락됨!
 
 // ❌ 모든 곳에 Either 사용 (오버엔지니어링)
@@ -1016,3 +1027,7 @@ class UserBloc {
 - [ ] Unit 타입을 사용하여 반환값이 없는 성공을 표현할 수 있다
 - [ ] Either.Do와 TaskEither.Do의 차이를 이해하고 적절히 사용할 수 있다
 - [ ] 언제 Either를 사용하고 언제 Exception을 사용해야 하는지 판단할 수 있다
+
+---
+
+**다음 문서:** [ModularArchitecture - 모듈러 아키텍처](./ModularArchitecture.md)

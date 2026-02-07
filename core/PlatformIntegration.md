@@ -1,5 +1,7 @@
 # Flutter 플랫폼 통합 가이드 (시니어)
 
+> **Flutter 3.27+ / Dart 3.6+** | pigeon ^22.0.0 | ffigen ^13.0.0 | ffi ^2.1.3
+
 > 네이티브 플랫폼과의 심층 통합을 위한 고급 패턴 및 최적화 전략
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
@@ -124,7 +126,7 @@ class BiometricPlatformChannel {
       );
       return result;
     } on PlatformException catch (e) {
-      print('Biometric authentication failed: ${e.message}');
+      debugPrint('Biometric authentication failed: ${e.message}');
       rethrow;
     }
   }
@@ -134,7 +136,7 @@ class BiometricPlatformChannel {
       final bool result = await _channel.invokeMethod('isAvailable');
       return result;
     } on PlatformException catch (e) {
-      print('Failed to check biometric availability: ${e.message}');
+      debugPrint('Failed to check biometric availability: ${e.message}');
       return false;
     }
   }
@@ -169,16 +171,34 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
-class BiometricPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
+class BiometricPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, ActivityAware {
     private lateinit var channel: MethodChannel
-    private lateinit var activity: FragmentActivity
+    private var activity: FragmentActivity? = null
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(binding.binaryMessenger, "com.example.app/biometric")
         channel.setMethodCallHandler(this)
+    }
+
+    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        activity = binding.activity as FragmentActivity
+    }
+
+    override fun onDetachedFromActivity() {
+        activity = null
+    }
+
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+        activity = binding.activity as FragmentActivity
+    }
+
+    override fun onDetachedFromActivityForConfigChanges() {
+        activity = null
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -418,7 +438,10 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
   StreamSubscription<LocationData>? _locationSubscription;
 
   LocationBloc(this._locationChannel) : super(const LocationState.initial()) {
-    on<LocationEvent>(_onEvent);
+    on<StartTracking>((event, emit) => _onStartTracking(emit));
+    on<StopTracking>((event, emit) => _onStopTracking(emit));
+    on<LocationUpdated>((event, emit) => emit(LocationState.updated(event.location)));
+    on<LocationError>((event, emit) => emit(LocationState.error(event.message)));
   }
 
   Future<void> _onStartTracking(Emitter<LocationState> emit) async {
@@ -446,8 +469,8 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
   }
 
   @override
-  Future<void> close() {
-    _locationSubscription?.cancel();
+  Future<void> close() async {
+    await _locationSubscription?.cancel();
     return super.close();
   }
 }
@@ -634,6 +657,7 @@ void process_array(int32_t* arr, int32_t length) {
 // lib/src/native_calculator.dart
 import 'dart:ffi' as ffi;
 import 'dart:io';
+import 'package:ffi/ffi.dart';
 
 // C 함수 시그니처 정의
 typedef AddFunc = ffi.Int32 Function(ffi.Int32 a, ffi.Int32 b);
@@ -673,7 +697,7 @@ class NativeCalculator {
 
   List<int> processArray(List<int> input) {
     // Dart List를 C 배열로 변환
-    final pointer = ffi.calloc<ffi.Int32>(input.length);
+    final pointer = calloc<ffi.Int32>(input.length);
 
     try {
       // 데이터 복사
@@ -693,7 +717,7 @@ class NativeCalculator {
       return result;
     } finally {
       // 메모리 해제
-      ffi.calloc.free(pointer);
+      calloc.free(pointer);
     }
   }
 }
@@ -724,6 +748,8 @@ void apply_filter(Image* image, Color* tint);
 // ============= Dart FFI 구조체 =============
 import 'dart:ffi' as ffi;
 import 'dart:typed_data';
+import 'dart:ui' show Color; // Color 타입 사용을 위해 필요
+import 'package:ffi/ffi.dart';
 
 // Dart에서 C 구조체 정의
 class ImageStruct extends ffi.Struct {
@@ -783,13 +809,13 @@ class NativeImageProcessor {
   ) {
     // 이미지 데이터를 C 메모리에 할당
     final dataSize = width * height * channels;
-    final dataPointer = ffi.calloc<ffi.Uint8>(dataSize);
+    final dataPointer = calloc<ffi.Uint8>(dataSize);
 
     // 이미지 구조체 할당
-    final imagePointer = ffi.calloc<ImageStruct>();
+    final imagePointer = calloc<ImageStruct>();
 
     // 색상 구조체 할당
-    final colorPointer = ffi.calloc<ColorStruct>();
+    final colorPointer = calloc<ColorStruct>();
 
     try {
       // 데이터 복사
@@ -821,9 +847,9 @@ class NativeImageProcessor {
       return result;
     } finally {
       // 메모리 해제
-      ffi.calloc.free(dataPointer);
-      ffi.calloc.free(imagePointer);
-      ffi.calloc.free(colorPointer);
+      calloc.free(dataPointer);
+      calloc.free(imagePointer);
+      calloc.free(colorPointer);
     }
   }
 }
@@ -892,7 +918,7 @@ class ComputationBloc extends Bloc<ComputationEvent, ComputationState> {
   final NativeHeavyComputation _computation;
 
   ComputationBloc(this._computation) : super(const ComputationState.initial()) {
-    on<ComputationEvent>(_onEvent);
+    on<StartComputation>((event, emit) => _onCompute(event.input, emit));
   }
 
   Future<void> _onCompute(int input, Emitter<ComputationState> emit) async {
@@ -1078,11 +1104,17 @@ class AuthCallbackHandler extends AuthCallbackApi {
   }
 }
 
+// 초기화 시 등록 필요:
+// final handler = AuthCallbackHandler();
+// AuthCallbackApi.setUp(handler);
+
 // ============= Android 구현 (Kotlin) =============
 class AuthApiImpl : AuthApi {
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
     override fun login(request: LoginRequest, callback: (Result<LoginResponse>) -> Unit) {
         // 비동기 작업
-        GlobalScope.launch {
+        scope.launch {
             try {
                 val user = authenticateUser(request.email!!, request.password!!)
                 val token = generateToken(user)
@@ -1225,7 +1257,7 @@ class Order {
   PaymentInfo? paymentInfo;
   Address? shippingAddress;
   double? total;
-  DateTime? createdAt;
+  int? createdAtMs; // milliseconds since epoch (Pigeon does not support DateTime)
 }
 
 class OrderItem {
@@ -1613,6 +1645,8 @@ PlatformViewLink(
 ```dart
 // ============= 지연 로딩 =============
 class LazyNativeView extends StatefulWidget {
+  const LazyNativeView({super.key});
+
   @override
   State<LazyNativeView> createState() => _LazyNativeViewState();
 }
@@ -1666,6 +1700,8 @@ class ConditionalNativeView extends StatelessWidget {
 
 // ============= 메모리 관리 =============
 class ManagedNativeView extends StatefulWidget {
+  const ManagedNativeView({super.key});
+
   @override
   State<ManagedNativeView> createState() => _ManagedNativeViewState();
 }
@@ -1819,17 +1855,17 @@ class StorageServiceImpl implements StorageService {
 }
 
 // lib/src/services/storage_service_web.dart
-import 'dart:html' as html;
+import 'package:web/web.dart' as web;
 
 class StorageServiceImpl implements StorageService {
   @override
   Future<void> save(String key, String value) async {
-    html.window.localStorage[key] = value;
+    web.window.localStorage.setItem(key, value);
   }
 
   @override
   Future<String?> read(String key) async {
-    return html.window.localStorage[key];
+    return web.window.localStorage.getItem(key);
   }
 }
 
@@ -1890,7 +1926,7 @@ class AdaptiveScrollView extends StatelessWidget {
 class AdaptivePageRoute<T> extends PageRoute<T> {
   final WidgetBuilder builder;
 
-  AdaptivePageRoute({required this.builder});
+  AdaptivePageRoute({required this.builder, super.settings});
 
   @override
   Color get barrierColor => Colors.transparent;
@@ -2173,14 +2209,17 @@ class IsolateCommunication {
 
 // 사용 예
 class DataProcessingBloc extends Bloc<DataEvent, DataState> {
+  StreamSubscription? _backgroundSubscription;
+
   DataProcessingBloc() : super(const DataState.initial()) {
-    on<DataEvent>(_onEvent);
+    on<ProcessData>((event, emit) => _onProcess(emit));
+    on<BackgroundResultReceived>((event, emit) => _onBackgroundResultReceived(event.result, emit));
 
     // Isolate 초기화
     IsolateCommunication.initialize();
 
     // Background Isolate로부터 메시지 수신
-    IsolateCommunication.messagesFromBackground.listen((message) {
+    _backgroundSubscription = IsolateCommunication.messagesFromBackground.listen((message) {
       add(DataEvent.backgroundResultReceived(message));
     });
   }
@@ -2200,6 +2239,12 @@ class DataProcessingBloc extends Bloc<DataEvent, DataState> {
     Emitter<DataState> emit,
   ) async {
     emit(DataState.completed(result));
+  }
+
+  @override
+  Future<void> close() async {
+    await _backgroundSubscription?.cancel();
+    return super.close();
   }
 }
 ```
@@ -2454,7 +2499,7 @@ class BiometricAuthService {
       });
       return result;
     } on PlatformException catch (e) {
-      print('Biometric authentication error: ${e.message}');
+      debugPrint('Biometric authentication error: ${e.message}');
       return false;
     }
   }
@@ -2545,7 +2590,6 @@ class BiometricPlugin(
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle("Biometric Authentication")
             .setSubtitle(reason)
-            .setNegativeButtonText("Cancel")
             .setAllowedAuthenticators(
                 BiometricManager.Authenticators.BIOMETRIC_STRONG or
                 BiometricManager.Authenticators.DEVICE_CREDENTIAL
@@ -2787,7 +2831,7 @@ class SerializationBenchmark {
       JsonSerializer.decode(jsonDecode(encoded));
     }
     final jsonDuration = DateTime.now().difference(jsonStart);
-    print('JSON: ${jsonDuration.inMilliseconds}ms');
+    debugPrint('JSON: ${jsonDuration.inMilliseconds}ms');
 
     // MessagePack
     final msgpackStart = DateTime.now();
@@ -2796,7 +2840,7 @@ class SerializationBenchmark {
       MessagePackSerializer.decode(encoded);
     }
     final msgpackDuration = DateTime.now().difference(msgpackStart);
-    print('MessagePack: ${msgpackDuration.inMilliseconds}ms');
+    debugPrint('MessagePack: ${msgpackDuration.inMilliseconds}ms');
 
     // Protobuf
     final protobufStart = DateTime.now();
@@ -2805,7 +2849,7 @@ class SerializationBenchmark {
       ProtobufSerializer.decode(encoded);
     }
     final protobufDuration = DateTime.now().difference(protobufStart);
-    print('Protobuf: ${protobufDuration.inMilliseconds}ms');
+    debugPrint('Protobuf: ${protobufDuration.inMilliseconds}ms');
 
     // 결과 (10,000회 반복):
     // JSON: ~500ms
@@ -2928,7 +2972,7 @@ import 'dart:io';
 
 class DataCompression {
   static Uint8List compress(Uint8List data) {
-    return gzip.encode(data);
+    return Uint8List.fromList(gzip.encode(data));
   }
 
   static Uint8List decompress(Uint8List data) {
@@ -3060,3 +3104,6 @@ Dart FFI를 활용하여 C 라이브러리(예: 이미지 처리, 암호화)를 
 - [ ] Dart FFI로 C/C++ 함수를 호출하는 바인딩을 작성할 수 있다
 - [ ] Platform View를 사용한 네이티브 UI 임베딩을 구현할 수 있다
 - [ ] 플랫폼별 분기 처리와 에러 핸들링을 적용할 수 있다
+
+---
+**다음 문서:** [Riverpod](./Riverpod.md) - Alternative State Management

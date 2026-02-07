@@ -50,14 +50,14 @@ dependencies:
   dio: ^5.9.0
   pretty_dio_logger: ^1.4.0
   connectivity_plus: ^7.0.0  # List<ConnectivityResult> 반환
-  injectable: ^2.7.1
+  injectable: ^2.5.0
   freezed_annotation: ^3.1.0
   fpdart: ^1.2.0
   crypto: ^3.0.3  # for SSL pinning (sha256)
 
 dev_dependencies:
-  injectable_generator: ^2.12.0
-  build_runner: ^2.10.5
+  injectable_generator: ^2.7.0
+  build_runner: ^2.4.15
   freezed: ^3.2.4
 ```
 
@@ -1348,7 +1348,7 @@ dio.interceptors.add(authInterceptor);     // 순서가 중요함
 ### 11.1 cURL 명령어 출력
 
 ```dart
-// import 'dart:convert'; // for jsonEncode
+import 'dart:convert';
 
 @injectable
 class CurlInterceptor extends Interceptor {

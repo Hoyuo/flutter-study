@@ -2,6 +2,8 @@
 
 > 이 문서는 GetIt과 Injectable을 사용한 의존성 주입 설정 방법을 설명합니다.
 
+> **Flutter 3.27+ / Dart 3.6+** | get_it ^9.2.0 | injectable ^2.5.0 | injectable_generator ^2.7.0
+
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - GetIt 컨테이너를 설정하고 서비스를 등록할 수 있다
 > - Injectable 어노테이션으로 자동 DI 코드를 생성할 수 있다
@@ -39,11 +41,11 @@ class HomeBloc {
 # pubspec.yaml (2026년 1월 기준)
 dependencies:
   get_it: ^9.2.0          # 2026년 1월 기준 최신
-  injectable: ^2.7.1      # get_it >=8.3.0 <10.0.0 호환
+  injectable: ^2.5.0      # 프로젝트 표준 버전
 
 dev_dependencies:
-  injectable_generator: ^2.12.0
-  build_runner: ^2.10.5
+  injectable_generator: ^2.7.0
+  build_runner: ^2.4.15
 ```
 
 > **get_it v9.0.0+ 주요 변경사항:**
@@ -522,12 +524,11 @@ void main() async {
 ```dart
 // test/helpers/test_injection.dart
 import 'package:get_it/get_it.dart';
-import 'package:mockito/mockito.dart';
-import 'package:mockito/annotations.dart';
+import 'package:mocktail/mocktail.dart';
 
-import 'test_injection.mocks.dart';
+class MockHomeRepository extends Mock implements HomeRepository {}
+class MockGetHomeDataUseCase extends Mock implements GetHomeDataUseCase {}
 
-@GenerateMocks([HomeRepository, GetHomeDataUseCase])
 void setupTestDependencies() {
   final getIt = GetIt.instance;
 
@@ -631,9 +632,9 @@ extension GetItInjectableX on _i1.GetIt {
 
 | 타입 | 어노테이션 | 이유 |
 |------|-----------|------|
-| DataSource | `@LazySingleton` | 재사용, 리소스 절약 |
-| Repository | `@LazySingleton` | 상태 없음, 재사용 |
-| Mapper | `@lazySingleton` | 상태 없음, 재사용 |
+| DataSource | `@LazySingleton(as: Interface)` | 재사용, 인터페이스 바인딩 |
+| Repository | `@LazySingleton(as: Interface)` | 상태 없음, 인터페이스 바인딩 |
+| Mapper | `@lazySingleton` | 상태 없음, 구체 클래스 직접 등록 |
 | UseCase | `@injectable` | 매번 새로 생성해도 무방 |
 | Bloc | 등록 안함 | BlocProvider에서 관리 |
 
@@ -714,6 +715,9 @@ targets:
 ```dart
 // Core를 먼저 초기화해야 Feature가 Dio 등을 주입받을 수 있음
 Future<void> configureDependencies(String env) async {
+  // 0. App 모듈 자체 등록
+  getIt.init(environment: env);
+
   // 1. Core 먼저
   network.initNetworkPackage(getIt);
   storage.initStoragePackage(getIt);
@@ -785,3 +789,6 @@ GetIt에 등록된 서비스를 Mock으로 교체하여 UseCase의 Unit 테스�
 - [ ] @module을 사용하여 외부 라이브러리 의존성을 등록할 수 있는가?
 - [ ] 환경별(@Environment)로 다른 구현체를 주입할 수 있는가?
 - [ ] build_runner로 DI 코드를 자동 생성할 수 있는가?
+
+---
+**다음 문서:** [Environment](./Environment.md) - 환경별 설정 관리

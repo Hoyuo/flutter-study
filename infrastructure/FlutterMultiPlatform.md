@@ -129,7 +129,7 @@ dependencies:
   json_annotation: ^4.9.0
 
   # Dependency Injection
-  injectable: ^2.7.1
+  injectable: ^2.5.0
   get_it: ^9.2.0
 
   # Responsive Design
@@ -159,10 +159,10 @@ dev_dependencies:
     sdk: flutter
 
   # Code Generation
-  build_runner: ^2.4.12
+  build_runner: ^2.4.15
   freezed: ^3.2.4
-  json_serializable: ^6.8.0
-  injectable_generator: ^2.6.2
+  json_serializable: ^6.9.5
+  injectable_generator: ^2.7.0
 
   # Linting
   flutter_lints: ^5.0.0

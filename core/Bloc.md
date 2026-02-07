@@ -115,10 +115,12 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 ### 의존성 추가
 
 ```yaml
-# pubspec.yaml (2026년 1월 기준)
+# pubspec.yaml (2024.01 기준)
 dependencies:
   flutter_bloc: ^9.1.1  # 9.x 최신 stable
   equatable: ^2.0.8
+  bloc_concurrency: ^0.2.6  # droppable, restartable, sequential transformer
+  stream_transform: ^2.1.0  # debounce, throttle
 
 dev_dependencies:
   bloc_test: ^10.0.0    # bloc ^9.0.0 호환
@@ -510,7 +512,7 @@ on<ConnectionStatusChanged>((event, emit) async {
 
 ### isClosed 체크 (중요)
 
-비동기 작업 후에는 반드시 `isClosed`와 `emit.isDone`을 체크해야 합니다.
+비동기 작업 후에는 `emit.isDone`을 체크하는 것이 권장됩니다 (bloc이 close되거나 동일 타입의 새 이벤트가 처리될 때 true). `isClosed`는 추가적인 방어 코드입니다.
 
 ```dart
 on<DataFetchRequested>((event, emit) async {
@@ -696,7 +698,7 @@ BlocListener<LoginBloc, LoginState>(
   },
   listener: (context, state) {
     if (state.isSuccess) {
-      Navigator.pushReplacementNamed(context, '/home');
+      context.go('/home');
     }
     if (state.isFailure) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -739,7 +741,7 @@ BlocConsumer<LoginBloc, LoginState>(
   listenWhen: (previous, current) => previous.status != current.status,
   listener: (context, state) {
     if (state.isSuccess) {
-      Navigator.pushReplacementNamed(context, '/home');
+      context.go('/home');
     }
     if (state.isFailure) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -801,6 +803,8 @@ Widget build(BuildContext context) {
 ### 패턴 1: Bloc 생성자 주입
 
 ```dart
+import 'dart:async'; // StreamSubscription 사용
+
 class UserBloc extends Bloc<UserEvent, UserState> {
   final AuthBloc _authBloc;
   late StreamSubscription<AuthState> _authSubscription;
@@ -835,7 +839,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 ```dart
 // 공유 Repository
 class SessionRepository {
-  // import 'package:rxdart/rxdart.dart';
+  // rxdart 패키지 필요: rxdart: ^0.28.0
   final _sessionController = BehaviorSubject<Session?>.seeded(null);
 
   Stream<Session?> get sessionStream => _sessionController.stream;
@@ -847,6 +851,10 @@ class SessionRepository {
 
   void clearSession() {
     _sessionController.add(null);
+  }
+
+  Future<void> dispose() async {
+    await _sessionController.close();
   }
 }
 
@@ -877,6 +885,12 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         add(LoadUserProfile(session.userId));
       }
     });
+  }
+
+  @override
+  Future<void> close() {
+    _sessionSubscription.cancel();
+    return super.close();
   }
 }
 ```
@@ -1195,21 +1209,26 @@ class PaginationState<T> with _$PaginationState<T> {
 import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 
+@freezed
+class ProductListEvent with _$ProductListEvent {
+  const factory ProductListEvent.started() = _Started;
+  const factory ProductListEvent.loadMore() = _LoadMore;
+  const factory ProductListEvent.refresh() = _Refresh;
+}
+
 class ProductListBloc extends Bloc<ProductListEvent, PaginationState<Product>> {
   final GetProductsUseCase _getProducts;
 
   ProductListBloc(this._getProducts) : super(const PaginationState()) {
-    on<ProductListEvent>(
-      (event, emit) => event.map(
-        started: (_) => _onStarted(emit),
-        loadMore: (_) => _onLoadMore(emit),
-        refresh: (_) => _onRefresh(emit),
-      ),
-      // 중복 요청 방지: 이전 요청 취소
-      transformer: droppable(),
-    );
+    // 각 이벤트 타입별 독립적인 Transformer 적용
+    // 개별 등록하면 Transformer가 타입별로 독립적으로 동작
+    on<_Started>((event, emit) => _onStarted(emit), transformer: droppable());
+    on<_LoadMore>((event, emit) => _onLoadMore(emit), transformer: droppable());
+    on<_Refresh>((event, emit) => _onRefresh(emit), transformer: restartable());
   }
 
+  // 참고: failure.message는 Failure 클래스에 message getter가 정의되어 있다고 가정
+  // Freezed Failure 사용 시 failure.when(...)으로 메시지 추출 (ErrorHandling.md 참조)
   Future<void> _onStarted(Emitter<PaginationState<Product>> emit) async {
     if (state.items.isNotEmpty) return; // 이미 로드됨
 
@@ -1254,7 +1273,13 @@ class ProductListBloc extends Bloc<ProductListEvent, PaginationState<Product>> {
   }
 
   Future<void> _onRefresh(Emitter<PaginationState<Product>> emit) async {
-    emit(const PaginationState(isLoading: true));
+    emit(state.copyWith(
+      isLoading: true,
+      error: null,
+      items: [],
+      currentPage: 1,
+      hasReachedEnd: false,
+    ));
 
     final result = await _getProducts(page: 1, pageSize: state.pageSize);
 
@@ -1278,6 +1303,8 @@ class ProductListBloc extends Bloc<ProductListEvent, PaginationState<Product>> {
 
 ```dart
 class ProductListPage extends StatelessWidget {
+  const ProductListPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ProductListBloc, PaginationState<Product>>(
@@ -1324,7 +1351,7 @@ class ProductListPage extends StatelessWidget {
 
 | 패턴 | 설명 |
 |-----|------|
-| `droppable()` | 이전 요청 취소, 최신 요청만 처리 |
+| `droppable()` | 처리 중 새 이벤트 무시 (중복 요청 방지) |
 | `canLoadMore` | 중복 로드 방지 |
 | `ScrollEndNotification` | 스크롤 80% 지점에서 미리 로드 |
 | `RefreshIndicator` | Pull-to-refresh 지원 |
@@ -1359,7 +1386,7 @@ void main() async {
 
   // HydratedStorage 초기화
   HydratedBloc.storage = await HydratedStorage.build(
-    storageDirectory: await getApplicationDocumentsDirectory(),
+    storageDirectory: await getApplicationSupportDirectory(),
   );
 
   runApp(const MyApp());
@@ -1384,13 +1411,13 @@ class CounterBloc extends HydratedBloc<CounterEvent, int> {
     on<Decrement>((event, emit) => emit(state - 1));
   }
 
-  /// 상태를 JSON으로 직렬화
+  /// JSON에서 상태 복원
   @override
   int? fromJson(Map<String, dynamic> json) {
     return json['value'] as int?;
   }
 
-  /// JSON에서 상태 복원
+  /// 상태를 JSON으로 직렬화
   @override
   Map<String, dynamic>? toJson(int state) {
     return {'value': state};
@@ -1550,7 +1577,7 @@ void main() async {
 
   // 기본 경로 사용
   HydratedBloc.storage = await HydratedStorage.build(
-    storageDirectory: await getApplicationDocumentsDirectory(),
+    storageDirectory: await getApplicationSupportDirectory(),
   );
 
   // 또는 커스텀 경로 사용
@@ -1702,24 +1729,20 @@ class AuthBloc extends HydratedBloc<AuthEvent, AuthState> {
 ```yaml
 dev_dependencies:
   bloc_test: ^10.0.0
-  mockito: ^5.6.3
-  build_runner: ^2.4.0
+  mocktail: ^1.0.4    # bloc_test와 호환, 코드 생성 불필요
 ```
 
 ### Mock 생성
 
 ```dart
-import 'package:mockito/mockito.dart';
-import 'package:mockito/annotations.dart';
+import 'package:mocktail/mocktail.dart';
 
-@GenerateMocks([AuthRepository, LoginBloc])
-void main() {}
+class MockAuthRepository extends Mock implements AuthRepository {}
 
-// 생성된 Mock 클래스들은 'test_file.mocks.dart' 파일에서 사용
-// dart run build_runner build 실행 필요
+// mocktail은 코드 생성이 필요 없음 (build_runner 불필요)
 ```
 
-또는 수동으로 Mock Bloc 정의:
+Mock Bloc 정의:
 
 ```dart
 import 'package:bloc_test/bloc_test.dart';
@@ -1733,10 +1756,8 @@ class MockLoginBloc extends MockBloc<LoginEvent, LoginState>
 ```dart
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
-import 'package:mockito/annotations.dart';
+import 'package:mocktail/mocktail.dart';
 
-@GenerateMocks([AuthRepository])
 void main() {
   late MockAuthRepository mockAuthRepository;
 
@@ -1756,9 +1777,9 @@ void main() {
     blocTest<LoginBloc, LoginState>(
       'LoginSubmitted 성공 시 status가 success로 변경',
       setUp: () {
-        when(mockAuthRepository.login(
-          email: anyNamed('email'),
-          password: anyNamed('password'),
+        when(() => mockAuthRepository.login(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
         )).thenAnswer((_) async => User(id: '1', name: 'Test'));
       },
       build: () => LoginBloc(authRepository: mockAuthRepository),
@@ -1771,7 +1792,7 @@ void main() {
         LoginState.initial().copyWith(status: LoginStatus.success),
       ],
       verify: (_) {
-        verify(mockAuthRepository.login(
+        verify(() => mockAuthRepository.login(
           email: 'test@test.com',
           password: 'password123',
         )).called(1);
@@ -1781,9 +1802,9 @@ void main() {
     blocTest<LoginBloc, LoginState>(
       'LoginSubmitted 실패 시 status가 failure로 변경',
       setUp: () {
-        when(mockAuthRepository.login(
-          email: anyNamed('email'),
-          password: anyNamed('password'),
+        when(() => mockAuthRepository.login(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
         )).thenThrow(Exception('Invalid credentials'));
       },
       build: () => LoginBloc(authRepository: mockAuthRepository),
@@ -1864,7 +1885,7 @@ testWidgets('LoginPage 테스트', (tester) async {
   await tester.tap(find.byType(ElevatedButton));
 
   // 이벤트 발생 확인
-  verify(mockBloc.add(const LoginSubmitted(
+  verify(() => mockBloc.add(const LoginSubmitted(
     email: 'test@test.com',
     password: 'password123',
   ))).called(1);
@@ -2020,3 +2041,11 @@ Future<void> _onDataRequested(
 - [ ] BlocProvider로 Bloc 생명주기를 관리하는 이유를 설명할 수 있다
 - [ ] 비동기 작업 후 isClosed를 체크하는 이유를 설명할 수 있다
 - [ ] BlocObserver를 사용하여 전역 로깅을 구현할 수 있다
+- [ ] Bloc 간 통신 패턴(생성자 주입, Repository, BlocListener)의 장단점을 설명할 수 있다
+- [ ] Pagination Bloc에서 droppable transformer를 활용한 중복 요청 방지를 구현할 수 있다
+- [ ] HydratedBloc으로 상태를 로컬에 저장하고 복원할 수 있다
+- [ ] blocTest를 사용하여 Bloc의 이벤트/상태 흐름을 테스트할 수 있다
+
+---
+
+학습 완료 후 다음 문서: [BlocUiEffect](./BlocUiEffect.md)

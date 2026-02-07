@@ -61,7 +61,7 @@ dependencies:
   fpdart: ^1.2.0
 
   # Dependency Injection
-  injectable: ^2.7.1
+  injectable: ^2.5.0
   get_it: ^9.2.0
 
   # Code Generation
@@ -88,10 +88,10 @@ dev_dependencies:
     sdk: flutter
 
   # Code Generation
-  build_runner: ^2.4.13
+  build_runner: ^2.4.15
   freezed: ^3.2.4
-  json_serializable: ^6.8.0
-  injectable_generator: ^2.6.2
+  json_serializable: ^6.9.5
+  injectable_generator: ^2.7.0
 
   # Testing
   bloc_test: ^9.1.7
@@ -272,6 +272,7 @@ lib/
 ```dart
 // lib/features/maps/domain/entities/location.dart
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'dart:math';
 
 part 'location.freezed.dart';
 
@@ -886,7 +887,7 @@ class MapOverlayControls extends StatelessWidget {
 
   void _addPolygon(BuildContext context) {
     final polygon = Polygon(
-      polygonId: const PolylineId('area_1'),
+      polygonId: const PolygonId('area_1'),
       points: const [
         LatLng(37.5665, 126.9780),
         LatLng(37.5700, 126.9780),
@@ -1089,6 +1090,8 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:fpdart/fpdart.dart';
+import '../../../../core/error/failures.dart';
 import '../../domain/entities/location.dart';
 import '../../domain/repositories/location_repository.dart';
 

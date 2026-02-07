@@ -53,7 +53,7 @@ dependencies:
 
 dev_dependencies:
   drift_dev: ^2.14.0
-  build_runner: ^2.10.5
+  build_runner: ^2.4.15
 ```
 
 ### 1.3 Database 클래스 생성
@@ -103,6 +103,8 @@ dart run build_runner watch
 
 ```dart
 // lib/data/local/tables/users.dart
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 class Users extends Table {
@@ -1104,6 +1106,9 @@ LazyDatabase _openEncryptedConnection() {
 ### 11.3 키 관리 (SecureStorage)
 
 ```dart
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class DatabaseKeyManager {

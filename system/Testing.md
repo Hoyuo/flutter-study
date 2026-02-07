@@ -52,7 +52,7 @@ dev_dependencies:
   bloc_test: ^9.1.7
   mocktail: ^1.0.4
   mockito: ^5.6.3
-  build_runner: ^2.4.0  # mockito 코드 생성용
+  build_runner: ^2.4.15  # mockito 코드 생성용
 ```
 
 ### 2.2 테스트 폴더 구조

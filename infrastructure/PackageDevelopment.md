@@ -137,6 +137,9 @@ class StringUtils {
 // lib/src/validators.dart
 import 'package:meta/meta.dart';
 
+/// 커스텀 검증 함수 타입
+typedef ValidatorFunction = bool Function(String value);
+
 /// 입력 값 검증을 위한 유틸리티
 class Validators {
   Validators._();
@@ -167,9 +170,6 @@ class Validators {
 
     return hasUppercase && hasLowercase && hasDigits && hasSpecialChars;
   }
-
-  /// 커스텀 검증 함수 타입
-  typedef ValidatorFunction = bool Function(String value);
 
   /// 여러 검증 함수를 조합
   static ValidatorFunction combine(List<ValidatorFunction> validators) {
@@ -1516,7 +1516,7 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   test: ^1.25.0
   mockito: ^5.4.4
-  build_runner: ^2.4.13
+  build_runner: ^2.4.15
 
 topics:
   - utilities

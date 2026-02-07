@@ -654,8 +654,8 @@ class MainAxisAlignmentDemo extends StatelessWidget {
 |------|------|
 | `start` | 교차축 시작점 정렬 |
 | `end` | 교차축 끝점 정렬 |
-| `center` | 교차축 중앙 정렬 |
-| `stretch` | 교차축 방향으로 늘림 (기본값) |
+| `center` | 교차축 중앙 정렬 (기본값) |
+| `stretch` | 교차축 방향으로 늘림 |
 | `baseline` | 텍스트 베이스라인 정렬 |
 
 ```dart
@@ -1209,13 +1209,13 @@ class StackFitDemo extends StatelessWidget {
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    color: Colors.blue.withOpacity(0.3),
+                    color: Colors.blue.withValues(alpha: 0.3),
                     child: Center(child: Text('Child 1')),
                   ),
                   Container(
                     width: 100,
                     height: 100,
-                    color: Colors.red.withOpacity(0.3),
+                    color: Colors.red.withValues(alpha: 0.3),
                     child: Center(child: Text('Child 2')),
                   ),
                 ],
@@ -1301,7 +1301,7 @@ class PositionedExample extends StatelessWidget {
             top: 50,
             bottom: 50,
             child: Container(
-              color: Colors.purple.withOpacity(0.5),
+              color: Colors.purple.withValues(alpha: 0.5),
               child: Center(
                 child: Text(
                   'Stretched',
@@ -1314,7 +1314,7 @@ class PositionedExample extends StatelessWidget {
           // Positioned.fill (전체 채우기 = left:0, right:0, top:0, bottom:0)
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               child: Center(
                 child: Text(
                   'Overlay',
@@ -1454,7 +1454,7 @@ class _IndexedStackExampleState extends State<IndexedStackExample> {
 
   Widget _buildTab(Color color, String label, IconData icon) {
     return Container(
-      color: color.withOpacity(0.3),
+      color: color.withValues(alpha: 0.3),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1814,10 +1814,14 @@ class ResponsiveGridExample extends StatelessWidget {
             columnCount = 4; // 데스크톱
           }
 
+          // ⚠️ CustomMultiChildLayout은 intrinsic size를 지원하지 않으므로
+          // SingleChildScrollView 안에서는 반드시 SizedBox로 명시적 높이를 제공하세요.
           return SingleChildScrollView(
             padding: EdgeInsets.all(8),
-            child: CustomMultiChildLayout(
-              delegate: ResponsiveGridDelegate(columnCount: columnCount),
+            child: SizedBox(
+              height: (120.0 * (12 / columnCount).ceil()) + (8.0 * ((12 / columnCount).ceil() - 1)),
+              child: CustomMultiChildLayout(
+                delegate: ResponsiveGridDelegate(columnCount: columnCount),
               children: List.generate(
                 12,
                 (index) => LayoutId(
@@ -1839,6 +1843,7 @@ class ResponsiveGridExample extends StatelessWidget {
                     ),
                   ),
                 ),
+              ),
               ),
             ),
           );
@@ -1916,25 +1921,30 @@ class MasonryLayoutExample extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Masonry Layout')),
+      // ⚠️ CustomMultiChildLayout은 intrinsic size를 지원하지 않으므로
+      // SingleChildScrollView 안에서는 반드시 SizedBox로 명시적 높이를 제공하세요.
       body: SingleChildScrollView(
         padding: EdgeInsets.all(8),
-        child: CustomMultiChildLayout(
-          delegate: MasonryLayoutDelegate(
-            columnCount: 2,
-            spacing: 8,
-            itemHeights: itemHeights,
-          ),
-          children: List.generate(
-            itemHeights.length,
-            (index) => LayoutId(
-              id: index,
-              child: Card(
-                color: Colors.primaries[index % Colors.primaries.length],
-                child: Center(
-                  child: Text(
-                    'Item $index\n${itemHeights[index].toInt()}px',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+        child: SizedBox(
+          height: 1200, // delegate가 계산할 총 높이를 명시적으로 제공
+          child: CustomMultiChildLayout(
+            delegate: MasonryLayoutDelegate(
+              columnCount: 2,
+              spacing: 8,
+              itemHeights: itemHeights,
+            ),
+            children: List.generate(
+              itemHeights.length,
+              (index) => LayoutId(
+                id: index,
+                child: Card(
+                  color: Colors.primaries[index % Colors.primaries.length],
+                  child: Center(
+                    child: Text(
+                      'Item $index\n${itemHeights[index].toInt()}px',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
                   ),
                 ),
               ),
@@ -2064,6 +2074,8 @@ class SliverBasics extends StatelessWidget {
 | `expandedHeight` | 확장된 높이 | null |
 | `collapsedHeight` | 축소된 높이 | kToolbarHeight (56) |
 | `stretch` | 오버스크롤 시 늘어남 | false |
+
+> **참고**: 아래 예제는 SliverAppBar의 다양한 옵션을 비교하기 위한 학습용 코드입니다. 실전에서는 하나의 CustomScrollView에 하나의 SliverAppBar만 사용합니다.
 
 ```dart
 class SliverAppBarVariations extends StatelessWidget {
@@ -2782,28 +2794,26 @@ class LimitedBoxExample extends StatelessWidget {
             ),
           ),
 
-          // Row는 세로 방향이 unbounded → maxHeight 적용됨
+          // Row는 가로 방향(main axis)이 unbounded → maxWidth 적용됨
           Container(
             color: Colors.grey.shade200,
             padding: EdgeInsets.all(8),
             child: Row(
               children: [
                 LimitedBox(
-                  maxHeight: 50, // ✅ 적용됨 (vertical unbounded)
+                  maxWidth: 100, // ✅ 적용됨 (Row의 가로가 unbounded)
+                  maxHeight: 50, // ❌ 적용 안됨 (세로는 부모 constraints로 bounded)
                   child: Container(
-                    width: 100,
                     color: Colors.orange,
-                    child: Center(child: Text('50px\nheight')),
+                    child: Center(child: Text('100px\nwidth')),
                   ),
                 ),
                 SizedBox(width: 8),
                 LimitedBox(
-                  maxWidth: 100, // ❌ 적용 안됨 (horizontal bounded)
-                  maxHeight: 80, // ✅ 적용됨
+                  maxWidth: 80, // ✅ 적용됨 (가로 unbounded)
                   child: Container(
-                    width: 200, // 200px로 렌더링됨
                     color: Colors.blue,
-                    child: Center(child: Text('200px\nwidth')),
+                    child: Center(child: Text('80px\nwidth')),
                   ),
                 ),
               ],
@@ -2812,7 +2822,7 @@ class LimitedBoxExample extends StatelessWidget {
 
           SizedBox(height: 20),
 
-          // Column은 가로 방향이 unbounded → maxWidth 적용됨
+          // Column은 세로 방향(main axis)이 unbounded → maxHeight 적용됨
           Expanded(
             child: Container(
               color: Colors.grey.shade300,
@@ -2820,11 +2830,11 @@ class LimitedBoxExample extends StatelessWidget {
               child: Column(
                 children: [
                   LimitedBox(
-                    maxWidth: 150, // ✅ 적용됨 (horizontal unbounded)
+                    maxWidth: 150, // ❌ 적용 안됨 (가로는 부모 constraints로 bounded)
+                    maxHeight: 80, // ✅ 적용됨 (Column의 세로가 unbounded)
                     child: Container(
-                      height: 60,
                       color: Colors.green,
-                      child: Center(child: Text('150px width')),
+                      child: Center(child: Text('80px height')),
                     ),
                   ),
                 ],
@@ -2872,34 +2882,19 @@ class FractionallySizedBoxExample extends StatelessWidget {
 
             SizedBox(height: 30),
 
-            Container(
+            // FractionallySizedBox는 bounded constraints 내에서 사용해야 합니다.
+            // ❌ Row의 직접 자식으로 사용하면 가로가 unbounded → 크래시
+            // ✅ SizedBox 등 bounded 부모 내에서 사용하거나, Expanded로 감싸세요.
+            SizedBox(
               width: 300,
               height: 150,
-              color: Colors.grey.shade300,
-              child: Row(
-                children: [
-                  FractionallySizedBox(
-                    widthFactor: 0.3,
-                    child: Container(
-                      color: Colors.red,
-                      child: Center(child: Text('30%')),
-                    ),
-                  ),
-                  FractionallySizedBox(
-                    widthFactor: 0.5,
-                    child: Container(
-                      color: Colors.green,
-                      child: Center(child: Text('50%')),
-                    ),
-                  ),
-                  FractionallySizedBox(
-                    widthFactor: 0.2,
-                    child: Container(
-                      color: Colors.blue,
-                      child: Center(child: Text('20%')),
-                    ),
-                  ),
-                ],
+              child: FractionallySizedBox(
+                widthFactor: 0.5, // 300 * 0.5 = 150
+                heightFactor: 0.3, // 150 * 0.3 = 45
+                child: Container(
+                  color: Colors.red,
+                  child: Center(child: Text('50% x 30%')),
+                ),
               ),
             ),
           ],
@@ -3478,6 +3473,8 @@ Container(
 
 ## 10. 실전 레이아웃 패턴
 
+> **팁**: `EdgeInsets.all()`, `SizedBox()`, `TextStyle()` 등 불변 객체에는 `const`를 사용하면 리빌드 시 새 인스턴스 생성을 방지할 수 있습니다.
+
 ### 복잡한 UI 분해 전략
 
 ```dart
@@ -3950,7 +3947,7 @@ class __DesktopScaffoldState extends State<_DesktopScaffold> {
     );
   }
 
-  List<String> _getTitles() => ['Home', 'Search', 'Profile'];
+  List<String> _getTitles() => ['Home', 'Search', 'Profile', 'Settings'];
 
   Widget _getPage(int index) {
     return Center(
@@ -3965,7 +3962,7 @@ class __DesktopScaffoldState extends State<_DesktopScaffold> {
     );
   }
 
-  List<IconData> _getIcons() => [Icons.home, Icons.search, Icons.person];
+  List<IconData> _getIcons() => [Icons.home, Icons.search, Icons.person, Icons.settings];
 }
 ```
 
@@ -4068,3 +4065,7 @@ Pinterest 스타일의 Masonry 레이아웃을 CustomMultiChildLayout으로 구�
 - [ ] Unbounded constraints 에러를 진단하고 해결할 수 있다
 - [ ] RenderFlex overflow 에러의 3가지 해결 방법을 안다
 - [ ] CustomMultiChildLayout으로 복잡한 커스텀 레이아웃을 구현할 수 있다
+
+---
+
+**학습 완료 후**: [fundamentals/DevToolsProfiling.md](./DevToolsProfiling.md)로 진행하여 DevTools 실전 활용과 성능 프로파일링을 학습하세요.

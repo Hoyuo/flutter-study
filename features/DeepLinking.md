@@ -62,7 +62,7 @@ dependencies:
   flutter_bloc: ^9.1.1
 
   # Dependency Injection
-  injectable: ^2.7.1
+  injectable: ^2.5.0
   get_it: ^9.2.0
 
   # Functional Programming
@@ -86,10 +86,10 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
   # Code Generation
-  build_runner: ^2.4.13
+  build_runner: ^2.4.15
   freezed: ^3.2.4
-  json_serializable: ^6.8.0
-  injectable_generator: ^2.6.2
+  json_serializable: ^6.9.5
+  injectable_generator: ^2.7.0
 
   # Testing
   mocktail: ^1.0.4

@@ -2,6 +2,8 @@
 
 > **참고**: 이 프로젝트의 표준 상태 관리는 **Bloc 패턴**입니다 (`core/Bloc.md` 참조). Riverpod은 대안적 접근 방식으로, 특정 시나리오에서의 활용법을 학습 목적으로 다룹니다.
 
+> **Flutter 3.27+ / Dart 3.6+** | riverpod ^3.0.0 | flutter_riverpod ^3.0.0 | riverpod_annotation ^3.0.0 | freezed ^3.2.4 | fpdart ^1.2.0
+
 > 이 문서는 Riverpod을 사용한 선언적 상태 관리 패턴을 설명합니다. Riverpod은 Provider의 개선된 버전으로, 컴파일 타임 안전성과 테스트 용이성을 제공합니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
@@ -102,16 +104,16 @@ dependencies:
   fpdart: ^1.2.0
 
   # 불변 데이터 클래스
-  freezed_annotation: ^2.4.4
+  freezed_annotation: ^3.1.0
 
 dev_dependencies:
   # Build Runner
-  build_runner: ^2.4.13
+  build_runner: ^2.4.15
 
   # Code Generation
   riverpod_generator: ^3.0.0
-  freezed: ^2.5.7
-  json_serializable: ^6.8.0
+  freezed: ^3.2.4
+  json_serializable: ^6.9.5
 
   # Lint
   riverpod_lint: ^3.0.0  # Riverpod 전용 린트
@@ -125,12 +127,7 @@ dev_dependencies:
 analyzer:
   plugins:
     - custom_lint
-
-linter:
-  rules:
-    # Riverpod Best Practices
-    - avoid_public_notifier_properties: true
-    - scoped_providers_should_specify_dependencies: true
+# riverpod_lint 규칙은 custom_lint 플러그인을 통해 자동 활성화됩니다
 ```
 
 ### 2.3 프로젝트 구조
@@ -226,7 +223,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'dio_provider.g.dart';
 
 @riverpod
-Dio dio(DioRef ref) {
+Dio dio(Ref ref) {
   final dio = Dio(
     BaseOptions(
       baseUrl: 'https://api.example.com',
@@ -260,6 +257,8 @@ final counterProvider = StateProvider<int>((ref) => 0);
 
 **주의:** StateProvider는 간단한 상태에만 사용하세요. 복잡한 로직은 NotifierProvider를 사용하세요.
 
+> **Riverpod 3.x 주의:** `StateProvider`는 레거시 API로 분류되었습니다 (`package:flutter_riverpod/legacy.dart`). 새 코드에서는 `Notifier` 기반 Provider를 사용하세요.
+
 ### 3.3 FutureProvider (비동기 데이터)
 
 `Future`를 반환하는 비동기 작업에 사용합니다.
@@ -273,7 +272,7 @@ import '../../../domain/usecases/get_weather_usecase.dart';
 part 'weather_provider.g.dart';
 
 @riverpod
-Future<Weather> weather(WeatherRef ref, String city) async {
+Future<Weather> weather(Ref ref, String city) async {
   // UseCase 가져오기
   final usecase = ref.read(getWeatherUseCaseProvider);
 
@@ -301,7 +300,7 @@ import '../../../domain/repositories/chat_repository.dart';
 part 'chat_provider.g.dart';
 
 @riverpod
-Stream<List<Message>> chatMessages(ChatMessagesRef ref, String roomId) {
+Stream<List<Message>> chatMessages(Ref ref, String roomId) {
   final repository = ref.read(chatRepositoryProvider);
   return repository.watchMessages(roomId);
 }
@@ -360,7 +359,7 @@ import '../../../domain/usecases/get_user_profile_usecase.dart';
 part 'user_profile_provider.g.dart';
 
 @riverpod
-class UserProfile extends _$UserProfile {
+class UserProfileNotifier extends _$UserProfileNotifier {
   @override
   Future<UserProfile> build(String userId) async {
     // 비동기 초기화
@@ -421,19 +420,19 @@ part 'greeting_provider.g.dart';
 
 // @riverpod 어노테이션 (함수 기반)
 @riverpod
-String greeting(GreetingRef ref) {
+String greeting(Ref ref) {
   return 'Hello, Riverpod!';
 }
 
 // 매개변수를 받는 Provider
 @riverpod
-String personalGreeting(PersonalGreetingRef ref, String name) {
+String personalGreeting(Ref ref, String name) {
   return 'Hello, $name!';
 }
 
 // 비동기 Provider
 @riverpod
-Future<String> asyncGreeting(AsyncGreetingRef ref) async {
+Future<String> asyncGreeting(Ref ref) async {
   await Future.delayed(const Duration(seconds: 1));
   return 'Hello after delay!';
 }
@@ -443,10 +442,10 @@ Future<String> asyncGreeting(AsyncGreetingRef ref) async {
 
 ```bash
 # 한 번 생성
-flutter pub run build_runner build --delete-conflicting-outputs
+dart run build_runner build --delete-conflicting-outputs
 
 # 감시 모드 (파일 변경 시 자동 생성)
-flutter pub run build_runner watch --delete-conflicting-outputs
+dart run build_runner watch --delete-conflicting-outputs
 ```
 
 ### 4.4 생성된 코드 예시
@@ -475,7 +474,9 @@ final greetingProvider = AutoDisposeProvider<String>.internal(
   allTransitiveDependencies: null,
 );
 
-typedef GreetingRef = AutoDisposeProviderRef<String>;
+// Riverpod 3.x에서는 아래 typedef가 더 이상 생성되지 않습니다.
+// 모든 커스텀 Ref 서브클래스(XxxRef)가 제거되고 Ref로 통합되었습니다.
+// typedef GreetingRef = AutoDisposeProviderRef<String>;  // 삭제됨
 // ... 생략 ...
 ```
 
@@ -489,7 +490,7 @@ part 'config_provider.g.dart';
 
 // 자동 dispose 방지 (앱 종료까지 유지)
 @Riverpod(keepAlive: true)
-String apiKey(ApiKeyRef ref) {
+String apiKey(Ref ref) {
   return 'YOUR_API_KEY';
 }
 ```
@@ -589,7 +590,8 @@ class LoginScreen extends ConsumerWidget {
         next.whenOrNull(
           data: (user) {
             // 로그인 성공 시 홈으로 이동
-            Navigator.of(context).pushReplacementNamed('/home');
+            // import 'package:go_router/go_router.dart';
+            context.go('/home');
           },
           error: (error, stack) {
             // 에러 시 스낵바 표시
@@ -621,7 +623,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'dio_provider.g.dart';
 
 @riverpod
-Dio dio(DioRef ref) {
+Dio dio(Ref ref) {
   return Dio(BaseOptions(baseUrl: 'https://api.example.com'));
 }
 
@@ -632,7 +634,7 @@ import '../../../core/providers/dio_provider.dart';
 part 'user_remote_datasource.g.dart';
 
 @riverpod
-UserRemoteDataSource userRemoteDataSource(UserRemoteDataSourceRef ref) {
+UserRemoteDataSource userRemoteDataSource(Ref ref) {
   // dio Provider를 의존
   final dio = ref.watch(dioProvider);
   return UserRemoteDataSourceImpl(dio);
@@ -640,7 +642,7 @@ UserRemoteDataSource userRemoteDataSource(UserRemoteDataSourceRef ref) {
 
 // data/repositories/user_repository_impl.dart
 @riverpod
-UserRepository userRepository(UserRepositoryRef ref) {
+UserRepository userRepository(Ref ref) {
   // datasource Provider를 의존
   final dataSource = ref.watch(userRemoteDataSourceProvider);
   return UserRepositoryImpl(dataSource);
@@ -648,7 +650,7 @@ UserRepository userRepository(UserRepositoryRef ref) {
 
 // domain/usecases/get_user_usecase.dart
 @riverpod
-GetUserUseCase getUserUseCase(GetUserUseCaseRef ref) {
+GetUserUseCase getUserUseCase(Ref ref) {
   // repository Provider를 의존
   final repository = ref.watch(userRepositoryProvider);
   return GetUserUseCase(repository);
@@ -714,11 +716,18 @@ class UserProfileScreen extends ConsumerWidget {
 }
 ```
 
-### 6.3 whenData() 메서드
+### 6.3 whenData() 메서드 (데이터 타입 변환)
 
-데이터가 있을 때만 처리합니다.
+`whenData()`는 위젯 빌더가 아니라 **데이터 타입을 변환**하는 메서드입니다. `AsyncValue<T>`를 `AsyncValue<R>`로 매핑합니다. 위젯을 빌드하려면 `when()`을 사용하세요.
 
 ```dart
+// whenData()는 AsyncValue의 데이터 타입을 변환합니다
+// AsyncValue<List<User>> → AsyncValue<int> (사용자 수만 추출)
+final userCountAsync = ref.watch(usersProvider).whenData(
+  (users) => users.length,
+);
+
+// 위젯 빌드에는 when()을 사용하세요
 class UserListScreen extends ConsumerWidget {
   const UserListScreen({super.key});
 
@@ -727,9 +736,10 @@ class UserListScreen extends ConsumerWidget {
     final usersAsync = ref.watch(usersProvider);
 
     return Scaffold(
-      body: usersAsync.whenData(
-        // 데이터가 있을 때만 실행
-        (users) => ListView.builder(
+      body: usersAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
+        data: (users) => ListView.builder(
           itemCount: users.length,
           itemBuilder: (context, index) {
             return ListTile(title: Text(users[index].name));
@@ -955,7 +965,7 @@ part 'product_provider.g.dart';
 
 // 제품 ID를 받는 Provider
 @riverpod
-Future<Product> product(ProductRef ref, String productId) async {
+Future<Product> product(Ref ref, String productId) async {
   final usecase = ref.read(getProductUseCaseProvider);
   final result = await usecase(productId);
 
@@ -973,7 +983,7 @@ Future<Product> product(ProductRef ref, String productId) async {
 // 여러 매개변수를 받는 경우
 @riverpod
 Future<List<Product>> productsByCategory(
-  ProductsByCategoryRef ref,
+  Ref ref,
   String category,
   int page,
 ) async {
@@ -1005,7 +1015,7 @@ part 'search_provider.g.dart';
 
 // Code Generation에서는 기본적으로 autoDispose가 활성화됨
 @riverpod
-Future<List<String>> searchResults(SearchResultsRef ref, String query) async {
+Future<List<String>> searchResults(Ref ref, String query) async {
   // 화면을 벗어나면 자동으로 dispose됨
   await Future.delayed(const Duration(seconds: 1));
   return ['Result 1', 'Result 2', 'Result 3'];
@@ -1013,7 +1023,7 @@ Future<List<String>> searchResults(SearchResultsRef ref, String query) async {
 
 // keepAlive로 자동 dispose 방지
 @Riverpod(keepAlive: true)
-Future<List<String>> persistentSearch(PersistentSearchRef ref, String query) async {
+Future<List<String>> persistentSearch(Ref ref, String query) async {
   // 화면을 벗어나도 유지됨
   await Future.delayed(const Duration(seconds: 1));
   return ['Result 1', 'Result 2', 'Result 3'];
@@ -1026,10 +1036,11 @@ Future<List<String>> persistentSearch(PersistentSearchRef ref, String query) asy
 
 ```dart
 @riverpod
-Future<UserData> userData(UserDataRef ref, String userId) async {
+Future<UserData> userData(Ref ref, String userId) async {
   // 데이터를 로드한 후에는 캐시 유지
   final link = ref.keepAlive();
 
+  // import 'dart:async'; 필요
   // 30초 후 자동 dispose 허용
   Timer(const Duration(seconds: 30), () {
     link.close();
@@ -1055,7 +1066,7 @@ part 'paginated_posts_provider.g.dart';
 
 // 페이지별로 캐시되지만, 사용하지 않으면 해제됨
 @riverpod
-Future<List<Post>> paginatedPosts(PaginatedPostsRef ref, int page) async {
+Future<List<Post>> paginatedPosts(Ref ref, int page) async {
   final usecase = ref.read(getPostsUseCaseProvider);
   final result = await usecase(GetPostsParams(page: page));
 
@@ -1344,13 +1355,13 @@ class PreviewScreen extends ConsumerWidget {
 // test/presentation/screens/home_screen_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 
 void main() {
   testWidgets('HomeScreen displays posts', (tester) async {
     // Mock Repository
     final mockRepository = MockPostRepository();
-    when(mockRepository.getPosts()).thenAnswer(
+    when(() => mockRepository.getPosts()).thenAnswer(
       (_) async => Right([
         Post(id: '1', title: 'Test Post'),
       ]),
@@ -1435,7 +1446,7 @@ import '../../../data/repositories/product_repository_impl.dart';
 part 'get_products_usecase.g.dart';
 
 @riverpod
-GetProductsUseCase getProductsUseCase(GetProductsUseCaseRef ref) {
+GetProductsUseCase getProductsUseCase(Ref ref) {
   final repository = ref.watch(productRepositoryProvider);
   return GetProductsUseCase(repository);
 }
@@ -1492,7 +1503,7 @@ part 'product_remote_datasource.g.dart';
 
 @riverpod
 ProductRemoteDataSource productRemoteDataSource(
-  ProductRemoteDataSourceRef ref,
+  Ref ref,
 ) {
   final dio = ref.watch(dioProvider);
   return ProductRemoteDataSourceImpl(dio);
@@ -1533,7 +1544,7 @@ import '../datasources/product_remote_datasource.dart';
 part 'product_repository_impl.g.dart';
 
 @riverpod
-ProductRepository productRepository(ProductRepositoryRef ref) {
+ProductRepository productRepository(Ref ref) {
   final dataSource = ref.watch(productRemoteDataSourceProvider);
   return ProductRepositoryImpl(dataSource);
 }
@@ -1673,6 +1684,8 @@ class CounterBloc extends Bloc<CounterEvent, CounterState> {
 
 // UI
 class CounterScreen extends StatelessWidget {
+  const CounterScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -1716,6 +1729,8 @@ class Counter extends _$Counter {
 
 // UI
 class CounterScreen extends ConsumerWidget {
+  const CounterScreen({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final count = ref.watch(counterProvider);
@@ -1833,6 +1848,8 @@ void main() {
 
 // 화면에서 두 시스템 함께 사용
 class HomeScreen extends ConsumerWidget {
+  const HomeScreen({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Riverpod
@@ -1844,7 +1861,7 @@ class HomeScreen extends ConsumerWidget {
           authenticated: (user) => postsAsync.when(
             loading: () => const CircularProgressIndicator(),
             data: (posts) => PostsList(posts: posts),
-            error: (err, stack) => ErrorWidget(err),
+            error: (err, stack) => Center(child: Text('Error: $err')),
           ),
           unauthenticated: () => const LoginScreen(),
         );
@@ -1891,7 +1908,7 @@ void main() {
 // test/presentation/providers/posts_provider_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:fpdart/fpdart.dart';
 
 void main() {
@@ -1915,7 +1932,7 @@ void main() {
 
   test('Posts should load successfully', () async {
     // Mock 설정
-    when(mockUseCase(NoParams())).thenAnswer(
+    when(() => mockUseCase(NoParams())).thenAnswer(
       (_) async => Right([
         Post(id: '1', title: 'Test Post'),
       ]),
@@ -1932,7 +1949,7 @@ void main() {
 
   test('Posts should handle error', () async {
     // Mock 설정
-    when(mockUseCase(NoParams())).thenAnswer(
+    when(() => mockUseCase(NoParams())).thenAnswer(
       (_) async => Left(ServerFailure('Network error')),
     );
 
@@ -1952,13 +1969,13 @@ void main() {
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 
 void main() {
   testWidgets('HomeScreen displays posts', (tester) async {
     // Mock 설정
     final mockUseCase = MockGetPostsUseCase();
-    when(mockUseCase(NoParams())).thenAnswer(
+    when(() => mockUseCase(NoParams())).thenAnswer(
       (_) async => Right([
         Post(id: '1', title: 'Test Post'),
       ]),
@@ -2039,6 +2056,8 @@ void main() {
 ```dart
 // ❌ 나쁜 예: 전체 리스트를 watch
 class TodoList extends ConsumerWidget {
+  const TodoList({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final todos = ref.watch(todosProvider);  // 전체 재빌드
@@ -2052,6 +2071,8 @@ class TodoList extends ConsumerWidget {
 
 // ✅ 좋은 예: select로 필요한 부분만 watch
 class TodoList extends ConsumerWidget {
+  const TodoList({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final todoCount = ref.watch(
@@ -2067,7 +2088,7 @@ class TodoList extends ConsumerWidget {
 
 class TodoItemProvider extends ConsumerWidget {
   final int index;
-  const TodoItemProvider({required this.index});
+  const TodoItemProvider({required this.index, super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -2108,6 +2129,8 @@ class UserProfile extends _$UserProfile {
 
 // UI에서 에러 타입별 처리
 class UserProfileScreen extends ConsumerWidget {
+  const UserProfileScreen({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(userProfileProvider('user123'));
@@ -2121,7 +2144,7 @@ class UserProfileScreen extends ConsumerWidget {
         } else if (error is NotFoundException) {
           return const NotFoundWidget();
         }
-        return ErrorWidget(error.toString());
+        return Center(child: Text('Error: ${error.toString()}'));
       },
     );
   }
@@ -2146,25 +2169,25 @@ class UserProfileScreen extends ConsumerWidget {
 ```dart
 // ✅ 좋은 예: 계층별 Provider 체이닝
 @riverpod
-Dio dio(DioRef ref) => Dio();
+Dio dio(Ref ref) => Dio();
 
 @riverpod
-UserRemoteDataSource userRemoteDataSource(UserRemoteDataSourceRef ref) {
+UserRemoteDataSource userRemoteDataSource(Ref ref) {
   return UserRemoteDataSourceImpl(ref.watch(dioProvider));
 }
 
 @riverpod
-UserRepository userRepository(UserRepositoryRef ref) {
+UserRepository userRepository(Ref ref) {
   return UserRepositoryImpl(ref.watch(userRemoteDataSourceProvider));
 }
 
 @riverpod
-GetUserUseCase getUserUseCase(GetUserUseCaseRef ref) {
+GetUserUseCase getUserUseCase(Ref ref) {
   return GetUserUseCase(ref.watch(userRepositoryProvider));
 }
 
 @riverpod
-class User extends _$User {
+class UserNotifier extends _$UserNotifier {
   @override
   Future<UserEntity> build(String userId) async {
     final usecase = ref.watch(getUserUseCaseProvider);
@@ -2194,7 +2217,7 @@ class MyProviderObserver extends ProviderObserver {
     Object? newValue,
     ProviderContainer container,
   ) {
-    print('''
+    debugPrint('''
 {
   "provider": "${provider.name ?? provider.runtimeType}",
   "previousValue": "$previousValue",
@@ -2256,3 +2279,6 @@ StateProvider, FutureProvider, StreamProvider, NotifierProvider를 각각 사용
 - [ ] @riverpod 어노테이션을 사용한 코드 생성 방식을 적용할 수 있다
 - [ ] ref.watch, ref.read, ref.listen의 사용 시나리오를 구분할 수 있다
 - [ ] Riverpod과 Bloc의 장단점을 프로젝트 맥락에서 비교할 수 있다
+
+---
+**다음 문서:** [Isolates](./Isolates.md) - Flutter Isolate & 동시성 프로그래밍

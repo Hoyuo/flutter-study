@@ -76,7 +76,7 @@ dependencies:
     sdk: flutter
 
   # WebSocket & 실시간 통신
-  web_socket_channel: ^3.0.0      # 기본 WebSocket 클라이언트
+  web_socket_channel: ^3.0.2      # 기본 WebSocket 클라이언트
   socket_io_client: ^2.0.3         # Socket.IO 클라이언트
 
   # 상태 관리 & 아키텍처
@@ -85,7 +85,7 @@ dependencies:
 
   # 의존성 주입
   get_it: ^9.2.0
-  injectable: ^2.7.1
+  injectable: ^2.5.0
 
   # 함수형 프로그래밍
   fpdart: ^1.2.0
@@ -104,10 +104,10 @@ dev_dependencies:
     sdk: flutter
 
   # 코드 생성
-  build_runner: ^2.4.8
+  build_runner: ^2.4.15
   freezed: ^3.2.4
-  json_serializable: ^6.7.1
-  injectable_generator: ^2.4.1
+  json_serializable: ^6.9.5
+  injectable_generator: ^2.7.0
 
   # 테스트
   mockito: ^5.4.4
@@ -326,6 +326,7 @@ abstract class WebSocketClient {
 ```dart
 // core/core_network/lib/src/websocket/websocket_client_impl.dart
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:fpdart/fpdart.dart';
@@ -463,7 +464,7 @@ class WebSocketClientImpl implements WebSocketClient {
     ));
 
     final delay = config.reconnectDelay *
-        (config.reconnectBackoff * (_reconnectAttempts - 1));
+        math.pow(config.reconnectBackoff, _reconnectAttempts - 1);
 
     logger.i('재연결 시도 $_reconnectAttempts/${config.maxReconnectAttempts} '
         '(${delay.toInt()}ms 후)');
@@ -1348,8 +1349,8 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   void _setupConnectivityListener() {
-    _connectivity.onConnectivityChanged.listen((result) {
-      if (result != ConnectivityResult.none) {
+    _connectivity.onConnectivityChanged.listen((results) {
+      if (!results.contains(ConnectivityResult.none)) {
         _processPendingMessages();
       }
     });
@@ -1377,10 +1378,10 @@ class ChatRepositoryImpl implements ChatRepository {
 
   @override
   Future<Either<Exception, void>> sendMessage(Message message) async {
-    final connectivityResult = await _connectivity.checkConnectivity();
+    final connectivityResults = await _connectivity.checkConnectivity();
 
     // 오프라인 상태면 큐에 추가
-    if (connectivityResult == ConnectivityResult.none) {
+    if (connectivityResults.contains(ConnectivityResult.none)) {
       await _offlineQueue.enqueue(message as MessageModel);
       return right(null);
     }
@@ -1983,7 +1984,7 @@ class BatteryAwareWebSocket {
     final batteryState = await _battery.batteryState;
 
     // 배터리 부족 시 최적화
-    if (batteryLevel < 20 || batteryState == BatteryState.charging) {
+    if (batteryLevel < 20 && batteryState != BatteryState.charging) {
       return baseConfig.copyWith(
         pingInterval: 10000,              // 핑 주기 증가
         reconnectDelay: 3000,             // 재연결 지연 증가

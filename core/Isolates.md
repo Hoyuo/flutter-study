@@ -1,11 +1,30 @@
 # Flutter Isolate & 동시성 가이드
 
+> **Flutter 3.27+ / Dart 3.6+** | flutter_bloc ^9.1.1 | workmanager ^0.5.2 | flutter_background_service ^5.0.10
+
 > Flutter의 Isolate를 활용한 동시성 프로그래밍 완벽 가이드. Event Loop 이해부터 백그라운드 작업, Worker Isolate, WorkManager, 그리고 실전 패턴까지 Clean Architecture와 Bloc을 활용한 실무 예제로 학습합니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - Flutter의 Event Loop와 Isolate 동작 원리를 이해할 수 있다
 > - compute()와 Worker Isolate를 사용한 백그라운드 작업을 구현할 수 있다
 > - 실전 프로젝트에서 Isolate가 필요한 시나리오를 판단하고 적용할 수 있다
+
+## 목차
+
+1. [개요](#1-개요)
+2. [프로젝트 설정](#2-프로젝트-설정)
+3. [compute() 함수](#3-compute-함수)
+4. [Isolate.spawn](#4-isolatespawn)
+5. [Isolate 간 데이터 전달](#5-isolate-간-데이터-전달)
+6. [장기 실행 Isolate (Worker Isolate)](#6-장기-실행-isolate-worker-isolate)
+7. [Isolate Pool](#7-isolate-pool)
+8. [WorkManager](#8-workmanager)
+9. [백그라운드 서비스](#9-백그라운드-서비스)
+10. [Bloc 연동](#10-bloc-연동)
+11. [실전 패턴](#11-실전-패턴)
+12. [플랫폼별 차이](#12-플랫폼별-차이)
+13. [테스트](#13-테스트)
+14. [Best Practices](#14-best-practices)
 
 ## 1. 개요
 
@@ -75,7 +94,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.6.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -85,7 +104,7 @@ dependencies:
   flutter_bloc: ^9.1.1
 
   # 의존성 주입
-  injectable: ^2.7.1
+  injectable: ^2.5.0
   get_it: ^9.2.0
 
   # 함수형 프로그래밍
@@ -107,10 +126,10 @@ dev_dependencies:
     sdk: flutter
 
   # 코드 생성 도구
-  build_runner: ^2.4.13
+  build_runner: ^2.4.15
   freezed: ^3.2.4
-  json_serializable: ^6.8.0
-  injectable_generator: ^2.6.2
+  json_serializable: ^6.9.5
+  injectable_generator: ^2.7.0
 
   # 린트
   flutter_lints: ^5.0.0
@@ -279,6 +298,11 @@ Uint8List _compressWithQuality(CompressionParams params) {
 }
 ```
 
+> **Dart 3.x+**: `Isolate.run()`은 `compute()`의 순수 Dart 대안입니다. Flutter 의존성 없이 사용할 수 있습니다:
+> ```dart
+> final result = await Isolate.run(() => _parseJson(jsonString));
+> ```
+
 ## 4. Isolate.spawn
 
 ### 4.1 직접 Isolate 생성
@@ -309,16 +333,18 @@ class IsolateManager {
       receivePort.sendPort,
     );
 
-    // Isolate로부터 SendPort 받기
-    _sendPort = await receivePort.first as SendPort;
+    // 핸드셰이크: Isolate로부터 SendPort 받기
+    final completer = Completer<SendPort>();
 
-    // 응답 수신 설정
-    final responsePort = ReceivePort();
-    _sendPort!.send(responsePort.sendPort);
-
-    responsePort.listen((message) {
-      _responseController.add(message);
+    receivePort.listen((message) {
+      if (message is SendPort) {
+        completer.complete(message);
+      } else {
+        _responseController.add(message);
+      }
     });
+
+    _sendPort = await completer.future;
   }
 
   /// 작업 전송
@@ -342,18 +368,14 @@ class IsolateManager {
 void _isolateEntryPoint(SendPort callerSendPort) {
   final receivePort = ReceivePort();
 
-  // SendPort를 메인으로 전송
+  // SendPort를 메인으로 전송 (핸드셰이크)
   callerSendPort.send(receivePort.sendPort);
 
-  SendPort? replyPort;
-
   receivePort.listen((message) {
-    if (message is SendPort) {
-      replyPort = message;
-    } else if (message is Map) {
+    if (message is Map) {
       // 작업 처리
       final result = _processTask(message);
-      replyPort?.send(result);
+      callerSendPort.send(result);
     }
   });
 }
@@ -414,7 +436,7 @@ class BidirectionalIsolate {
   }
 
   void _handleResponse(dynamic message) {
-    print('Received from worker: $message');
+    debugPrint('Received from worker: $message');
   }
 
   Future<void> sendRequest(String data) async {
@@ -676,7 +698,7 @@ Future<dynamic> _processTask(String taskType, dynamic data) async {
 
     case 'compress':
       // 압축 로직
-      await Future.delayed(Duration(seconds: 1)); // 시뮬레이션
+      await Future.delayed(const Duration(seconds: 1)); // 시뮬레이션
       return 'compressed_$data';
 
     default:
@@ -730,7 +752,9 @@ class EncryptData {
 // lib/core/isolates/isolate_pool.dart
 
 import 'dart:async';
+import 'dart:collection';
 import 'dart:isolate';
+import 'package:collection/collection.dart';
 import 'package:injectable/injectable.dart';
 
 @singleton
@@ -739,6 +763,8 @@ class IsolatePool {
   final List<_IsolateWorker> _workers = [];
   final Queue<_Task> _taskQueue = Queue();
   bool _isInitialized = false;
+
+  bool get isInitialized => _isInitialized;
 
   IsolatePool({int poolSize = 4}) : _poolSize = poolSize;
 
@@ -798,7 +824,7 @@ class IsolatePool {
         task.taskType,
         task.data,
       ).timeout(
-        task.timeout ?? Duration(seconds: 30),
+        task.timeout ?? const Duration(seconds: 30),
       );
 
       task.completer.complete(result);
@@ -913,7 +939,7 @@ void _workerEntryPoint(SendPort callerSendPort) {
 
 Future<dynamic> _heavyComputation(String taskType, dynamic data) async {
   // 실제 무거운 연산 처리
-  await Future.delayed(Duration(milliseconds: 100));
+  await Future.delayed(const Duration(milliseconds: 100));
   return 'Result for $taskType: $data';
 }
 
@@ -930,26 +956,11 @@ class _Task<T> {
   });
 }
 
-// Queue 헬퍼 (dart:collection 대신)
-class Queue<T> {
-  final List<T> _list = [];
+// dart:collection의 Queue 사용 (O(1) removeFirst)
+// import 'dart:collection';
 
-  void add(T item) => _list.add(item);
-  T removeFirst() => _list.removeAt(0);
-  bool get isEmpty => _list.isEmpty;
-  bool get isNotEmpty => _list.isNotEmpty;
-  void clear() => _list.clear();
-}
-
-// firstWhereOrNull 헬퍼
-extension IterableExtension<T> on Iterable<T> {
-  T? firstWhereOrNull(bool Function(T) test) {
-    for (final element in this) {
-      if (test(element)) return element;
-    }
-    return null;
-  }
-}
+// collection 패키지의 firstWhereOrNull 사용
+// import 'package:collection/collection.dart';
 ```
 
 ### 7.2 IsolatePool 사용 예제
@@ -970,7 +981,7 @@ class ProcessBatch {
 
   Future<Either<Failure, List<String>>> call(List<String> items) async {
     try {
-      if (!_isolatePool._isInitialized) {
+      if (!_isolatePool.isInitialized) {
         await _isolatePool.initialize();
       }
 
@@ -1105,6 +1116,8 @@ void callbackDispatcher() {
           break;
 
         default:
+          // 주의: WorkManager 콜백은 별도 Isolate에서 실행되므로
+          // Flutter 엔진이 없는 환경에서는 debugPrint가 동작하지 않을 수 있습니다.
           print('Unknown task: $taskName');
       }
       return true; // 성공
@@ -1267,6 +1280,7 @@ part 'tracking_state.dart';
 @injectable
 class TrackingBloc extends Bloc<TrackingEvent, TrackingState> {
   final BackgroundService _backgroundService;
+  late final StreamSubscription<Map<String, dynamic>?> _dataSubscription;
 
   TrackingBloc(this._backgroundService) : super(const TrackingState.initial()) {
     on<TrackingEvent>((event, emit) async {
@@ -1278,11 +1292,17 @@ class TrackingBloc extends Bloc<TrackingEvent, TrackingState> {
     });
 
     // 서비스로부터 데이터 수신
-    _backgroundService.onDataReceived.listen((data) {
+    _dataSubscription = _backgroundService.onDataReceived.listen((data) {
       if (data != null) {
         add(TrackingEvent.dataReceived(data));
       }
     });
+  }
+
+  @override
+  Future<void> close() async {
+    await _dataSubscription.cancel();
+    return super.close();
   }
 
   Future<void> _onStarted(Emitter<TrackingState> emit) async {
@@ -1403,14 +1423,14 @@ class CompressImage {
     int quality,
   ) async {
     try {
-      if (!_isolatePool._isInitialized) {
+      if (!_isolatePool.isInitialized) {
         await _isolatePool.initialize();
       }
 
       final result = await _isolatePool.execute<Uint8List>(
         'compress_image',
         {'bytes': imageBytes, 'quality': quality},
-        timeout: Duration(seconds: 30),
+        timeout: const Duration(seconds: 30),
       );
 
       return right(result);
@@ -1429,7 +1449,6 @@ class CompressImage {
 // lib/features/image_processing/data/datasources/image_processor_datasource.dart
 
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 
@@ -1756,7 +1775,7 @@ void main() {
 
       expect(
         () => workerIsolate.execute('unknown_task', 'data'),
-        throwsA(isA<UnsupportedError>()),
+        throwsA(isA<String>()),
       );
     });
 
@@ -1782,21 +1801,7 @@ void main() {
 import 'package:mocktail/mocktail.dart';
 import 'package:isolate_concurrency_example/core/isolates/worker_isolate.dart';
 
-class MockWorkerIsolate extends Mock implements WorkerIsolate {
-  @override
-  Future<void> initialize() async {
-    // Mock 구현
-  }
-
-  @override
-  Future<T> execute<T>(String taskType, dynamic data) async {
-    return super.noSuchMethod(
-      Invocation.method(#execute, [taskType, data]),
-      returnValue: Future.value(null as T),
-      returnValueForMissingStub: Future.value(null as T),
-    );
-  }
-}
+class MockWorkerIsolate extends Mock implements WorkerIsolate {}
 ```
 
 ### 13.3 타이밍 테스트
@@ -1824,7 +1829,7 @@ void main() {
     test('should complete within timeout', () async {
       final testBytes = Uint8List.fromList([1, 2, 3]);
 
-      when(() => mockPool._isInitialized).thenReturn(true);
+      when(() => mockPool.isInitialized).thenReturn(true);
       when(() => mockPool.execute<Uint8List>(
         any(),
         any(),
@@ -2054,3 +2059,6 @@ Flutter의 Isolate를 활용하면 CPU 집약적 작업도 UI 차단 없이 부�
 - [ ] compute()와 Isolate.spawn()의 차이점과 사용 시나리오를 구분할 수 있다
 - [ ] SendPort/ReceivePort를 통한 Isolate 간 통신을 구현할 수 있다
 - [ ] Isolate 사용이 필요한 시나리오와 불필요한 시나리오를 판단할 수 있다
+
+---
+**다음 문서:** [DI](../infrastructure/DI.md) - 의존성 주입 설정

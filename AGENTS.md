@@ -20,10 +20,10 @@ Flutter 개발팀을 위한 포괄적인 개발 가이드 문서 저장소입니
 | `infrastructure/` | 인프라 - DI, Environment, LocalStorage, CICD, StoreSubmission, AdvancedCICD, Firebase, FlutterMultiPlatform, PackageDevelopment | 9개 (see `infrastructure/AGENTS.md`) |
 | `networking/` | 네트워킹 - Dio, Retrofit, WebSocket, GraphQL | 4개 (see `networking/AGENTS.md`) |
 | `features/` | 기능별 - Navigation, Localization, Permission, PushNotification, DeepLinking, MapsGeolocation, CameraMedia | 7개 (see `features/AGENTS.md`) |
-| `patterns/` | 필수 패턴 - Analytics, ImageHandling, Pagination, FormValidation, OfflineSupport, InAppPurchase, Animation, AdvancedPatterns, CustomPainting | 9개 (see `patterns/AGENTS.md`) |
+| `patterns/` | 필수 패턴 - Analytics, ImageHandling, Pagination, FormValidation, OfflineSupport, InAppPurchase, Animation, AdvancedPatterns, CustomPainting, ResponsiveDesign, DesignSystem, ServerDrivenUI | 12개 (see `patterns/AGENTS.md`) |
 | `system/` | 시스템 - ErrorHandling, Theming, AppLifecycle, Testing, Performance, Security, Accessibility, Logging, Monitoring, AdvancedPerformance, AdvancedTesting, ProductionOperations, AdvancedSecurity | 13개 (see `system/AGENTS.md`) |
 
-**총 52개 문서**
+**총 64개 문서**
 
 ## Directory Structure
 
@@ -78,7 +78,10 @@ flutter-study/
 │   ├── InAppPurchase.md
 │   ├── Animation.md
 │   ├── AdvancedPatterns.md
-│   └── CustomPainting.md
+│   ├── CustomPainting.md
+│   ├── ResponsiveDesign.md
+│   ├── DesignSystem.md
+│   └── ServerDrivenUI.md
 └── system/                   ← 시스템
     ├── AGENTS.md
     ├── ErrorHandling.md
@@ -237,5 +240,21 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 49. `features/MapsGeolocation.md` - Google Maps, 위치 서비스, Geofencing
 50. `features/CameraMedia.md` - 카메라, 이미지/비디오 촬영, 미디어 처리
 51. `patterns/CustomPainting.md` - Canvas API, CustomPainter, 커스텀 그래픽
+
+### 신규 추가 (Phase 2)
+
+52. `patterns/ResponsiveDesign.md` - 반응형/적응형 디자인, 다중 화면 크기
+53. `patterns/DesignSystem.md` - 디자인 시스템, 디자인 토큰, 컴포넌트 라이브러리
+54. `infrastructure/DatabaseAdvanced.md` - 고급 데이터베이스 패턴 (Drift, Floor)
+55. `infrastructure/CachingStrategy.md` - 캐싱 전략, 메모리/디스크/네트워크
+56. `system/TeamCollaboration.md` - 팀 협업, 코드 리뷰, 문서화
+57. `fundamentals/DartAdvanced.md` - Dart 심화 (Generics, Extension, Mixin)
+58. `fundamentals/WidgetFundamentals.md` - Widget/Element/RenderObject 트리
+59. `fundamentals/LayoutSystem.md` - Constraints 전파, Flex, Sliver
+60. `fundamentals/FlutterInternals.md` - 렌더링 파이프라인
+61. `fundamentals/DevToolsProfiling.md` - DevTools, 성능 프로파일링
+62. `projects/FullStackProject.md` - Clean Architecture + Bloc Todo 앱 튜토리얼
+63. `CURRICULUM.md` - 레벨별 교육 커리큘럼
+64. `patterns/ServerDrivenUI.md` - Server-Driven UI, JSON 렌더링, Widget Registry
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->

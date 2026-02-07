@@ -15,17 +15,17 @@
 # pubspec.yaml
 dependencies:
   rxdart: ^0.28.0
-  flutter_bloc: ^9.0.0
+  flutter_bloc: ^9.1.1
   freezed_annotation: ^3.1.0
   fpdart: ^1.2.0
-  injectable: ^2.7.1
+  injectable: ^2.5.0
   shimmer: ^3.0.0  # Skeleton Loader 섹션
 
 dev_dependencies:
   bloc_test: ^9.1.0
-  mocktail: ^1.0.0
+  mocktail: ^1.0.4
   freezed: ^3.2.4
-  build_runner: ^2.4.0
+  build_runner: ^2.4.15
 ```
 
 ## 기본 구조

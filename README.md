@@ -1,6 +1,6 @@
 # Flutter Clean Architecture Reference Guide
 
-Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 63개의 문서와 실제 구현 예제를 제공합니다.
+Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 64개의 문서와 실제 구현 예제를 제공합니다.
 
 ## Overview
 
@@ -20,12 +20,12 @@ flutter-study/
 ├── infrastructure/ # 인프라 (11개)
 ├── networking/     # 네트워킹 (4개)
 ├── features/       # 기능별 가이드 (7개)
-├── patterns/       # 필수 패턴 (11개)
+├── patterns/       # 필수 패턴 (12개)
 ├── system/         # 시스템 (14개)
 └── projects/       # 실전 프로젝트 (1개) ← NEW
 ```
 
-**총 63개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
+**총 64개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
 
 ## Quick Start
 
@@ -65,7 +65,7 @@ Dart 언어와 Flutter 기본기
 
 ### Patterns (11개)
 공통 패턴
-- Analytics, ImageHandling, Pagination, FormValidation, InAppPurchase, Animation, OfflineSupport, AdvancedPatterns, CustomPainting, **ResponsiveDesign**, **DesignSystem**
+- Analytics, ImageHandling, Pagination, FormValidation, InAppPurchase, Animation, OfflineSupport, AdvancedPatterns, CustomPainting, **ResponsiveDesign**, **DesignSystem**, **ServerDrivenUI**
 
 ### System (14개)
 시스템 품질

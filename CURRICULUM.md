@@ -467,7 +467,7 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
 | **Junior 필수** (10) | Architecture (core), DI (infra), Bloc (core), Freezed (core), Networking_Dio (net), Networking_Retrofit (net), ErrorHandling (sys), Navigation (feat), Theming (sys), FormValidation (pat) |
 | **Mid-level 필수** (18) | Fpdart (core), BlocUiEffect (core), Environment (infra), LocalStorage (infra), Localization (feat), Permission (feat), PushNotification (feat), Pagination (pat), ImageHandling (pat), Analytics (pat), Animation (pat), Testing (sys), Performance (sys), Security (sys), Logging (sys), **ResponsiveDesign (pat)**, **DesignSystem (pat)**, **CachingStrategy (infra)** |
 | **Senior 심화** (13) | AdvancedStateManagement (core), ModularArchitecture (core), AdvancedPatterns (pat), PlatformIntegration (core), AdvancedTesting (sys), AdvancedPerformance (sys), AdvancedSecurity (sys), AdvancedCICD (infra), ProductionOperations (sys), OfflineSupport (pat), **DatabaseAdvanced (infra)**, **TeamCollaboration (sys)**, **FullStackProject (proj)** |
-| **프로젝트별 선택** (9) | Riverpod (core), WebSocket (net), Firebase (infra), InAppPurchase (pat), AppLifecycle (sys), Accessibility (sys), Monitoring (sys), CICD (infra), StoreSubmission (infra) |
+| **프로젝트별 선택** (10) | Riverpod (core), WebSocket (net), Firebase (infra), InAppPurchase (pat), AppLifecycle (sys), Accessibility (sys), Monitoring (sys), CICD (infra), StoreSubmission (infra), **ServerDrivenUI (pat)** |
 | **NEXT_ROADMAP** (8) | Isolates (core), FlutterMultiPlatform (infra), PackageDevelopment (infra), GraphQL (net), DeepLinking (feat), MapsGeolocation (feat), CameraMedia (feat), CustomPainting (pat) |
 
 ### 의존성 다이어그램
@@ -541,4 +541,4 @@ Architecture ─┬─> DI ──> Bloc ──> Freezed ──> Networking_Dio �
 ---
 
 **마지막 업데이트:** 2026-02-06
-**기반 문서 수:** 63개 (기존 52 + 신규 11)
+**기반 문서 수:** 64개 (기존 52 + 신규 12)

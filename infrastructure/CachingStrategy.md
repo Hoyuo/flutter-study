@@ -103,6 +103,8 @@ class CacheLayer {
 ### 1.2 캐싱 전략
 
 ```dart
+import 'dart:async';
+
 enum CachingStrategy {
   /// 캐시 우선: 캐시가 있으면 즉시 반환, 없으면 네트워크 요청
   /// 사용 사례: 거의 변하지 않는 데이터 (국가 목록, 카테고리)
@@ -388,7 +390,7 @@ class CacheStats {
 // pubspec.yaml
 /*
 dependencies:
-  dio: ^5.4.0
+  dio: ^5.9.0
   dio_cache_interceptor: ^3.5.0
   dio_cache_interceptor_hive_store: ^3.2.2
   hive: ^2.2.3
@@ -688,7 +690,7 @@ class DiskCache {
 /*
 dev_dependencies:
   hive_generator: ^2.0.1
-  build_runner: ^2.4.6
+  build_runner: ^2.4.15
 */
 
 import 'package:hive/hive.dart';
@@ -776,6 +778,8 @@ class TypedDiskCache<T> {
 ### 5.1 캐시를 통합한 Repository
 
 ```dart
+import 'dart:async';
+
 abstract class CachedRepository<T> {
   final ApiClient apiClient;
   final DiskCache diskCache;
@@ -1248,7 +1252,7 @@ class AutoEvictionScheduler {
 
   Future<void> _evict() async {
     // 메모리 캐시 만료 항목 제거
-    memoryCache._cache.evictExpired();
+    memoryCache.evictExpired();
 
     // 디스크 캐시 만료 항목 제거
     await diskCache.evictExpired();
@@ -1466,6 +1470,8 @@ class ConnectivityService {
 ### 9.2 오프라인 우선 Repository
 
 ```dart
+import 'dart:async';
+
 class OfflineFirstRepository extends CachedRepository<Product> {
   final ConnectivityService connectivityService;
 
@@ -1867,10 +1873,10 @@ class CacheDashboard extends StatelessWidget {
 
 **Package Versions**
 - flutter_bloc: ^9.1.1
-- freezed: ^3.1.0
-- fpdart: ^1.1.0
-- go_router: ^14.8.1
-- dio: ^5.4.0
+- freezed: ^3.2.4
+- fpdart: ^1.2.0
+- go_router: ^17.0.1
+- dio: ^5.9.0
 - dio_cache_interceptor: ^3.5.0
 - hive: ^2.2.3
 - cached_network_image: ^3.3.0

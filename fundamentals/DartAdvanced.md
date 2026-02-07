@@ -1,7 +1,7 @@
 # Dart 언어 심화 가이드
 
 > Flutter Clean Architecture + Bloc 패턴 기반 교육 자료
-> Package versions: flutter_bloc ^9.1.1, freezed ^3.1.0, fpdart ^1.1.0, go_router ^14.8.1, get_it ^8.0.3, injectable ^2.5.0
+> Package versions: flutter_bloc ^9.1.1, freezed ^3.2.4, fpdart ^1.2.0, go_router ^17.0.1, get_it ^9.2.0, injectable ^2.5.0
 
 > **학습 목표**:
 > - Dart의 고급 타입 시스템(Generics, Sealed Class, Records)을 실전에서 활용할 수 있다
@@ -118,6 +118,23 @@ void covariantExample() {
   final dogs = <Dog>[Dog(), Dog()];
   printAnimalsIterable(dogs); // OK!
 }
+
+// ⚠️ 주의: Dart의 제네릭 공변성은 unsound합니다
+// 컴파일은 통과하지만 런타임 에러가 발생할 수 있습니다
+void unsoundExample() {
+  List<Animal> animals = <Dog>[Dog(), Dog()]; // 컴파일 OK
+  // animals.add(Cat()); // 런타임 TypeError! List<Dog>에 Cat 추가 불가
+}
+
+// covariant 키워드: 메서드 파라미터의 타입을 하위 타입으로 좁힐 때
+class AnimalShelter {
+  void adopt(covariant Animal animal) {}
+}
+
+class DogShelter extends AnimalShelter {
+  @override
+  void adopt(Dog dog) {} // covariant 덕분에 Dog로 좁힐 수 있음
+}
 ```
 
 ---
@@ -136,25 +153,31 @@ extension StringExtensions on String {
     return '${this[0].toUpperCase()}${substring(1)}';
   }
 
+  // 참고: 실무에서는 서버 측 검증을 병행하세요
   bool get isValidEmail {
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$');
     return emailRegex.hasMatch(this);
   }
 
-  String repeat(int times) {
-    return List.filled(times, this).join();
+  // Dart 내장: 'abc' * 3 == 'abcabcabc'
+  // 대신 더 유용한 extension을 정의합시다
+  String truncate(int maxLength, {String suffix = '...'}) {
+    if (length <= maxLength) return this;
+    return '${substring(0, maxLength - suffix.length)}$suffix';
   }
 }
 
 // 사용
 print('hello'.capitalize()); // Hello
 print('test@example.com'.isValidEmail); // true
-print('*'.repeat(5)); // *****
+print('Hello, World!'.truncate(8)); // Hello...
 ```
 
 ### 2.2 List Extension
 
 ```dart
+// 참고: package:collection에 동일한 extension이 존재합니다
+// 실무에서는 공식 패키지 사용을 권장하며, 여기서는 학습 목적으로 직접 구현합니다
 extension ListExtensions<T> on List<T> {
   T? getOrNull(int index) {
     if (index < 0 || index >= length) return null;
@@ -288,6 +311,33 @@ class Duck extends Animal with Flyable, Swimmable {
 }
 ```
 
+### 3.3 Mixin Class (Dart 3.0+)
+
+`mixin class`는 클래스와 mixin 두 가지 역할을 동시에 수행할 수 있습니다.
+
+```dart
+// mixin class: 클래스로도, mixin으로도 사용 가능
+mixin class Identifiable {
+  String id = '';
+
+  String get shortId => id.substring(0, 8);
+}
+
+// mixin으로 사용
+class User with Identifiable {
+  String name;
+  User(this.name);
+}
+
+// 클래스로 상속
+class AdminUser extends Identifiable {
+  String role;
+  AdminUser(this.role);
+}
+```
+
+> **mixin vs mixin class**: 일반 `mixin`은 `with`로만 사용 가능하고, `mixin class`는 `extends`와 `with` 모두 가능합니다. 단, `mixin class`는 `on` 절을 사용할 수 없습니다.
+
 ---
 
 ## 4. Sealed Class & Pattern Matching
@@ -341,9 +391,10 @@ class Rectangle extends Shape {
   Rectangle(this.width, this.height);
 }
 
+// import 'dart:math' show pi;
 double calculateArea(Shape shape) {
   return switch (shape) {
-    Circle(:final radius) when radius > 0 => 3.14159 * radius * radius,
+    Circle(:final radius) when radius > 0 => pi * radius * radius,
     Circle() => throw ArgumentError('Invalid radius'),
     Rectangle(:final width, :final height) when width > 0 && height > 0 =>
       width * height,
@@ -394,7 +445,10 @@ void recordExample() {
   final mean = sum / values.length;
 
   final sorted = List<double>.from(values)..sort();
-  final median = sorted[sorted.length ~/ 2];
+  final mid = sorted.length ~/ 2;
+  final median = sorted.length.isOdd
+      ? sorted[mid]
+      : (sorted[mid - 1] + sorted[mid]) / 2;
 
   return (mean, median);
 }
@@ -450,7 +504,7 @@ Stream<int> countStream(int max) async* {
   }
 }
 
-// StreamController
+// import 'dart:async';
 class EventBus {
   final _controller = StreamController<String>.broadcast();
 
@@ -488,7 +542,7 @@ Future<T> retryWithExponentialBackoff<T>(
 
       print('Attempt $attempt failed, retrying in ${delay.inSeconds}s...');
       await Future.delayed(delay);
-      delay *= backoffMultiplier.toInt();
+      delay = delay * backoffMultiplier;
     }
   }
 }
@@ -502,24 +556,20 @@ Future<T> retryWithExponentialBackoff<T>(
 
 ```dart
 // 커스텀 annotation
-class JsonSerializable {
-  final bool createFactory;
-  final bool createToJson;
+class ApiEndpoint {
+  final String path;
+  final String method;
 
-  const JsonSerializable({
-    this.createFactory = true,
-    this.createToJson = true,
+  const ApiEndpoint({
+    required this.path,
+    this.method = 'GET',
   });
 }
 
 // 사용
-@JsonSerializable()
-class User {
-  final String id;
-  final String name;
-  final String email;
-
-  User({required this.id, required this.name, required this.email});
+@ApiEndpoint(path: '/users', method: 'GET')
+class UserApi {
+  // API 엔드포인트 구현
 }
 ```
 
@@ -543,6 +593,16 @@ class User with _$User {
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
 }
 ```
+
+> **코드 생성 실행**: freezed, injectable 등은 `build_runner`로 코드를 생성합니다.
+> ```bash
+> # 일회성 빌드
+> dart run build_runner build --delete-conflicting-outputs
+>
+> # 파일 변경 감지 자동 빌드 (개발 중 권장)
+> dart run build_runner watch --delete-conflicting-outputs
+> ```
+> `part 'user.freezed.dart'`는 build_runner가 생성할 파일을 선언합니다. 이 파일은 직접 수정하지 않으며, 소스 코드 변경 시 자동으로 재생성됩니다.
 
 ### 7.3 injectable 패턴
 
@@ -580,17 +640,32 @@ class AppSettings {
 ### 8.1 Garbage Collection 이해
 
 ```dart
-// 메모리 누수 방지
-class GoodExample {
-  final List<String> _cache = [];
+import 'dart:async';
 
-  void addToCache(String data) {
-    _cache.add(data);
+// ❌ Bad: 캐시 크기 제한 없음 → 메모리 무한 증가
+class UnboundedCache {
+  final Map<String, Object> _cache = {};
+
+  void put(String key, Object value) {
+    _cache[key] = value; // 계속 쌓임
+  }
+}
+
+// ✅ Good: LRU 방식으로 크기 제한
+class BoundedCache {
+  final int maxSize;
+  final Map<String, Object> _cache = {};
+
+  BoundedCache({this.maxSize = 100});
+
+  void put(String key, Object value) {
+    if (_cache.length >= maxSize) {
+      _cache.remove(_cache.keys.first); // 가장 오래된 항목 제거
+    }
+    _cache[key] = value;
   }
 
-  void clearCache() {
-    _cache.clear();
-  }
+  Object? get(String key) => _cache[key];
 }
 
 // Stream 구독 누수 방지
@@ -634,7 +709,28 @@ class CacheWithWeakReference {
 
 ## 9. Isolate 기초
 
-### 9.1 기본 Isolate 사용
+### 9.1 Isolate.run() (권장)
+
+Dart 2.19+에서 도입된 `Isolate.run()`은 가장 간단한 Isolate 사용법입니다.
+
+```dart
+import 'dart:isolate';
+
+// 단순하고 현대적인 방식 (권장)
+Future<int> calculateInBackground(int n) async {
+  return await Isolate.run(() {
+    var sum = 0;
+    for (var i = 1; i <= n; i++) {
+      sum += i;
+    }
+    return sum;
+  });
+}
+```
+
+### 9.2 Isolate.spawn (양방향 통신)
+
+양방향으로 메시지를 주고받아야 할 때는 `Isolate.spawn`을 사용합니다.
 
 ```dart
 import 'dart:isolate';
@@ -661,7 +757,7 @@ void _calculateSum(List<dynamic> args) {
 }
 ```
 
-### 9.2 Compute 함수 (Flutter)
+### 9.3 Compute 함수 (Flutter)
 
 ```dart
 import 'package:flutter/foundation.dart';
@@ -680,7 +776,9 @@ Future<void> computeExample() async {
 }
 ```
 
-### 9.3 참고
+> **참고**: Flutter 3.x에서 `compute`는 여전히 사용 가능하지만, `Isolate.run()`이 Dart 팀이 공식 권장하는 대안입니다.
+
+### 9.4 참고
 
 Isolate에 대한 더 자세한 내용은 [core/Isolates.md](../core/Isolates.md)를 참조하세요.
 
@@ -745,11 +843,11 @@ Bloc 패턴을 사용하여 Todo 앱의 상태 관리를 구현하세요:
 - [ ] Sealed class로 exhaustive pattern matching을 구현하고, guard clause를 활용할 수 있다
 - [ ] Records와 destructuring을 사용해 다중 값을 반환하고 간결한 코드를 작성할 수 있다
 - [ ] Future와 Stream의 차이를 이해하고, StreamController로 커스텀 스트림을 만들 수 있다
-- [ ] Zone을 사용해 비동기 에러를 중앙에서 처리하고, zone local values를 활용할 수 있다
+- [ ] Future.wait, Future.any를 활용한 병렬/경쟁 실행 패턴을 이해하고, retry 패턴을 구현할 수 있다
 - [ ] build_runner와 code generation의 원리를 이해하고, freezed/injectable을 활용할 수 있다
-- [ ] WeakReference와 Finalizer를 사용해 메모리 누수를 방지할 수 있다
+- [ ] WeakReference를 사용한 캐시 패턴을 이해하고, Stream 구독 해제로 메모리 누수를 방지할 수 있다
 - [ ] Isolate의 메모리 격리 개념을 이해하고, compute 함수로 무거운 연산을 백그라운드에서 처리할 수 있다
 
 ---
 
-**학습 완료 후**: [features/StateManagement.md](../features/StateManagement.md)로 진행하여 Bloc 패턴과 상태 관리를 심화 학습하세요.
+**학습 완료 후**: [fundamentals/WidgetFundamentals.md](./WidgetFundamentals.md)로 진행하여 Widget/Element/RenderObject 트리와 BuildContext를 학습하세요.

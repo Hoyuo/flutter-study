@@ -2,6 +2,11 @@
 
 Dart에서 불변(immutable) 데이터 클래스를 쉽게 생성하기 위한 Freezed 패키지 사용 가이드입니다.
 
+> **Package Versions (2025-01 기준)**
+> - freezed: ^3.2.4 | freezed_annotation: ^3.1.0
+> - json_serializable: ^6.11.4 | json_annotation: ^4.9.0
+> - build_runner: ^2.10.5
+
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - Freezed를 사용하여 불변 데이터 클래스를 자동 생성할 수 있습니다
 > - Union 타입(sealed class)으로 복잡한 상태 분기를 타입 안전하게 처리할 수 있습니다
@@ -225,6 +230,9 @@ class User with _$User {
 }
 ```
 
+> **참고**: 이후 예제에서는 간결함을 위해 `import`, `part` 선언을 생략합니다.
+> 실제 코드에서는 반드시 `part 'filename.freezed.dart';`를 포함해야 합니다.
+
 ### 기본값 설정
 
 ```dart
@@ -253,9 +261,9 @@ final darkSettings = Settings(isDarkMode: true);  // 일부만 지정
 class Profile with _$Profile {
   const factory Profile({
     required String userId,
-    String? bio,           // nullable, 기본값 없음
+    String? bio,           // nullable - 기본값 null (암시적)
     String? website,
-    @Default(null) String? avatarUrl,  // nullable, 기본값 명시
+    @Default(null) String? avatarUrl,  // nullable - 기본값 null (명시적, JSON 역직렬화 시 필드 누락 허용)
   }) = _Profile;
 }
 ```
@@ -366,8 +374,10 @@ final cleared = profile.copyWith(bio: null);  // Profile(name: 'John', bio: null
 | 코드 생성 | 불필요 | 필요 (build_runner) |
 | copyWith | 수동 구현 | 자동 생성 |
 | JSON 직렬화 | 수동 구현 | json_serializable 통합 |
-| when/map 메서드 | switch expression 사용 | 자동 생성 |
-| 추천 상황 | 단순한 상태 분기 | 복잡한 데이터 모델 |
+| 패턴 매칭 | switch expression (언어 내장) | when/map + switch expression 모두 가능 |
+| ==, hashCode | 수동 구현 | 자동 생성 |
+| 추천: Bloc Event | **권장** (copyWith 불필요) | 가능하지만 과도할 수 있음 |
+| 추천: 데이터 모델 | 보일러플레이트 많음 | **권장** (copyWith, JSON, == 자동 생성) |
 
 ### 기본 Union 타입
 
@@ -424,7 +434,7 @@ final widget = state.map(
   loading: (_) => const LoadingWidget(),
   authenticated: (state) => HomeWidget(user: state.user),
   unauthenticated: (_) => const LoginWidget(),
-  error: (state) => ErrorWidget(message: state.message),
+  error: (state) => ErrorView(message: state.message),
 );
 
 // maybeMap: 일부만 처리
@@ -449,6 +459,24 @@ final user = state.mapOrNull(
   authenticated: (state) => state.user,
 );
 ```
+
+### 패턴 매칭: Dart 3 switch expression
+
+Freezed 3.x + Dart 3.6+에서는 네이티브 switch expression도 사용 가능합니다.
+
+```dart
+// Dart 3 switch expression (Freezed 3.x에서 사용 가능)
+final message = switch (state) {
+  AuthInitial() => '초기화 중...',
+  AuthLoading() => '로딩 중...',
+  Authenticated(:final user) => '안녕하세요, ${user.name}님!',
+  Unauthenticated() => '로그인이 필요합니다.',
+  AuthError(:final message) => '오류: $message',
+};
+```
+
+> **💡 when vs switch**: Freezed의 `when`/`map` 메서드와 Dart 3 `switch` expression 모두 사용 가능합니다.
+> `switch`는 코드 생성 없이 언어 내장 기능이며, `when`/`map`은 Freezed가 자동 생성하는 편의 메서드입니다.
 
 ### Union 타입 비교
 
@@ -579,6 +607,10 @@ class PaymentMethod with _$PaymentMethod {
 // Cash: {"type": "cash"}
 ```
 
+> **참고**: JSON의 type 값은 factory 생성자 이름에서 파생됩니다.
+> `PaymentMethod.card(...)` → `"card"`, `.bank(...)` → `"bank"`
+> 커스텀 값이 필요하면 `@FreezedUnionValue('custom_name')` 어노테이션을 사용하세요.
+
 ### 커스텀 타입 변환
 
 ```dart
@@ -644,6 +676,10 @@ final listResponse = ApiResponse<List<User>>.fromJson(
 ---
 
 ## 7. 고급 기능
+
+> **`@freezed` vs `@Freezed(...)`**
+> - `@freezed` (소문자): 기본 설정 사용
+> - `@Freezed(...)` (대문자): 커스텀 옵션 지정 (`unionKey`, `equal`, `genericArgumentFactories` 등)
 
 ### Private 생성자와 메서드 추가
 
@@ -830,8 +866,11 @@ class ProductListState with _$ProductListState {
 
   factory ProductListState.initial() => const ProductListState();
 }
+```
 
-// 또는 Union 타입으로
+**방법 2: Union 타입 방식**
+
+```dart
 @freezed
 class ProductListState with _$ProductListState {
   const factory ProductListState.initial() = ProductListInitial;
@@ -1031,6 +1070,9 @@ targets:
           field_rename: snake
 ```
 
+> **참고**: `field_rename: snake` 설정 시 별도의 `@JsonKey(name: 'snake_case')`는 불필요합니다.
+> 글로벌 설정과 `@JsonKey`가 동시에 존재하면 `@JsonKey`가 우선합니다.
+
 ### 성능 고려사항
 
 ```dart
@@ -1125,3 +1167,7 @@ ProductListState를 Union 타입으로 리팩토링하세요.
 - [ ] JSON 직렬화를 위한 설정(@JsonKey, genericArgumentFactories)을 할 수 있다
 - [ ] build_runner를 실행하여 .freezed.dart와 .g.dart 파일을 생성할 수 있다
 - [ ] Freezed vs 수동 작성의 장단점을 비교할 수 있다
+
+---
+
+**다음 문서:** [Fpdart - 함수형 에러 처리](./Fpdart.md)

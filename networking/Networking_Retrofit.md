@@ -49,8 +49,8 @@ dependencies:
 
 dev_dependencies:
   retrofit_generator: ^10.2.1
-  json_serializable: ^6.11.4
-  build_runner: ^2.10.5
+  json_serializable: ^6.9.5
+  build_runner: ^2.4.15
 ```
 
 > **retrofit 4.9.0+ 주요 변경사항:**

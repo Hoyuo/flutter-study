@@ -89,12 +89,12 @@ git commit -m "chore: initial commit"
 
 **필수 패키지:**
 - flutter_bloc ^9.1.1
-- freezed ^3.1.0
-- fpdart ^1.1.0
-- dio ^5.4.0 / retrofit ^4.0.0
+- freezed ^3.2.4
+- fpdart ^1.2.0
+- dio ^5.9.0 / retrofit ^4.0.0
 - drift ^2.14.0
-- get_it ^8.0.3 / injectable ^2.5.0
-- go_router ^14.8.1
+- get_it ^9.2.0 / injectable ^2.5.0
+- go_router ^17.0.1
 
 ### 2.3 폴더 구조 생성
 

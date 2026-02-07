@@ -7,6 +7,25 @@
 > - Feature 기반 모듈화와 의존성 방향 규칙을 준수하여 프로젝트를 구조화할 수 있습니다
 > - Repository 패턴, UseCase 패턴, Bloc 생명주기 관리 등 핵심 패턴을 실무에 적용할 수 있습니다
 
+> **패키지 버전 (2024.01 기준)**
+> ```yaml
+> dependencies:
+>   flutter_bloc: ^9.1.1
+>   freezed_annotation: ^3.1.0
+>   fpdart: ^1.2.0
+>   get_it: ^9.2.0
+>   injectable: ^2.5.0
+>   go_router: ^17.0.1
+>   dio: ^5.9.0
+>   app_links: ^6.4.0
+>
+> dev_dependencies:
+>   freezed: ^3.2.4
+>   json_serializable: ^6.9.5
+>   injectable_generator: ^2.7.0
+>   build_runner: ^2.4.15
+> ```
+
 ## 1. 프로젝트 개요
 
 - **플랫폼**: Flutter
@@ -47,8 +66,8 @@ class HomeBloc extends Bloc { ... }
 ### 2.3 비즈니스 로직은 Bloc에
 
 ```dart
-// ❌ Screen에 비즈니스 로직 금지
-class MyScreen extends StatefulWidget {
+// ❌ Screen(State)에 비즈니스 로직 금지
+class _MyScreenState extends State<MyScreen> {
   Future<void> _doSomething() async {
     await Future.delayed(const Duration(seconds: 1));  // 비즈니스 로직
     await someUseCase.call();  // 직접 호출
@@ -228,6 +247,7 @@ GoRouter createAppRouter(AppAuthNotifier authNotifier) {
     initialLocation: AppRoutes.splash,
     routes: [
       // intro feature
+      // (_, _): Dart 3.0+ wildcard - context, state 모두 미사용 시
       GoRoute(
         path: AppRoutes.splash,
         builder: (_, _) => IntroScreen(onAuthCheck: authNotifier.checkAuthStatus),
@@ -443,12 +463,22 @@ class RemoteConfigFeatureFlags implements FeatureFlagService {
   final FirebaseRemoteConfig _remoteConfig;
   final _updateController = StreamController<void>.broadcast();
 
+  RemoteConfigFeatureFlags(this._remoteConfig);
+
+  @override
+  Stream<void> get onConfigUpdated => _updateController.stream;
+
+  void dispose() {
+    _updateController.close();
+  }
+
   @override
   Future<void> initialize() async {
     await _remoteConfig.setDefaults({
       'new_checkout_flow': false,
       'dark_mode_v2': false,
       'ai_recommendations': false,
+      'experimental_camera': false,
     });
 
     await _remoteConfig.fetchAndActivate();
@@ -476,10 +506,12 @@ class RemoteConfigFeatureFlags implements FeatureFlagService {
   }
 
   String _flagKey(FeatureFlag flag) {
-    return flag.name.replaceAllMapped(
+    final snake = flag.name.replaceAllMapped(
       RegExp('([A-Z])'),
       (m) => '_${m.group(1)!.toLowerCase()}',
-    ).replaceFirst('_', '');
+    );
+    // PascalCase 입력 시 선행 underscore만 제거
+    return snake.startsWith('_') ? snake.substring(1) : snake;
   }
 }
 ```
@@ -488,6 +520,8 @@ class RemoteConfigFeatureFlags implements FeatureFlagService {
 
 ```dart
 class CheckoutPage extends StatelessWidget {
+  const CheckoutPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     final featureFlags = context.read<FeatureFlagService>();
@@ -514,8 +548,14 @@ class FeatureGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isEnabled = context.watch<FeatureFlagService>().isEnabled(flag);
-    return isEnabled ? enabled : disabled;
+    final featureFlags = context.read<FeatureFlagService>();
+    return StreamBuilder<void>(
+      stream: featureFlags.onConfigUpdated,
+      builder: (context, _) {
+        final isEnabled = featureFlags.isEnabled(flag);
+        return isEnabled ? enabled : disabled;
+      },
+    );
   }
 }
 ```
@@ -596,7 +636,7 @@ final router = GoRouter(
 ```dart
 // Requires: app_links package
 // dependencies:
-//   app_links: ^6.0.0
+//   app_links: ^6.4.0
 
 // 딥링크 핸들러
 class DeepLinkHandler {
@@ -632,16 +672,16 @@ class DeepLinkHandler {
 
 ## 12. 라이브러리 사용
 
-| 용도 | 라이브러리 |
-|------|-----------|
-| 상태 관리 | flutter_bloc |
-| DI | get_it + injectable |
-| 불변 객체 | freezed + freezed_annotation |
-| JSON 직렬화 | json_annotation + json_serializable |
-| 함수형 | fpdart (Either, Option) |
-| 라우팅 | go_router |
-| 네트워크 | dio |
-| 코드 생성 | build_runner |
+| 용도 | 라이브러리 | 버전 |
+|------|-----------|------|
+| 상태 관리 | flutter_bloc | ^9.1.1 |
+| DI | get_it + injectable | ^9.2.0 / ^2.5.0 |
+| 불변 객체 | freezed + freezed_annotation | ^3.2.4 / ^3.1.0 |
+| JSON 직렬화 | json_annotation + json_serializable | ^4.9.0 / ^6.9.5 |
+| 함수형 | fpdart (Either, Option) | ^1.2.0 |
+| 라우팅 | go_router | ^17.0.1 |
+| 네트워크 | dio | ^5.9.0 |
+| 코드 생성 | build_runner | ^2.4.15 |
 
 ## 13. Freezed 사용 패턴
 
@@ -779,6 +819,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   Future<void> _onEvent(HomeEvent event, Emitter<HomeState> emit) async {
+    // Freezed when 패턴: 모든 이벤트 타입에 대한 핸들러를 제공
+    // 개별 이벤트에 다른 Transformer가 필요하면 on<SpecificEvent>() 사용 (Bloc.md 참조)
     await event.when(
       started: () => _onStarted(emit),
       refresh: () => _onRefresh(emit),
@@ -827,6 +869,7 @@ class _HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // LoadingIndicator, ErrorView: common_ui 패키지에서 정의된 공통 위젯
     return BlocBuilder<HomeBloc, HomeState>(
       builder: (context, state) {
         return state.when(
@@ -892,7 +935,7 @@ class HomeBloc extends Bloc { ... }
 
 ```dart
 // ❌ 금지
-class MyScreen extends StatefulWidget {
+class _MyScreenState extends State<MyScreen> {
   void _onTap() async {
     await Future.delayed(const Duration(seconds: 1));  // Bloc으로 이동
   }
@@ -981,3 +1024,9 @@ API 통신을 포함한 완전한 Repository를 구현하세요.
 - [ ] Repository 패턴에서 Interface(Domain)와 Implementation(Data)의 분리 이유를 설명할 수 있다
 - [ ] Either<Failure, Entity> 패턴을 사용하여 에러를 처리할 수 있다
 - [ ] 새 Feature를 생성할 때 올바른 순서(Domain → Data → Presentation)로 작업할 수 있다
+- [ ] Feature Flag 서비스를 구현하고 Remote Config와 연동하는 방법을 이해한다
+- [ ] Deep Link 설정(Android/iOS)과 GoRouter 연동 방법을 설명할 수 있다
+
+---
+
+학습 완료 후 다음 문서: [Bloc](./Bloc.md)

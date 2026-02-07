@@ -1,7 +1,7 @@
 # Flutter Widget 기본기 가이드
 
 > Flutter Clean Architecture + Bloc 패턴 기반 교육 자료
-> Package versions: flutter_bloc ^9.1.1, freezed ^3.1.0, fpdart ^1.1.0, go_router ^14.8.1, get_it ^8.0.3, injectable ^2.5.0
+> Package versions: flutter_bloc ^9.1.1, freezed ^3.2.4, fpdart ^1.2.0, go_router ^17.0.1, get_it ^9.2.0, injectable ^2.5.0
 
 > **학습 목표**:
 > - Widget, Element, RenderObject의 관계와 Flutter의 렌더링 파이프라인을 이해한다
@@ -35,7 +35,7 @@ Flutter에서 Widget은 **UI 구성의 설계도(blueprint)**입니다. Widget �
 class MyWidget extends StatelessWidget {
   final String title;
 
-  const MyWidget({Key? key, required this.title}) : super(key: key);
+  const MyWidget({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -76,10 +76,10 @@ class Greeting extends StatelessWidget {
   final TextStyle? style;
 
   const Greeting({
-    Key? key,
+    super.key,
     required this.name,
     this.style,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +97,7 @@ class Greeting extends StatelessWidget {
 class Counter extends StatefulWidget {
   final int initialValue;
 
-  const Counter({Key? key, this.initialValue = 0}) : super(key: key);
+  const Counter({super.key, this.initialValue = 0});
 
   @override
   State<Counter> createState() => _CounterState();
@@ -142,13 +142,19 @@ class AppTheme extends InheritedWidget {
   final Color accentColor;
 
   const AppTheme({
-    Key? key,
+    super.key,
     required this.primaryColor,
     required this.accentColor,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
-  static AppTheme? of(BuildContext context) {
+  static AppTheme of(BuildContext context) {
+    final result = context.dependOnInheritedWidgetOfExactType<AppTheme>();
+    assert(result != null, 'No AppTheme found in context');
+    return result!;
+  }
+
+  static AppTheme? maybeOf(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<AppTheme>();
   }
 
@@ -180,6 +186,8 @@ class MyWidget extends StatelessWidget {
 ```
 
 ### 2.2 Context의 위치
+
+Scaffold는 build 메서드 내에서 생성되므로, build에 전달된 context는 Scaffold보다 위에 위치합니다. Builder를 사용하면 Scaffold 아래의 context를 얻을 수 있습니다.
 
 ```dart
 class ContextExample extends StatelessWidget {
@@ -215,10 +223,10 @@ class MyInheritedWidget extends InheritedWidget {
   final String data;
 
   const MyInheritedWidget({
-    Key? key,
+    super.key,
     required this.data,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
   static MyInheritedWidget? of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<MyInheritedWidget>();
@@ -266,12 +274,19 @@ Element (변경 가능한 인스턴스)
 RenderObject (실제 레이아웃 & 페인팅)
 ```
 
+> **3-tree 관계 요약**:
+> - **Widget**: 불변 설계도. 매 빌드마다 새로 생성될 수 있음 (가벼움)
+> - **Element**: 위젯의 인스턴스를 관리하는 중간 계층. 위젯이 변경되어도 가능하면 재사용됨
+> - **RenderObject**: 실제 레이아웃(크기 계산)과 페인팅(화면 그리기)을 담당. `layout()` → `paint()` → compositing 순으로 처리됨
+>
+> Widget은 가볍게 재생성되지만, RenderObject는 비용이 크므로 Element가 중간에서 재사용 여부를 판단합니다.
+
 ```dart
 // Widget은 Element를 생성
 class MyCustomWidget extends StatelessWidget {
   final String title;
 
-  const MyCustomWidget({Key? key, required this.title}) : super(key: key);
+  const MyCustomWidget({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -288,6 +303,14 @@ class MyCustomWidget extends StatelessWidget {
 Element 재사용 조건:
 1. Widget의 runtimeType이 같아야 함
 2. Key가 같아야 함 (또는 둘 다 null)
+
+> Flutter는 내부적으로 `Widget.canUpdate(oldWidget, newWidget)`를 호출하여 재사용 여부를 판단합니다:
+> ```dart
+> static bool canUpdate(Widget oldWidget, Widget newWidget) {
+>   return oldWidget.runtimeType == newWidget.runtimeType
+>       && oldWidget.key == newWidget.key;
+> }
+> ```
 
 ```dart
 class ElementReuseExample extends StatefulWidget {
@@ -314,6 +337,31 @@ class _ElementReuseExampleState extends State<ElementReuseExample> {
     );
   }
 }
+
+// _ColoredBox: 탭 횟수를 내부 State로 관리하는 예제 위젯
+class _ColoredBox extends StatefulWidget {
+  final Color color;
+  const _ColoredBox({required this.color});
+
+  @override
+  State<_ColoredBox> createState() => _ColoredBoxState();
+}
+
+class _ColoredBoxState extends State<_ColoredBox> {
+  int _tapCount = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => setState(() => _tapCount++),
+      child: Container(
+        width: 100, height: 100,
+        color: widget.color,
+        child: Center(child: Text('Taps: $_tapCount')),
+      ),
+    );
+  }
+}
 ```
 
 ---
@@ -326,45 +374,53 @@ class _ElementReuseExampleState extends State<ElementReuseExample> {
 class LifecycleDemo extends StatefulWidget {
   @override
   State<LifecycleDemo> createState() {
-    print('1. createState()');
+    print('1. createState()'); // Framework이 위젯을 처음 삽입할 때
     return _LifecycleDemoState();
   }
 }
+
+// 2. State 생성자 (Dart 런타임이 호출, 명시적으로 오버라이드하지 않음)
 
 class _LifecycleDemoState extends State<LifecycleDemo> {
   @override
   void initState() {
     super.initState();
-    print('3. initState()');
+    print('3. initState()'); // State 초기화 (1회만 호출)
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    print('4. didChangeDependencies()');
+    print('4. didChangeDependencies()'); // InheritedWidget 변경 시에도 호출
   }
 
   @override
   Widget build(BuildContext context) {
-    print('5. build()');
+    print('5. build()'); // UI 구성 (setState 호출 시마다)
     return Container();
   }
 
   @override
   void didUpdateWidget(LifecycleDemo oldWidget) {
     super.didUpdateWidget(oldWidget);
-    print('6. didUpdateWidget()');
+    print('6. didUpdateWidget()'); // 부모가 같은 runtimeType으로 리빌드 시
+  }
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    print('7. reassemble()'); // hot reload 시 호출 (디버그 전용)
   }
 
   @override
   void deactivate() {
-    print('8. deactivate()');
+    print('8. deactivate()'); // 트리에서 제거될 때 (재삽입 가능)
     super.deactivate();
   }
 
   @override
   void dispose() {
-    print('9. dispose()');
+    print('9. dispose()'); // 영구 제거 시 리소스 해제
     super.dispose();
   }
 }
@@ -376,7 +432,7 @@ class _LifecycleDemoState extends State<LifecycleDemo> {
 class PracticalLifecycle extends StatefulWidget {
   final String userId;
 
-  const PracticalLifecycle({Key? key, required this.userId}) : super(key: key);
+  const PracticalLifecycle({super.key, required this.userId});
 
   @override
   State<PracticalLifecycle> createState() => _PracticalLifecycleState();
@@ -428,6 +484,46 @@ class _PracticalLifecycleState extends State<PracticalLifecycle> {
 Key는 Flutter가 Element를 올바르게 재사용하거나 업데이트하도록 돕습니다.
 
 ```dart
+// 섹션 5에서 사용하는 헬퍼 위젯 정의
+class _StatefulTile extends StatefulWidget {
+  final String title;
+  const _StatefulTile({super.key, required this.title});
+
+  @override
+  State<_StatefulTile> createState() => _StatefulTileState();
+}
+
+class _StatefulTileState extends State<_StatefulTile> {
+  bool _selected = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(widget.title),
+      selected: _selected,
+      onTap: () => setState(() => _selected = !_selected),
+    );
+  }
+}
+
+class _Counter extends StatefulWidget {
+  const _Counter({super.key});
+
+  @override
+  State<_Counter> createState() => _CounterState();
+}
+
+class _CounterState extends State<_Counter> {
+  int _count = 0;
+
+  void increment() => setState(() => _count++);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text('Count: $_count');
+  }
+}
+
 // ValueKey: 값 기반 비교
 class ValueKeyExample extends StatelessWidget {
   final List<String> items = ['Apple', 'Banana', 'Cherry'];
@@ -481,7 +577,14 @@ class ObjectKeyExample extends StatelessWidget {
 }
 
 // GlobalKey: 다른 Widget에서 State 접근
-class GlobalKeyExample extends StatelessWidget {
+class GlobalKeyExample extends StatefulWidget {
+  const GlobalKeyExample({super.key});
+
+  @override
+  State<GlobalKeyExample> createState() => _GlobalKeyExampleState();
+}
+
+class _GlobalKeyExampleState extends State<GlobalKeyExample> {
   final GlobalKey<_CounterState> counterKey = GlobalKey<_CounterState>();
 
   @override
@@ -493,7 +596,7 @@ class GlobalKeyExample extends StatelessWidget {
           onPressed: () {
             counterKey.currentState?.increment();
           },
-          child: Text('Increment from outside'),
+          child: const Text('Increment from outside'),
         ),
       ],
     );
@@ -501,11 +604,56 @@ class GlobalKeyExample extends StatelessWidget {
 }
 ```
 
+### 5.2 UniqueKey
+
+`UniqueKey`는 항상 고유한 Key를 생성합니다. 주로 위젯의 State를 강제로 초기화하고 싶을 때 사용합니다.
+
+```dart
+// UniqueKey: State를 강제 초기화
+class UniqueKeyExample extends StatefulWidget {
+  const UniqueKeyExample({super.key});
+
+  @override
+  State<UniqueKeyExample> createState() => _UniqueKeyExampleState();
+}
+
+class _UniqueKeyExampleState extends State<UniqueKeyExample> {
+  Key _childKey = UniqueKey();
+
+  void _resetChild() {
+    setState(() => _childKey = UniqueKey()); // 새 Key → State 재생성
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _Counter(key: _childKey), // Key 변경 시 State 초기화됨
+        ElevatedButton(
+          onPressed: _resetChild,
+          child: const Text('Reset Counter'),
+        ),
+      ],
+    );
+  }
+}
+```
+
+> **Key 종류 정리**:
+> | Key | 용도 | 비교 기준 |
+> |-----|------|----------|
+> | `ValueKey<T>` | 고유한 값이 있을 때 | 값(`value`) |
+> | `ObjectKey` | 객체 자체가 식별자일 때 | 객체 참조 |
+> | `UniqueKey` | 항상 고유해야 할 때 | 인스턴스 자체 |
+> | `GlobalKey` | 다른 위젯에서 State 접근 시 | 글로벌 고유 |
+
 ---
 
 ## 6. Widget 리빌드 최적화
 
 ### 6.1 const 생성자
+
+const 위젯은 컴파일 타임에 생성되어 캐싱됩니다. 부모가 리빌드되어도 const 위젯은 동일 인스턴스가 재사용되므로 build()가 호출되지 않습니다.
 
 ```dart
 class ConstExample extends StatelessWidget {
@@ -575,8 +723,21 @@ class _StaticHeader extends StatelessWidget {
 
 ```dart
 // ValueListenableBuilder
-class ValueListenableExample extends StatelessWidget {
+class ValueListenableExample extends StatefulWidget {
+  const ValueListenableExample({super.key});
+
+  @override
+  State<ValueListenableExample> createState() => _ValueListenableExampleState();
+}
+
+class _ValueListenableExampleState extends State<ValueListenableExample> {
   final ValueNotifier<int> _counter = ValueNotifier<int>(0);
+
+  @override
+  void dispose() {
+    _counter.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -600,7 +761,7 @@ class ValueListenableExample extends StatelessWidget {
 
           ElevatedButton(
             onPressed: () => _counter.value++,
-            child: Text('Increment'),
+            child: const Text('Increment'),
           ),
         ],
       ),
@@ -621,11 +782,11 @@ class CounterProvider extends InheritedWidget {
   final VoidCallback increment;
 
   const CounterProvider({
-    Key? key,
+    super.key,
     required this.count,
     required this.increment,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
   static CounterProvider? of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<CounterProvider>();
@@ -646,15 +807,16 @@ class DataProvider extends InheritedWidget {
   final int count;
 
   const DataProvider({
-    Key? key,
+    super.key,
     required this.count,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
   static DataProvider? of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<DataProvider>();
   }
 
+  /// 값만 읽고 구독하지 않음 (1회성 읽기용)
   static DataProvider? read(BuildContext context) {
     return context.getInheritedWidgetOfExactType<DataProvider>();
   }
@@ -664,15 +826,21 @@ class DataProvider extends InheritedWidget {
     return count != oldWidget.count;
   }
 }
+```
 
+> **`dependOn` vs `get` 차이**:
+> - `dependOnInheritedWidgetOfExactType` (= `of()`): 값을 읽고 **변경 구독**. InheritedWidget 업데이트 시 리빌드됨
+> - `getInheritedWidgetOfExactType` (= `read()`): 값만 읽고 **구독하지 않음**. 이벤트 핸들러에서 1회성 읽기에 적합
+
+```dart
 class ActionProvider extends InheritedWidget {
   final VoidCallback increment;
 
   const ActionProvider({
-    Key? key,
+    super.key,
     required this.increment,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
   static ActionProvider? of(BuildContext context) {
     return context.getInheritedWidgetOfExactType<ActionProvider>();
@@ -696,12 +864,12 @@ class UserModel extends InheritedModel<UserAspect> {
   final String avatar;
 
   const UserModel({
-    Key? key,
+    super.key,
     required this.name,
     required this.email,
     required this.avatar,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
   static UserModel? of(BuildContext context, {UserAspect? aspect}) {
     return InheritedModel.inheritFrom<UserModel>(context, aspect: aspect);
@@ -746,10 +914,10 @@ class StatelessExample extends StatelessWidget {
   final VoidCallback onPressed;
 
   const StatelessExample({
-    Key? key,
+    super.key,
     required this.title,
     required this.onPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -820,7 +988,7 @@ class _StateHoistingExampleState extends State<StateHoistingExample> {
 class IncrementButton extends StatelessWidget {
   final VoidCallback onPressed;
 
-  const IncrementButton({Key? key, required this.onPressed}) : super(key: key);
+  const IncrementButton({super.key, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -831,7 +999,7 @@ class IncrementButton extends StatelessWidget {
 class DecrementButton extends StatelessWidget {
   final VoidCallback onPressed;
 
-  const DecrementButton({Key? key, required this.onPressed}) : super(key: key);
+  const DecrementButton({super.key, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -887,6 +1055,23 @@ class _GoodObjectCreationState extends State<GoodObjectCreation> {
 ### 9.2 안티패턴 2: 잘못된 context 사용
 
 ```dart
+// ❌ 나쁨 - Scaffold와 같은 build 메서드의 context 사용
+class BadContextUsage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: ElevatedButton(
+        onPressed: () {
+          // context는 Scaffold보다 위에 위치 → Scaffold를 찾지 못함
+          Scaffold.of(context).openDrawer(); // 에러 발생!
+        },
+        child: Text('Open Drawer'),
+      ),
+      drawer: Drawer(),
+    );
+  }
+}
+
 // 좋음 - Builder 사용
 class GoodContextUsage extends StatelessWidget {
   @override
@@ -911,6 +1096,31 @@ class GoodContextUsage extends StatelessWidget {
 ### 9.3 안티패턴 3: setState 남용
 
 ```dart
+// ❌ 나쁨 - 전체 위젯 트리를 리빌드
+class BadSetState extends StatefulWidget {
+  @override
+  State<BadSetState> createState() => _BadSetStateState();
+}
+
+class _BadSetStateState extends State<BadSetState> {
+  int _counter = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // _counter가 변경되면 이 무거운 위젯도 함께 리빌드됨
+        const Text('Heavy Widget'), // 무거운 위젯 가정 - 불필요한 리빌드
+        Text('Counter: $_counter'),
+        ElevatedButton(
+          onPressed: () => setState(() => _counter++),
+          child: Text('Increment'),
+        ),
+      ],
+    );
+  }
+}
+
 // 좋음 - ValueNotifier 사용
 class GoodSetState extends StatefulWidget {
   @override
@@ -977,6 +1187,8 @@ class _GoodMountedState extends State<GoodMounted> {
   }
 }
 ```
+
+> **참고**: `StatefulWidget`의 State에서는 `mounted` 속성을, `StatelessWidget`이나 콜백에서는 `context.mounted` (Flutter 3.7+)를 사용합니다. 둘 다 위젯이 트리에 존재하는지 확인하는 용도입니다.
 
 ---
 
@@ -1046,4 +1258,4 @@ Theme 시스템을 InheritedWidget으로 구현하세요.
 
 ---
 
-**학습 완료 후**: [patterns/BlocPattern.md](../patterns/BlocPattern.md)로 진행하여 Bloc 패턴의 내부 동작과 Widget 통합을 심화 학습하세요.
+**학습 완료 후**: [fundamentals/LayoutSystem.md](./LayoutSystem.md)로 진행하여 Constraints 전파 원리와 Sliver 기반 레이아웃을 학습하세요.

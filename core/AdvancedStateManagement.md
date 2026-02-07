@@ -2,6 +2,8 @@
 
 > 대규모 엔터프라이즈 애플리케이션을 위한 고급 상태 관리 패턴 및 아키텍처
 
+> **Flutter 3.27+ / Dart 3.6+** | bloc ^9.1.1 | flutter_bloc ^9.1.1 | bloc_concurrency ^0.3.0 | hydrated_bloc ^9.1.5 | freezed ^3.2.4 | fpdart ^1.2.0
+
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - Event Sourcing, CQRS 등 고급 상태 관리 패턴을 이해하고 구현할 수 있다
 > - Multi-Bloc 조합과 상태 동기화 전략을 설계할 수 있다
@@ -31,6 +33,8 @@
 // - 단일 위젯 내에서만 사용
 // - 다른 위젯과 공유 불필요
 class CounterWidget extends StatefulWidget {
+  const CounterWidget({super.key});
+
   @override
   State<CounterWidget> createState() => _CounterWidgetState();
 }
@@ -215,6 +219,20 @@ on<SearchQueryChanged>(
   _onQueryChanged,
   transformer: restartable(), // 이전 요청 취소
 )
+
+// debounce는 bloc_concurrency에 포함되어 있지 않으므로 커스텀 구현
+// restartable()을 기반으로 타이머를 활용한 디바운스 트랜스포머
+EventTransformer<T> debounce<T>(Duration duration) {
+  return (events, mapper) {
+    return restartable<T>().call(
+      events.asyncExpand((event) async* {
+        await Future.delayed(duration);
+        yield event;
+      }),
+      mapper,
+    );
+  };
+}
 
 on<SearchQueryChanged>(
   _onQueryChanged,
@@ -444,6 +462,8 @@ MultiBlocProvider(
 // 특정 Feature 내에서만 사용
 
 class ProductListPage extends StatelessWidget {
+  const ProductListPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -459,6 +479,8 @@ class ProductListPage extends StatelessWidget {
 // 단일 페이지 내에서만 사용
 
 class CheckoutPage extends StatelessWidget {
+  const CheckoutPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -474,12 +496,15 @@ class CheckoutPage extends StatelessWidget {
 // ============= Component-scoped State =============
 // 단일 컴포넌트(위젯) 내에서만 사용
 
-class SearchBar extends StatefulWidget {
+// Flutter 3.10+에서 SearchBar는 내장 위젯과 이름 충돌하므로 CustomSearchBar 사용
+class CustomSearchBar extends StatefulWidget {
+  const CustomSearchBar({super.key});
+
   @override
-  State<SearchBar> createState() => _SearchBarState();
+  State<CustomSearchBar> createState() => _CustomSearchBarState();
 }
 
-class _SearchBarState extends State<SearchBar> {
+class _CustomSearchBarState extends State<CustomSearchBar> {
   final _controller = TextEditingController();
   // 컴포넌트 내부 상태
 }
@@ -623,8 +648,8 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   }
 
   @override
-  Future<void> close() {
-    _cartSubscription.cancel();
+  Future<void> close() async {
+    await _cartSubscription.cancel();
     return super.close();
   }
 }
@@ -697,7 +722,7 @@ BlocBuilder<ProductListBloc, ProductListState>(
 )
 
 // 성능 최적화: Memoization
-// ⚠️ Freezed 2.x는 클래스 상속을 지원하지 않으므로 composition 패턴 사용
+// ⚠️ Freezed는 클래스 상속을 지원하지 않으므로 composition 패턴 사용
 class MemoizedProductListState {
   final ProductListState state;
   final Map<String, List<Product>> _cache = {};
@@ -855,17 +880,33 @@ class SqliteEventStore implements EventStore {
     return results.map((row) => _jsonToEvent(row)).toList();
   }
 
+  // 마지막으로 처리한 이벤트 버전 추적 (중복 방지)
+  final Map<String, int> _lastVersion = {};
+
   @override
   Stream<DomainEvent> stream(String aggregateId) {
     // SQLite는 네이티브 스트림 지원 안 함
     // Polling 또는 외부 pub/sub 시스템 사용
+    // lastVersion 커서로 이미 처리한 이벤트를 제외하여 중복 방지
     return Stream.periodic(const Duration(seconds: 1))
         .asyncMap((_) => load(aggregateId))
+        .map((events) {
+          final lastVer = _lastVersion[aggregateId] ?? -1;
+          final newEvents = events.where((e) => e.version > lastVer).toList();
+          if (newEvents.isNotEmpty) {
+            _lastVersion[aggregateId] = newEvents.last.version;
+          }
+          return newEvents;
+        })
+        .where((events) => events.isNotEmpty)
         .expand((events) => events);
   }
 
   Map<String, dynamic> _eventToJson(DomainEvent event) {
     // Event를 JSON으로 직렬화
+    // 권장: freezed의 toJson() 또는 수동 매핑 사용
+    // 예: event.toJson() (freezed 사용 시)
+    // 또는 switch (event) { case OrderCreated e: return {...}; ... }
     return {}; // 구현 생략
   }
 
@@ -886,15 +927,15 @@ class SqliteEventStore implements EventStore {
 ### 4.2 Aggregate 패턴
 
 ```dart
-// Aggregate: 이벤트로부터 현재 상태 재구성
+// Aggregate: 이벤트로부터 현재 상태 재구성 (불변 패턴)
 class OrderAggregate {
-  String id;
-  String customerId;
-  List<OrderItem> items;
-  OrderStatus status;
-  int version;
+  final String id;
+  final String customerId;
+  final List<OrderItem> items;
+  final OrderStatus status;
+  final int version;
 
-  OrderAggregate({
+  const OrderAggregate({
     required this.id,
     required this.customerId,
     this.items = const [],
@@ -902,19 +943,38 @@ class OrderAggregate {
     this.version = 0,
   });
 
-  // 이벤트 적용하여 상태 재구성
-  void apply(DomainEvent event) {
-    switch (event) {
-      case OrderCreated(:final customerId, :final items):
-        this.customerId = customerId;
-        this.items = items;
-        status = OrderStatus.created;
-      case OrderItemAdded(:final item):
-        items = [...items, item];
-      case OrderPaid():
-        status = OrderStatus.paid;
-    }
-    version = event.version;
+  // 이벤트 적용하여 새로운 Aggregate 반환 (불변 패턴)
+  OrderAggregate apply(DomainEvent event) {
+    return switch (event) {
+      OrderCreated(:final customerId, :final items) => OrderAggregate(
+        id: id,
+        customerId: customerId,
+        items: items,
+        status: OrderStatus.created,
+        version: event.version,
+      ),
+      OrderItemAdded(:final item) => OrderAggregate(
+        id: id,
+        customerId: customerId,
+        items: [...items, item],
+        status: status,
+        version: event.version,
+      ),
+      OrderPaid() => OrderAggregate(
+        id: id,
+        customerId: customerId,
+        items: items,
+        status: OrderStatus.paid,
+        version: event.version,
+      ),
+      _ => OrderAggregate(
+        id: id,
+        customerId: customerId,
+        items: items,
+        status: status,
+        version: event.version,
+      ),
+    };
   }
 
   // 이벤트 시퀀스로부터 Aggregate 재구성
@@ -924,13 +984,13 @@ class OrderAggregate {
     }
 
     final firstEvent = events.first as OrderCreated;
-    final aggregate = OrderAggregate(
+    var aggregate = OrderAggregate(
       id: firstEvent.aggregateId,
       customerId: firstEvent.customerId,
     );
 
     for (final event in events) {
-      aggregate.apply(event);
+      aggregate = aggregate.apply(event);
     }
 
     return aggregate;
@@ -983,6 +1043,7 @@ class OrderAggregate {
 class OrderBloc extends Bloc<OrderEvent, OrderState> {
   final EventStore _eventStore;
   final String _orderId;
+  late final StreamSubscription<DomainEvent> _eventSubscription;
 
   OrderBloc(this._eventStore, this._orderId)
       : super(const OrderState.loading()) {
@@ -992,7 +1053,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     add(OrderEvent.load());
 
     // 이벤트 스트림 구독
-    _eventStore.stream(_orderId).listen((domainEvent) {
+    _eventSubscription = _eventStore.stream(_orderId).listen((domainEvent) {
       add(OrderEvent.eventReceived(domainEvent));
     });
   }
@@ -1070,11 +1131,17 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     // 다른 소스(다른 기기, 백엔드)에서 이벤트 수신
     await state.maybeWhen(
       loaded: (aggregate) {
-        aggregate.apply(domainEvent);
-        emit(OrderState.loaded(aggregate));
+        final updated = aggregate.apply(domainEvent);
+        emit(OrderState.loaded(updated));
       },
       orElse: () {},
     );
+  }
+
+  @override
+  Future<void> close() async {
+    await _eventSubscription.cancel();
+    return super.close();
   }
 }
 ```
@@ -1588,14 +1655,12 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
         pendingOperations: Map.from(state.pendingOperations)..remove(operationId),
       ));
     } catch (e) {
-      // 4. 실패: Rollback
+      // 4. 실패: Rollback + 에러 알림 (단일 emit으로 통합)
       emit(state.copyWith(
         todos: state.todos.where((todo) => todo.id != optimisticTodo.id).toList(),
         pendingOperations: Map.from(state.pendingOperations)..remove(operationId),
+        error: 'Failed to add todo: ${e.toString()}',
       ));
-
-      // 에러 알림
-      emit(state.copyWith(error: 'Failed to add todo: ${e.toString()}'));
     }
   }
 
@@ -1682,6 +1747,8 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
 
 ```dart
 class TodoListView extends StatelessWidget {
+  const TodoListView({super.key});
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<TodoBloc, TodoState>(
@@ -1807,9 +1874,9 @@ class OperationQueue {
 ### 7.1 Stream 기반 동기화
 
 ```dart
-// ============= Master-Slave 패턴 =============
+// ============= Leader-Follower 패턴 =============
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  // Master: 인증 상태 관리
+  // Leader: 인증 상태 관리
 }
 
 class UserBloc extends Bloc<UserEvent, UserState> {
@@ -1817,7 +1884,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   late StreamSubscription _authSubscription;
 
   UserBloc(this._authBloc) : super(const UserState.initial()) {
-    // Slave: AuthBloc 상태를 구독
+    // Follower: AuthBloc 상태를 구독
     _authSubscription = _authBloc.stream.listen((authState) {
       authState.whenOrNull(
         authenticated: (user) => add(UserEvent.loadProfile(user.id)),
@@ -1829,8 +1896,8 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   }
 
   @override
-  Future<void> close() {
-    _authSubscription.cancel();
+  Future<void> close() async {
+    await _authSubscription.cancel();
     return super.close();
   }
 }
@@ -1878,8 +1945,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   }
 
   @override
-  Future<void> close() {
-    _productSubscription.cancel();
+  Future<void> close() async {
+    await _productSubscription.cancel();
     return super.close();
   }
 }
@@ -1891,7 +1958,10 @@ class CartBloc extends Bloc<CartEvent, CartState> {
 // 공유 상태 저장소
 @injectable
 class SharedStateRepository {
-  final _stateController = BehaviorSubject<AppSharedState>();
+  // rxdart 패키지 필요: rxdart: ^0.28.0
+  final _stateController = BehaviorSubject<AppSharedState>.seeded(
+    const AppSharedState(),
+  );
 
   Stream<AppSharedState> get stateStream => _stateController.stream;
   AppSharedState get currentState => _stateController.value;
@@ -1925,14 +1995,21 @@ class AppSharedState with _$AppSharedState {
 // Bloc에서 사용
 class CartBloc extends Bloc<CartEvent, CartState> {
   final SharedStateRepository _sharedState;
+  late final StreamSubscription<CartState> _stateSubscription;
 
   CartBloc(this._sharedState) : super(const CartState()) {
     on<CartEvent>(_onEvent);
 
     // 상태 변경 시 공유 저장소 업데이트
-    stream.listen((state) {
+    _stateSubscription = stream.listen((state) {
       _sharedState.updateCart(state);
     });
+  }
+
+  @override
+  Future<void> close() async {
+    await _stateSubscription.cancel();
+    return super.close();
   }
 }
 ```
@@ -2304,6 +2381,8 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
 
 ```dart
 class TodoPage extends StatelessWidget {
+  const TodoPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -2350,13 +2429,15 @@ class TodoPage extends StatelessWidget {
 
 // Keyboard Shortcuts
 class TodoPageWithShortcuts extends StatelessWidget {
+  const TodoPageWithShortcuts({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Shortcuts(
       shortcuts: {
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyZ):
+        const SingleActivator(LogicalKeyboardKey.keyZ, control: true):
             const UndoIntent(),
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyY):
+        const SingleActivator(LogicalKeyboardKey.keyY, control: true):
             const RedoIntent(),
       },
       child: Actions(
@@ -2738,32 +2819,28 @@ class TimeTravelDebugger<E, S> extends StatelessWidget {
 ### 9.4 Redux DevTools 통합
 
 ```dart
-// Redux DevTools Extension과 통합
+// Redux DevTools 연동 (개념적 예시)
+// 개념적 예시 - DevToolsExtension은 실제 Flutter API가 아닙니다.
+// 실제 구현 시에는 BlocObserver에서 debugPrint 로깅하거나,
+// dart:developer의 postEvent를 사용하여 DevTools Extension을 구현합니다.
 class ReduxDevToolsObserver extends BlocObserver {
-  final devtools = DevToolsExtension();
-
   @override
   void onEvent(Bloc bloc, Object? event) {
     super.onEvent(bloc, event);
 
-    // DevTools에 이벤트 전송
-    devtools.send(
-      event.toString(),
-      bloc.state,
-      timestamp: DateTime.now(),
-    );
+    // 실제 구현 예: dart:developer를 사용한 DevTools 연동
+    // import 'dart:developer' as developer;
+    // developer.postEvent('bloc_event', {'event': event.toString()});
+    debugPrint('[Bloc Event] ${bloc.runtimeType}: $event');
   }
 
   @override
   void onTransition(Bloc bloc, Transition transition) {
     super.onTransition(bloc, transition);
 
-    // DevTools에 상태 전환 전송
-    devtools.send(
-      transition.event.toString(),
-      transition.nextState,
-      previousState: transition.currentState,
-    );
+    // 실제 구현 예: 상태 전환 로깅
+    debugPrint('[Bloc Transition] ${bloc.runtimeType}: '
+        '${transition.currentState} → ${transition.nextState}');
   }
 }
 
@@ -2840,6 +2917,8 @@ class AppState with _$AppState {
     required DateTime lastSynced,
   }) = _AppState;
 
+  const AppState._();
+
   factory AppState.fromJson(Map<String, dynamic> json) {
     return AppState(
       user: json['user'] != null ? User.fromJson(json['user']) : null,
@@ -2856,12 +2935,12 @@ class AppState with _$AppState {
     );
   }
 
-  Map<String, dynamic> toJson(AppState state) {
+  Map<String, dynamic> toJson() {
     return {
-      'user': state.user?.toJson(),
-      'cart': state.cart.map((item) => item.toJson()).toList(),
-      'orders': state.orders.map((key, value) => MapEntry(key, value.toJson())),
-      'lastSynced': state.lastSynced.toIso8601String(),
+      'user': user?.toJson(),
+      'cart': cart.map((item) => item.toJson()).toList(),
+      'orders': orders.map((key, value) => MapEntry(key, value.toJson())),
+      'lastSynced': lastSynced.toIso8601String(),
     };
   }
 }
@@ -2896,14 +2975,14 @@ class AuthBloc extends HydratedBloc<AuthEvent, AuthState> {
   }
 
   // 토큰은 SecureStorage에 별도 저장
+  static const _secureStorage = FlutterSecureStorage();
+
   Future<void> _saveTokenSecurely(String token) async {
-    final storage = FlutterSecureStorage();
-    await storage.write(key: 'auth_token', value: token);
+    await _secureStorage.write(key: 'auth_token', value: token);
   }
 
   Future<String?> _loadTokenSecurely() async {
-    final storage = FlutterSecureStorage();
-    return storage.read(key: 'auth_token');
+    return _secureStorage.read(key: 'auth_token');
   }
 }
 ```
@@ -2937,7 +3016,7 @@ class VersionedBloc extends HydratedBloc<MyEvent, MyState> {
 
       return MyState.fromJson(migratedJson);
     } catch (e) {
-      print('Migration failed: $e');
+      debugPrint('Migration failed: $e');
       return null; // 기본 상태 사용
     }
   }
@@ -3032,22 +3111,23 @@ class CompressedBloc extends HydratedBloc<MyEvent, MyState> {
 // 암호화된 저장소
 class EncryptedStorage implements Storage {
   final Encrypter _encrypter;
+  final IV _iv;
   final Storage _storage;
 
-  EncryptedStorage(this._encrypter, this._storage);
+  EncryptedStorage(this._encrypter, this._iv, this._storage);
 
   @override
   Future<void> write(String key, dynamic value) async {
-    final encrypted = _encrypter.encrypt(jsonEncode(value));
+    final encrypted = _encrypter.encrypt(jsonEncode(value), iv: _iv);
     await _storage.write(key, encrypted.base64);
   }
 
   @override
-  Future<dynamic> read(String key) async {
-    final encrypted = await _storage.read(key);
+  dynamic read(String key) {
+    final encrypted = _storage.read(key);
     if (encrypted == null) return null;
 
-    final decrypted = _encrypter.decrypt64(encrypted);
+    final decrypted = _encrypter.decrypt64(encrypted as String, iv: _iv);
     return jsonDecode(decrypted);
   }
 
@@ -3057,6 +3137,12 @@ class EncryptedStorage implements Storage {
   @override
   Future<void> clear() => _storage.clear();
 }
+
+// 사용 예:
+// final key = Key.fromLength(32);
+// final iv = IV.fromLength(16);
+// final encrypter = Encrypter(AES(key));
+// final storage = EncryptedStorage(encrypter, iv, HydratedBloc.storage);
 ```
 
 ---
@@ -3111,3 +3197,7 @@ Event Sourcing 패턴으로 사용자 액션의 히스토리를 관리하고, Un
 - [ ] Event Sourcing과 CQRS 패턴의 차이를 설명할 수 있다
 - [ ] Bloc의 Transformer를 활용한 이벤트 처리 최적화를 적용할 수 있다
 - [ ] 상태 디버깅 도구(DevTools, Observer)를 설정하고 활용할 수 있다
+
+---
+
+**다음 문서:** [PlatformIntegration](./PlatformIntegration.md) - Platform Channel, FFI, Pigeon

@@ -35,7 +35,7 @@ dependencies:
 
   # 상태 관리
   flutter_bloc: ^9.1.1
-  freezed_annotation: ^3.0.0  # Dart 3.6 호환
+  freezed_annotation: ^3.1.0  # Dart 3.6 호환
 
   # UUID 생성
   uuid: ^4.0.0
@@ -48,7 +48,7 @@ dependencies:
 
 dev_dependencies:
   freezed: ^3.2.4            # Dart 3.6 호환
-  build_runner: ^2.4.13
+  build_runner: ^2.4.15
   drift_dev: ^2.22.0
   hive_generator: ^2.0.1
 ```

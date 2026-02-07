@@ -20,6 +20,9 @@
 | `Animation.md` | 암시적/명시적 애니메이션, Lottie, Hero, 접근성 고려 |
 | `AdvancedPatterns.md` | DDD, Hexagonal Architecture, Saga 패턴, Specification 패턴, SOLID 심화 |
 | `CustomPainting.md` | Canvas API, CustomPainter, 커스텀 그래픽, Path 드로잉, 성능 최적화 |
+| `ResponsiveDesign.md` | 반응형 디자인, 적응형 레이아웃, 다중 화면 크기 대응 |
+| `DesignSystem.md` | 디자인 시스템, 디자인 토큰, 컴포넌트 라이브러리 |
+| `ServerDrivenUI.md` | Server-Driven UI, JSON 스키마 렌더링, Widget Registry, A/B 테스트 |
 
 ## For AI Agents
 

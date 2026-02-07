@@ -78,13 +78,13 @@ dependencies:
   # 권장 대안: Drift (타입 안전, 활발한 개발)
   drift: ^2.14.0
 
-  injectable: ^2.7.1  # DI.md와 동일
+  injectable: ^2.5.0
   path_provider: ^2.1.2
 
 dev_dependencies:
   isar_plus_generator: ^1.2.1
-  build_runner: ^2.10.5
-  injectable_generator: ^2.12.0  # DI.md와 동일
+  build_runner: ^2.4.15
+  injectable_generator: ^2.7.0
 ```
 
 ## 3. SharedPreferences
@@ -1750,12 +1750,12 @@ dependencies:
   drift: ^2.14.0  # SQL, 권장!
   # objectbox: ^2.4.0  # NoSQL 대안
 
-  injectable: ^2.7.1
+  injectable: ^2.5.0
   path_provider: ^2.1.2
 
 dev_dependencies:
   drift_dev: ^2.14.0  # Drift 사용 시
-  build_runner: ^2.10.5
+  build_runner: ^2.4.15
 ```
 
 ### 마이그레이션 체크리스트

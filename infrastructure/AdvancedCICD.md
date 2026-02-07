@@ -241,6 +241,8 @@ dependencies:
 
 ```dart
 // lib/core/feature_flags/launchdarkly_service.dart
+import 'dart:io';
+
 import 'package:launchdarkly_flutter_client_sdk/launchdarkly_flutter_client_sdk.dart';
 
 class LaunchDarklyService {
@@ -344,6 +346,9 @@ class LaunchDarklyService {
 
 ```dart
 // lib/core/feature_flags/remote_config_service.dart
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 
 class RemoteConfigService {

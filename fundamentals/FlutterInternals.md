@@ -2,6 +2,10 @@
 
 Flutter의 내부 동작 원리 (Widget → Element → RenderObject → 화면)를 다루는 가이드입니다.
 
+> **패키지 버전 (2024.01 기준)**
+> - Flutter SDK: 3.27.x
+> - Dart SDK: 3.6.x
+
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - Widget Tree, Element Tree, RenderObject Tree의 3개 트리 구조와 역할을 이해할 수 있습니다
 > - Build → Layout → Paint → Composite 렌더링 파이프라인의 각 단계를 설명할 수 있습니다
@@ -72,19 +76,10 @@ class MyWidget extends StatelessWidget {
 }
 
 // Widget은 경량 객체 (설정만 담음)
-class Container extends StatelessWidget {
-  final Color? color;
-  final Widget? child;
-  final double? width;
-  final double? height;
-  
-  const Container({
-    this.color,
-    this.child,
-    this.width,
-    this.height,
-  });
-}
+// Flutter의 Container 내부 구조 (개념적 단순화):
+//   - color, child, width, height 등의 설정값만 보유
+//   - build() 호출 시 실제 RenderObject 생성을 위임
+//   - @immutable: 생성 후 변경 불가
 ```
 
 ### Element Tree
@@ -316,7 +311,7 @@ Flutter 렌더링은 **4단계 파이프라인**을 거칩니다:
 ┌─────────────────────────────────────────────────────────┐
 │ 4. Composite Phase                                      │
 │    - Layer 트리를 Scene으로 변환                         │
-│    - GPU에 전송 (Skia 엔진)                             │
+│    - GPU에 전송 (Impeller/Skia 엔진)                     │
 │    - 래스터화 및 화면 출력                               │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -544,6 +539,25 @@ class MyWidget extends StatelessWidget {
 ### Build 최적화: Key 사용
 
 ```dart
+// ColorBox: Key 예제를 위한 StatefulWidget
+class ColorBox extends StatefulWidget {
+  final Color color;
+  const ColorBox({super.key, required this.color});
+
+  @override
+  State<ColorBox> createState() => _ColorBoxState();
+}
+
+class _ColorBoxState extends State<ColorBox> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 100,
+      color: widget.color,
+    );
+  }
+}
+
 // ❌ Key 없음: 순서 변경 시 Element 잘못 재사용
 class WithoutKey extends StatefulWidget {
   @override
@@ -905,6 +919,8 @@ class _RepaintBoundaryExampleState extends State<RepaintBoundaryExample> {
 }
 
 class ExpensiveStaticWidget extends StatelessWidget {
+  const ExpensiveStaticWidget({super.key});
+
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
@@ -917,14 +933,14 @@ class ExpensiveStaticWidget extends StatelessWidget {
 class ExpensivePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    print('ExpensivePainter.paint() called'); // 리페인트 감지
+    print('ExpensivePainter.paint() called'); // 디버깅용 (프로덕션에서는 제거할 것)
     
     // 복잡한 그리기
     for (int i = 0; i < 1000; i++) {
       canvas.drawCircle(
         Offset(size.width / 2, size.height / 2),
         i.toDouble(),
-        Paint()..color = Colors.blue.withOpacity(0.01),
+        Paint()..color = Colors.blue.withValues(alpha: 0.01),
       );
     }
   }
@@ -983,8 +999,9 @@ void compositeFrame() {
   final ui.SceneBuilder builder = ui.SceneBuilder();
   final ui.Scene scene = layer!.buildScene(builder);
   
-  // GPU로 전송
-  window.render(scene);
+  // Flutter 3.x 이전: window.render(scene)
+  // Flutter 3.x 이후: PlatformDispatcher 사용
+  _platformDispatcher.views.first.render(scene);
   scene.dispose();
 }
 
@@ -1039,8 +1056,10 @@ void addToScene(ui.SceneBuilder builder) {
 ┌──────────────────────────────────────────────────┐
 │ Flutter Engine (C++)                             │
 ├──────────────────────────────────────────────────┤
-│ 1. Scene을 Skia에 전달                           │
-│ 2. Skia가 Scene을 GPU 명령으로 변환              │
+│ 1. Scene을 렌더링 엔진에 전달                    │
+│    (Impeller 기본: iOS 3.16+, Android 3.22+)    │
+│    (Skia: fallback 또는 이전 버전)               │
+│ 2. 렌더링 엔진이 Scene을 GPU 명령으로 변환       │
 │ 3. OpenGL/Vulkan/Metal을 통해 GPU에 전송         │
 │ 4. GPU가 래스터화 (픽셀로 변환)                  │
 │ 5. 화면 출력                                      │
@@ -1084,24 +1103,24 @@ void scheduleFrame() {
   
   _hasScheduledFrame = true;
   
-  // VSync 신호 요청 (플랫폼에게)
-  window.scheduleFrame();
+  // Flutter 3.x 이전: window.scheduleFrame()
+  // Flutter 3.x 이후: PlatformDispatcher 사용
+  platformDispatcher.scheduleFrame();
 }
 
-// VSync 신호 도착 시 호출됨
+// VSync 신호 도착 시 엔진이 순서대로 호출
 void handleBeginFrame(Duration timeStamp) {
   _currentFrameTimeStamp = timeStamp;
-  handleDrawFrame();
+  // Transient callbacks (애니메이션 틱)
+  _invokeTransientCallbacks(timeStamp);
 }
 
+// handleBeginFrame 완료 후 엔진이 별도로 호출
 void handleDrawFrame() {
-  // 1. Transient callbacks (애니메이션 틱)
-  _invokeFrameCallback(_transientCallbacks);
-  
-  // 2. Persistent callbacks (빌드/레이아웃/페인트)
+  // 1. Persistent callbacks (빌드/레이아웃/페인트)
   _invokePersistentFrameCallbacks();
-  
-  // 3. Post-frame callbacks (프레임 완료 후 처리)
+
+  // 2. Post-frame callbacks (프레임 완료 후 처리)
   _invokePostFrameCallbacks();
 }
 ```
@@ -1213,7 +1232,7 @@ void main() {
 // const: 컴파일 타임에 단일 인스턴스 생성
 class ConstExample extends StatelessWidget {
   // const 생성자
-  const ConstExample({Key? key}) : super(key: key);
+  const ConstExample({super.key});
   
   @override
   Widget build(BuildContext context) {
@@ -1258,6 +1277,12 @@ class _RepaintBoundaryOptimizationState
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
@@ -1271,7 +1296,7 @@ class _RepaintBoundaryOptimizationState
           animation: _controller,
           builder: (context, child) {
             return Transform.rotate(
-              angle: _controller.value * 2 * 3.14159,
+              angle: _controller.value * 2 * pi, // import 'dart:math' 필요
               child: child,
             );
           },
@@ -1400,10 +1425,10 @@ class MyInheritedWidget extends InheritedWidget {
   final int data;
 
   const MyInheritedWidget({
-    Key? key,
+    super.key,
     required this.data,
-    required Widget child,
-  }) : super(key: key, child: child);
+    required super.child,
+  });
 
   @override
   bool updateShouldNotify(MyInheritedWidget oldWidget) {
@@ -1781,10 +1806,10 @@ class CircularProgress extends LeafRenderObjectWidget {
   final Color color;
 
   const CircularProgress({
-    Key? key,
+    super.key,
     required this.progress,
     required this.color,
-  }) : super(key: key);
+  });
 
   @override
   RenderObject createRenderObject(BuildContext context) {
@@ -1827,6 +1852,12 @@ class _PerformanceProblemState extends State<PerformanceProblem>
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
@@ -1838,7 +1869,7 @@ class _PerformanceProblemState extends State<PerformanceProblem>
               children: [
                 ExpensiveWidget(),
                 Transform.rotate(
-                  angle: _controller.value * 2 * 3.14159,
+                  angle: _controller.value * 2 * pi, // import 'dart:math' 필요
                   child: Container(width: 100, height: 100, color: Colors.blue),
                 ),
                 ExpensiveWidget(),
@@ -1861,6 +1892,8 @@ class _PerformanceProblemState extends State<PerformanceProblem>
 }
 
 class ExpensiveWidget extends StatelessWidget {
+  const ExpensiveWidget({super.key});
+
   @override
   Widget build(BuildContext context) {
     print('ExpensiveWidget rebuilt'); // 리빌드 감지
@@ -1875,7 +1908,7 @@ class ExpensiveWidget extends StatelessWidget {
 ```
 
 **요구사항:**
-1. `debugPrintBuildScope = true` 설정하여 리빌드 추적
+1. `debugPrintRebuildDirtyWidgets = true` 설정하여 리빌드 추적
 2. `debugPrintMarkNeedsPaintStacks = true` 설정하여 리페인트 추적
 3. const, RepaintBoundary, child 패턴 등을 활용하여 최적화
 4. 최적화 전후 성능 비교
@@ -1927,4 +1960,9 @@ StreamBuilder<int>(
 - [ ] VSync와 Frame 스케줄링 흐름을 설명할 수 있다
 - [ ] Hit Test 알고리즘과 Gesture Arena를 이해한다
 - [ ] Platform Channel의 메시지 직렬화/역직렬화 과정을 안다
+- [ ] Impeller와 Skia의 차이점과 Flutter에서의 역할 전환을 이해한다
 - [ ] Custom RenderObject를 구현할 수 있다
+
+---
+
+학습 완료 후 다음 문서: [Architecture](../core/Architecture.md)

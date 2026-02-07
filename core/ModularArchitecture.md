@@ -2,6 +2,12 @@
 
 > 대규모 Flutter 애플리케이션을 위한 모듈화 전략 및 아키텍처 패턴
 
+> **Package Versions (2025-01 기준)**
+> - melos: ^6.0.0
+> - go_router: ^17.0.1
+> - get_it: ^9.2.0 | injectable: ^2.5.0
+> - dio: ^5.9.0
+
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - Melos를 활용한 모노레포 기반 모듈화 구조를 설계할 수 있다
 > - Feature Module과 Core Module을 분리하고 의존성을 관리할 수 있다
@@ -110,7 +116,8 @@ command:
     workspaceChangelog: true
 
   bootstrap:
-    runPubGetInParallel: true
+    # Melos 6.x에서는 기본적으로 병렬 실행됨
+    usePubspecOverrides: true
 
 scripts:
   analyze:
@@ -227,38 +234,45 @@ my_app/
 
 ### Package 간 의존성 규칙
 
-```dart
-// pubspec.yaml 의존성 계층
-// Level 0: 외부 패키지만 의존
-// design_system/ds_tokens/pubspec.yaml
+**Level 0**: 외부 패키지만 의존 (`design_system/ds_tokens/pubspec.yaml`)
+
+```yaml
 dependencies:
   flutter:
     sdk: flutter
+```
 
-// Level 1: Level 0 패키지만 의존
-// core/core_network/pubspec.yaml
+**Level 1**: Level 0 패키지만 의존 (`core/core_network/pubspec.yaml`)
+
+```yaml
 dependencies:
   dio: ^5.9.0
   retrofit: ^5.0.0
+```
 
-// Level 2: Level 0-1 패키지 의존
-// common/common_ui/pubspec.yaml
+**Level 2**: Level 0-1 패키지 의존 (`common/common_ui/pubspec.yaml`)
+
+```yaml
 dependencies:
   ds_tokens:
     path: ../../design_system/ds_tokens
   ds_components:
     path: ../../design_system/ds_components
+```
 
-// Level 3: Level 0-2 패키지 의존
-// features/auth/pubspec.yaml
+**Level 3**: Level 0-2 패키지 의존 (`features/auth/pubspec.yaml`)
+
+```yaml
 dependencies:
   core_network:
     path: ../../core/core_network
   common_ui:
     path: ../../common/common_ui
+```
 
-// Level 4: 모든 하위 레벨 의존
-// app/my_app/pubspec.yaml
+**Level 4**: 모든 하위 레벨 의존 (`app/my_app/pubspec.yaml`)
+
+```yaml
 dependencies:
   feature_auth:
     path: ../../features/auth
@@ -280,7 +294,8 @@ scripts:
 
   # 특정 모듈만 빌드
   build:feature:
-    exec: fvm flutter build apk
+    exec: fvm dart analyze .
+    description: Analyze feature packages
     packageFilters:
       scope: "feature_*"
 
@@ -366,10 +381,11 @@ class IncrementalBuilder {
     for (final pkg in packages) {
       print('Building $pkg...');
 
+      // melos exec는 워크스페이스 루트에서 실행해야 합니다
+      // --scope는 pubspec.yaml의 name 값을 기준으로 필터링합니다
       final result = await Process.run(
         'melos',
-        ['exec', '--scope=$pkg', '--', 'flutter', 'build', 'apk'],
-        workingDirectory: pkg,
+        ['exec', '--scope=$pkg', '--', 'flutter', 'test'],
       );
 
       if (result.exitCode != 0) {
@@ -445,6 +461,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
 ```dart
 // common/common_contracts/lib/common_contracts.dart
+// 💡 Dart 최신 스타일에서는 library 선언이 선택적입니다
 library common_contracts;
 
 // Services
@@ -485,10 +502,13 @@ abstract class AuthService {
 }
 
 // features/auth/lib/src/auth_service_impl.dart
+import 'package:rxdart/rxdart.dart'; // rxdart: ^0.28.0 필요
+
 @LazySingleton(as: AuthService)
 class AuthServiceImpl implements AuthService {
   final AuthRepository _repository;
-  final _authStateController = BehaviorSubject<AuthState>();
+  // rxdart: ^0.28.0 필요
+  final _authStateController = BehaviorSubject<AuthState>.seeded(const AuthState.initial());
 
   AuthServiceImpl(this._repository);
 
@@ -519,7 +539,9 @@ class AppEventBus {
   }
 
   void fire(AppEvent event) {
-    _controller.add(event);
+    if (!_controller.isClosed) {
+      _controller.add(event);
+    }
   }
 
   void dispose() {
@@ -649,6 +671,7 @@ extension AuthGetItInjectableX on GetIt {
 
 ```dart
 // features/booking/lib/booking.dart
+// 💡 Dart 최신 스타일에서는 library 선언이 선택적입니다
 library booking;
 
 export 'src/booking_module.dart';
@@ -727,6 +750,7 @@ class ModuleLoader {
       throw Exception('Module $name not registered');
     }
 
+    // 💡 실제 프로젝트에서는 print 대신 Logger 또는 debugPrint 사용
     print('Loading module: $name');
     await loader();
     _loadedModules.add(name);
@@ -741,10 +765,10 @@ class ModuleLoader {
   /// 지연 로딩 (필요할 때만 로드)
   static Future<T> lazyLoad<T>(
     String moduleName,
-    Future<T> Function() factory,
+    FutureOr<T> Function() factory,
   ) async {
     await load(moduleName);
-    return factory();
+    return await factory();
   }
 }
 
@@ -851,12 +875,12 @@ void main() async {
   final modulesToLoad = <String>[];
 
   if (featureConfig.enableBooking) {
-    ModuleLoader.register('booking', BookingModule.initialize);
+    ModuleLoader.register('booking', () => BookingModule.initialize(GetIt.I));
     modulesToLoad.add('booking');
   }
 
   if (featureConfig.enablePayment) {
-    ModuleLoader.register('payment', PaymentModule.initialize);
+    ModuleLoader.register('payment', () => PaymentModule.initialize(GetIt.I));
     modulesToLoad.add('payment');
   }
 
@@ -876,6 +900,7 @@ void main() async {
 // common/common_routing/lib/src/module_router.dart
 abstract class ModuleRouter {
   String get basePath;
+  String get moduleName;  // 추가
   List<GoRoute> get routes;
 }
 
@@ -883,6 +908,9 @@ abstract class ModuleRouter {
 class BookingRouter implements ModuleRouter {
   @override
   String get basePath => '/bookings';
+
+  @override
+  String get moduleName => 'booking';
 
   @override
   List<GoRoute> get routes => [
@@ -934,7 +962,7 @@ class AppRouter {
         final isAuthenticated = authService.currentUser != null;
 
         final publicPaths = ['/', '/login', '/signup'];
-        final isPublicPath = publicPaths.contains(state.matchedLocation);
+        final isPublicPath = publicPaths.contains(state.uri.path);
 
         if (!isAuthenticated && !isPublicPath) {
           return '/login';
@@ -996,11 +1024,10 @@ class DeepLinkHandler {
     }
 
     // 2. 모듈 로드 (필요시)
-    final moduleName = router.runtimeType.toString().replaceAll('Router', '');
-    await ModuleLoader.load(moduleName.toLowerCase());
+    await ModuleLoader.load(router.moduleName);
 
     // 3. 라우팅
-    _goRouter.go(uri.path, extra: uri.queryParameters);
+    _goRouter.go(uri.toString());  // 쿼리 파라미터 포함
 
     // 4. Analytics
     GetIt.I<AnalyticsService>().logEvent('deep_link_opened', {
@@ -1058,13 +1085,7 @@ class NavigationServiceImpl implements NavigationService {
     String route, {
     Map<String, dynamic>? arguments,
   }) async {
-    final completer = Completer<T?>();
-
-    _router.push<T>(route, extra: arguments).then((result) {
-      completer.complete(result);
-    });
-
-    return completer.future;
+    return _router.push<T>(route, extra: arguments);
   }
 
   @override
@@ -1074,9 +1095,9 @@ class NavigationServiceImpl implements NavigationService {
 
   @override
   void popUntil(String route) {
-    while (_router.canPop() && _router.location != route) {
-      _router.pop();
-    }
+    // go_router에서는 popUntil 대신 go()로 대체하는 것을 권장
+    // pop() 반복 호출은 라우트 상태 동기화 문제가 발생할 수 있음
+    _router.go(route);
   }
 
   @override
@@ -1140,11 +1161,11 @@ class BuildConfig {
 void main() {
   // 빌드 시 제외된 모듈은 등록하지 않음
   if (BuildConfig.enableBooking) {
-    ModuleLoader.register('booking', BookingModule.initialize);
+    ModuleLoader.register('booking', () => BookingModule.initialize(GetIt.I));
   }
 
   if (BuildConfig.enablePayment) {
-    ModuleLoader.register('payment', PaymentModule.initialize);
+    ModuleLoader.register('payment', () => PaymentModule.initialize(GetIt.I));
   }
 
   runApp(const MyApp());
@@ -1178,7 +1199,8 @@ jobs:
       - name: Get changed packages
         id: changed
         run: |
-          CHANGED=$(melos list --diff=origin/${{ github.base_ref }} --json)
+          # melos list --json 출력을 jq로 파싱하여 패키지 이름만 추출
+          CHANGED=$(melos list --diff=origin/${{ github.base_ref }} --json | jq -r '.[].name' | paste -sd,)
           echo "packages=$CHANGED" >> $GITHUB_OUTPUT
 
       - name: Build changed packages only
@@ -1193,15 +1215,19 @@ jobs:
 
 ```dockerfile
 # Dockerfile for CI/CD with build cache
-FROM cirrusci/flutter:3.27.0
+FROM ghcr.io/cirruslabs/flutter:3.27.0
 
 WORKDIR /app
 
 # 1. pubspec 파일만 먼저 복사 (의존성 캐싱)
 COPY pubspec.yaml pubspec.lock melos.yaml ./
 COPY app/my_app/pubspec.yaml app/my_app/
-COPY features/*/pubspec.yaml features/
-COPY core/*/pubspec.yaml core/
+# ⚠️ Docker COPY 와일드카드는 디렉토리 구조를 보존하지 않습니다
+# 실제 프로젝트에서는 개별 COPY 명령어 사용:
+COPY features/auth/pubspec.yaml features/auth/
+COPY features/booking/pubspec.yaml features/booking/
+COPY core/core_network/pubspec.yaml core/core_network/
+# ... 또는 .dockerignore + 전체 COPY 후 빌드
 
 # 2. 의존성 설치 (캐시 레이어)
 RUN melos bootstrap
@@ -1259,7 +1285,7 @@ class ParallelBuilder {
     String buildTarget = 'apk',  // 'apk', 'ios', 'web' 등
   }) async {
     while (true) {
-      // 원자적 인덱스 증가로 race condition 방지
+      // Dart 단일 스레드 이벤트 루프에서 동기 연산이므로 안전
       final index = _currentIndex++;
       if (index >= packages.length) break;
 
@@ -1289,7 +1315,8 @@ void main() async {
   // Melos로 빌드 대상 패키지 목록 가져오기
   final result = await Process.run('melos', ['list', '--json']);
   final packages = (jsonDecode(result.stdout) as List)
-      .cast<String>();
+      .map((e) => (e as Map<String, dynamic>)['path'] as String)
+      .toList();
 
   await builder.buildPackages(packages);
 }
@@ -1353,6 +1380,7 @@ jobs:
         run: |
           # 변경된 파일에서 모듈 추출
           MODULES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            # 참고: grep -oP는 GNU grep (Linux) 전용. macOS에서는 ggrep 설치 필요
             | grep -oP 'features/\K[^/]+' \
             | sort -u)
           echo "modules=$MODULES" >> $GITHUB_OUTPUT
@@ -1399,6 +1427,7 @@ jobs:
         id: set-matrix
         run: |
           MODULES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            # 참고: grep -oP는 GNU grep (Linux) 전용. macOS에서는 ggrep 설치 필요
             | grep -oP 'features/\K[^/]+' \
             | sort -u \
             | jq -R -s -c 'split("\n") | map(select(length > 0))')
@@ -1701,22 +1730,23 @@ core_analytics
 
 ### 모듈별 책임
 
-```dart
-// features/product_catalog/README.md
-# Product Catalog Module
+아래는 `features/product_catalog/README.md` 예시입니다:
 
-## 책임
-- 상품 목록 표시
-- 상품 필터링 및 정렬
-- 상품 검색 결과 표시
-- 무한 스크롤 페이지네이션
+> **Product Catalog Module**
+>
+> **책임**
+> - 상품 목록 표시
+> - 상품 필터링 및 정렬
+> - 상품 검색 결과 표시
+> - 무한 스크롤 페이지네이션
+>
+> **의존성**
+> - common_ui: UI 컴포넌트
+> - core_network: API 통신
+> - common_contracts: ProductService 인터페이스
 
-## 의존성
-- common_ui: UI 컴포넌트
-- core_network: API 통신
-- common_contracts: ProductService 인터페이스
+**노출 API:**
 
-## 노출 API
 ```dart
 // Public API
 class ProductCatalogModule {
@@ -1733,14 +1763,13 @@ abstract class ProductService {
 }
 ```
 
-## 이벤트
-- `ProductSelected(String productId)`: 상품 선택 시 발행
-- `ProductAddedToCart(String productId)`: 장바구니 추가 시
-
-## 팀
-- Owner: @product-team
-- Reviewers: @mobile-leads
-```
+> **이벤트**
+> - `ProductSelected(String productId)`: 상품 선택 시 발행
+> - `ProductAddedToCart(String productId)`: 장바구니 추가 시
+>
+> **팀**
+> - Owner: @product-team
+> - Reviewers: @mobile-leads
 
 ### 통합 예제
 
@@ -1871,3 +1900,7 @@ Feature Module 간 직접 의존성을 제거하고, 추상화된 인터페이�
 - [ ] Feature Module과 Core Module의 역할과 경계를 정의할 수 있다
 - [ ] 모듈 간 의존성 방향을 올바르게 설계할 수 있다 (단방향)
 - [ ] 모듈별 독립 빌드 및 테스트 실행이 가능하다
+
+---
+
+**다음 문서:** [AdvancedStateManagement - 고급 상태 관리](./AdvancedStateManagement.md)

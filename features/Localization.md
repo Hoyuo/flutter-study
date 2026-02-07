@@ -449,7 +449,7 @@ void main() async {
 # 대안: slang 패키지 또는 수동 LocaleKeys 관리 권장
 dev_dependencies:
   # easy_localization_generator: ^1.4.0  # deprecated
-  build_runner: ^2.10.5
+  build_runner: ^2.4.15
 ```
 
 ```dart

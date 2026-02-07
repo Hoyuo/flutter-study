@@ -130,7 +130,7 @@ dependencies:
   flutter_bloc: ^9.1.1
 
   # DI
-  injectable: ^2.7.1
+  injectable: ^2.5.0
   get_it: ^9.2.0
 
   # Functional Programming
@@ -166,10 +166,10 @@ dev_dependencies:
     sdk: flutter
 
   # Code Generation
-  build_runner: ^2.4.12
+  build_runner: ^2.4.15
   freezed: ^3.2.4
-  json_serializable: ^6.8.0
-  injectable_generator: ^2.6.2
+  json_serializable: ^6.9.5
+  injectable_generator: ^2.7.0
 
   # Testing
   bloc_test: ^9.1.7
@@ -1424,6 +1424,7 @@ class _VideoControlsState extends State<_VideoControls> {
 ```dart
 // lib/features/media/domain/entities/scan_result.dart
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'dart:ui';
 
 part 'scan_result.freezed.dart';
 
@@ -2148,6 +2149,7 @@ class PermissionFailure extends Failure {
 ```dart
 // lib/features/media/domain/repositories/media_repository.dart
 import 'package:fpdart/fpdart.dart';
+import 'dart:io';
 import '../entities/media_file.dart';
 import '../entities/scan_result.dart';
 import '../usecases/pick_image.dart';
@@ -2444,6 +2446,7 @@ void main() {
 ```dart
 // lib/core/utils/permission_utils.dart
 import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
 
 class PermissionUtils {
   static Future<bool> requestCameraPermission() async {

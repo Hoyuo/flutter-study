@@ -1,5 +1,8 @@
 # Flutter DevTools & 성능 프로파일링 가이드
 
+> Flutter Clean Architecture + Bloc 패턴 기반 교육 자료
+> Package versions: flutter_bloc ^9.1.1, freezed ^3.2.4, fpdart ^1.2.0, go_router ^17.0.1, get_it ^9.2.0, injectable ^2.5.0
+
 DevTools 실전 활용과 성능 문제 진단/해결 방법을 다루는 가이드입니다.
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
@@ -61,16 +64,19 @@ Flutter DevTools는 Flutter/Dart 앱의 성능, 메모리, 네트워크를 분�
 ### 설치 및 실행
 
 ```bash
-# 1. DevTools 최신 버전 설치
+# 권장: dart devtools (Dart SDK 내장)
+dart devtools
+
+# 또는 수동 설치
 dart pub global activate devtools
 
-# 2. 앱 실행 (Debug 모드)
+# 앱 실행 (Debug 모드)
 flutter run
 
-# 3. DevTools 자동 실행 (또는 수동 실행)
+# DevTools 자동 실행 (또는 수동 실행)
 flutter pub global run devtools
 
-# 4. 브라우저에서 접속
+# 브라우저에서 접속
 # http://localhost:9100
 ```
 
@@ -93,8 +99,7 @@ flutter pub global run devtools
 // 1. 앱 실행 후 터미널에 표시되는 URL 확인
 // Flutter run key commands.
 // ...
-// An Observatory debugger and profiler on iPhone 14 is available at:
-// http://127.0.0.1:12345/xxxxx
+// The Dart VM service is listening on http://127.0.0.1:12345/xxxxx
 
 // 2. DevTools에서 "Connect" 버튼 클릭
 // 3. VM Service URL 입력
@@ -199,6 +204,21 @@ Padding(
 - 색이 자주 바뀌면 = 리페인트 많이 발생
 
 ```dart
+// 성능 테스트를 위한 무거운 정적 위젯 (예시)
+class ExpensiveStaticWidget extends StatelessWidget {
+  const ExpensiveStaticWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 200,
+      height: 100,
+      color: Colors.grey[300],
+      child: const Center(child: Text('Heavy Static Widget')),
+    );
+  }
+}
+
 // Repaint Rainbow로 최적화 확인
 class RepaintRainbowExample extends StatefulWidget {
   @override
@@ -219,12 +239,18 @@ class _RepaintRainbowExampleState extends State<RepaintRainbowExample>
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         // ❌ RepaintBoundary 없음: 전체 리페인트 (무지개색 깜빡임)
         ExpensiveStaticWidget(),
-        
+
         AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
@@ -521,10 +547,20 @@ class _MemoryLeakExampleState extends State<MemoryLeakExample> {
 // - Listener가 안 제거됨
 // - 전역 변수에 객체 누적
 
+// 커스텀 ChangeNotifier 예시
+class MyNotifier extends ChangeNotifier {
+  int _value = 0;
+  int get value => _value;
+  void increment() {
+    _value++;
+    notifyListeners();
+  }
+}
+
 class MemoryLeakPatterns {
   // ❌ 패턴 1: 전역 리스트에 누적
   static final List<Image> _cache = [];
-  
+
   void loadImage() {
     _cache.add(Image.network('https://example.com/image.png'));
     // 리스트에서 제거 안함 → 메모리 릭
@@ -661,7 +697,7 @@ final dio = Dio()
     DioCacheInterceptor(
       options: CacheOptions(
         store: MemCacheStore(),
-        maxStale: Duration(days: 7),
+        maxStale: const Duration(days: 7), // dio_cache_interceptor v3+ 기준
       ),
     ),
   );
@@ -744,7 +780,7 @@ void structuredLogging() {
   logger.i('Info message');  // 💡 INFO
   logger.w('Warning message'); // ⚠️ WARNING
   logger.e('Error message', error: Exception('Test')); // ⛔ ERROR
-  logger.f('Fatal message'); // 👾 FATAL (wtf)
+  logger.f('Fatal message'); // 👾 FATAL
 }
 ```
 
@@ -789,9 +825,9 @@ class OptimizedList extends StatefulWidget {
 }
 
 class _OptimizedListState extends State<OptimizedList> {
-  final Map<int, String> _cache = {};
+  final Map<int, int> _cache = {};
 
-  String _getData(int index) {
+  int _getData(int index) {
     if (!_cache.containsKey(index)) {
       _cache[index] = _expensiveCalculation(index);
     }
@@ -812,31 +848,11 @@ class _OptimizedListState extends State<OptimizedList> {
   }
 }
 
-// ✅ 해결 2: Isolate로 계산 오프로드
+// ✅ 해결 2: Isolate로 계산 오프로드 (Dart 2.19+)
 import 'dart:isolate';
 
-Future<String> _expensiveCalculationAsync(int index) async {
-  final receivePort = ReceivePort();
-  await Isolate.spawn(_isolateEntry, receivePort.sendPort);
-  
-  final sendPort = await receivePort.first as SendPort;
-  final responsePort = ReceivePort();
-  sendPort.send([index, responsePort.sendPort]);
-  
-  return await responsePort.first as String;
-}
-
-void _isolateEntry(SendPort sendPort) {
-  final port = ReceivePort();
-  sendPort.send(port.sendPort);
-  
-  port.listen((message) {
-    final index = message[0] as int;
-    final replyPort = message[1] as SendPort;
-    
-    final result = _expensiveCalculation(index);
-    replyPort.send(result);
-  });
+Future<int> _expensiveCalculationAsync(int index) async {
+  return await Isolate.run(() => _expensiveCalculation(index));
 }
 ```
 
@@ -870,6 +886,12 @@ class _AnimationJankState extends State<AnimationJank>
       duration: Duration(seconds: 2),
       vsync: this,
     )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -912,6 +934,12 @@ class _AnimationOptimizedState extends State<AnimationOptimized>
       duration: Duration(seconds: 2),
       vsync: this,
     )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -1051,6 +1079,8 @@ class _MemoryLeakFixedState extends State<MemoryLeakFixed> {
 // → 동일한 URL로 반복 요청 발견
 
 // ❌ 문제 코드
+import 'dart:convert';
+
 class OverFetching extends StatelessWidget {
   Future<String> fetchUserName() async {
     final response = await http.get(
@@ -1244,35 +1274,22 @@ void main() {
   testWidgets('Scroll performance test', (tester) async {
     await tester.pumpWidget(MyApp());
 
-    // 성능 측정 시작
+    // 성능 측정
     await binding.traceAction(() async {
-      // 리스트 찾기
       final listFinder = find.byType(Scrollable);
 
-      // 스크롤 반복 (성능 측정)
       for (int i = 0; i < 10; i++) {
-        await tester.fling(listFinder, Offset(0, -300), 1000);
+        await tester.fling(listFinder, const Offset(0, -300), 1000);
         await tester.pumpAndSettle();
-        await tester.fling(listFinder, Offset(0, 300), 1000);
+        await tester.fling(listFinder, const Offset(0, 300), 1000);
         await tester.pumpAndSettle();
       }
     }, reportKey: 'scrolling_timeline');
-
-    // 타임라인 데이터 저장
-    final timeline = await binding.captureTimeline(
-      whitelistMask: 'flutter',
-    );
-
-    // 성능 분석
-    final summary = driver.TimelineSummary.summarize(timeline);
-    
-    // 평균 프레임 시간 확인
-    final averageFrameTime = summary.summaryJson['average_frame_build_time_millis'];
-    
-    // 60fps (16.67ms) 이하 확인
-    expect(averageFrameTime, lessThan(16.67));
   });
 }
+// 참고: 타임라인 분석은 test_driver/perf_driver.dart의
+// responseDataCallback에서 driver.TimelineSummary로 수행합니다.
+// integration_test 내에서는 flutter_driver API를 직접 사용할 수 없습니다.
 ```
 
 ### 실행 및 분석
@@ -1311,11 +1328,11 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v2
-      
+      - uses: actions/checkout@v4
+
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.16.0'
+          flutter-version: '3.27.0'
       
       - name: Install dependencies
         run: flutter pub get
@@ -1333,7 +1350,7 @@ jobs:
           python scripts/analyze_timeline.py
       
       - name: Upload results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: performance-results
           path: build/timeline*
@@ -1341,8 +1358,8 @@ jobs:
 
 ### 성능 회귀 감지
 
-```dart
-// scripts/analyze_timeline.py
+```python
+# scripts/analyze_timeline.py
 import json
 import sys
 
@@ -1411,6 +1428,8 @@ class _ProblematicListState extends State<ProblematicList>
       vsync: this,
     )..repeat();
   }
+
+  // 문제 4: AnimationController dispose 누락
 
   @override
   Widget build(BuildContext context) {
@@ -1483,7 +1502,7 @@ class ExpensivePainter extends CustomPainter {
       canvas.drawCircle(
         Offset(size.width / 2, size.height / 2),
         i.toDouble() / 10,
-        Paint()..color = Colors.blue.withOpacity(0.01),
+        Paint()..color = Colors.blue.withValues(alpha: 0.01),
       );
     }
   }
@@ -1624,3 +1643,7 @@ ListView 스크롤 성능을 측정하는 integration_test를 작성하세요:
 - [ ] Repaint Rainbow로 불필요한 리페인트를 시각화할 수 있다
 - [ ] 성능 문제를 체계적으로 진단하고 해결할 수 있다
 - [ ] integration_test로 자동화된 성능 테스트를 작성할 수 있다
+
+---
+
+**학습 완료 후**: [fundamentals/FlutterInternals.md](./FlutterInternals.md)로 진행하여 렌더링 파이프라인의 내부 동작을 학습하세요.

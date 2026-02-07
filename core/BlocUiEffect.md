@@ -2,6 +2,12 @@
 
 Toast, Dialog, Navigation 등 일회성 이벤트 처리 패턴에 대한 가이드입니다.
 
+> **Package Versions (2025-01 기준)**
+> - flutter_bloc: ^9.1.1 | bloc: ^9.0.0
+> - freezed: ^3.2.4 | freezed_annotation: ^3.1.0
+> - go_router: ^17.0.1
+> - mocktail: ^1.0.4
+
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - Toast, Dialog, Navigation 등 일회성 UI 이벤트를 Bloc에서 올바르게 처리할 수 있습니다
 > - BlocListener를 사용하여 Side Effect를 State와 분리하여 처리할 수 있습니다
@@ -304,10 +310,10 @@ BlocListener<AuthBloc, AuthState>(
       showErrorToast(state.errorMessage);
     }
     if (state.status == AuthStatus.success) {
-      Navigator.pushReplacementNamed(context, '/home');
+      context.go('/home');
     }
   },
-  child: LoginForm(),
+  child: const LoginForm(),
 )
 ```
 
@@ -329,7 +335,7 @@ MultiBlocListener(
       },
     ),
   ],
-  child: MyApp(),
+  child: const MyApp(),
 )
 ```
 
@@ -351,7 +357,7 @@ BlocConsumer<AuthBloc, AuthState>(
   buildWhen: (prev, curr) => prev.isLoading != curr.isLoading,
   builder: (context, state) {
     // UI 빌드는 여기서!
-    return state.isLoading ? LoadingSpinner() : LoginForm();
+    return state.isLoading ? const CircularProgressIndicator() : const LoginForm();
   },
 )
 ```
@@ -445,10 +451,10 @@ BlocListener<LoginBloc, LoginState>(
         showDialog(context: context, builder: (_) =>
           AlertDialog(title: Text(title), content: Text(message)));
       case NavigateToHome():
-        Navigator.pushReplacementNamed(context, '/home');
+        context.go('/home');
     }
   },
-  child: LoginForm(),
+  child: const LoginForm(),
 )
 ```
 
@@ -512,9 +518,9 @@ mixin UiEffectHandler {
           ),
         );
       case NavigateToHome():
-        Navigator.pushReplacementNamed(context, '/home');
+        context.go('/home');
       case NavigateToSignUp():
-        Navigator.pushNamed(context, '/signup');
+        context.push('/signup');
     }
   }
 }
@@ -524,6 +530,8 @@ mixin UiEffectHandler {
 
 ```dart
 class LoginPage extends StatelessWidget with UiEffectHandler {
+  const LoginPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<LoginBloc, LoginState>(
@@ -537,7 +545,7 @@ class LoginPage extends StatelessWidget with UiEffectHandler {
         return Scaffold(
           body: state.isLoading
               ? const Center(child: CircularProgressIndicator())
-              : LoginForm(),
+              : const LoginForm(),
         );
       },
     );
@@ -616,7 +624,12 @@ class LoginState extends Equatable {
 }
 ```
 
-**주의사항**: 모든 emit에서 listener가 호출되므로 `listenWhen`으로 필터링이 필수입니다.
+> **주의**: `props`에서 `uiEffect`를 제외하면, `uiEffect`만 변경되고 다른 필드는 동일한 경우
+> Equatable이 "상태 변경 없음"으로 판단하여 **`emit()`이 무시됩니다** (Bloc 내부에서 동일 상태 emit을 drop).
+> 따라서 `uiEffect`만 단독으로 변경하는 emit은 전달되지 않으며, 반드시 다른 필드와 함께
+> 변경하거나 아래의 `listenWhen` 필터링과 조합하여 사용해야 합니다.
+
+**추가 주의사항**: 모든 emit에서 listener가 호출되므로 `listenWhen`으로 필터링이 필수입니다.
 
 ```dart
 listenWhen: (prev, curr) =>
@@ -629,7 +642,7 @@ listenWhen: (prev, curr) =>
 |------|------|------|
 | **고유 ID 추가** | 간단, 안전 | UiEffect 클래스 수정 필요 |
 | **null 초기화** | 명시적 | Event/Handler 추가 필요 |
-| **Equatable 제외** | 수정 최소화 | listenWhen 관리 필요 |
+| **Equatable 제외** | 수정 최소화 | uiEffect-only 변경 시 emit이 drop됨, listenWhen 관리 필요 |
 
 **권장**: **고유 ID 추가** 방식이 가장 간단하고 실수할 여지가 적습니다.
 
@@ -677,11 +690,20 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 ### 별도 Stream: UI 구현
 
 ```dart
-class LoginPage extends StatefulWidget { ... }
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
 
 class _LoginPageState extends State<LoginPage> {
   late StreamSubscription<LoginUiEffect> _subscription;
 
+  // 참고: initState에서 context.read<T>()는 일회성 접근이므로 사용 가능합니다.
+  // 단, context.watch<T>()는 initState에서 사용할 수 없습니다 (구독 기반이므로
+  // didChangeDependencies 이후에서만 사용). context.read는 InheritedWidget을
+  // listen하지 않으므로 initState에서 안전합니다.
   @override
   void initState() {
     super.initState();
@@ -695,7 +717,7 @@ class _LoginPageState extends State<LoginPage> {
       case ShowToast(:final message):
         ScaffoldMessenger.of(context).showSnackBar(...);
       case NavigateToHome():
-        Navigator.pushReplacementNamed(context, '/home');
+        context.go('/home');
     }
   }
 
@@ -794,7 +816,7 @@ class BlocEffectListener<B extends BaseBloc<dynamic, dynamic, E>, E>
     extends StatefulWidget {
   final Widget child;
   final void Function(BuildContext, E) onEffect;
-  const BlocEffectListener({required this.child, required this.onEffect});
+  const BlocEffectListener({super.key, required this.child, required this.onEffect});
 
   @override
   State<BlocEffectListener<B, E>> createState() => _State<B, E>();
@@ -864,7 +886,7 @@ class _LoginPageState extends State<LoginPage>
       case ShowToast(:final message):
         ScaffoldMessenger.of(context).showSnackBar(...);
       case NavigateToHome():
-        Navigator.pushReplacementNamed(context, '/home');
+        context.go('/home');
     }
   }
 
@@ -928,7 +950,7 @@ void initState() {
 ```dart
 void onEffect(LoginEffect effect) {
   // ❌ 위험: context 사용 시 에러 발생 가능
-  Navigator.pushReplacementNamed(context, '/home');
+  context.go('/home');
 }
 
 void onEffect(LoginEffect effect) {
@@ -937,7 +959,7 @@ void onEffect(LoginEffect effect) {
 
   switch (effect) {
     case NavigateToHome():
-      Navigator.pushReplacementNamed(context, '/home');
+      context.go('/home');
     case ShowToast(:final message):
       ScaffoldMessenger.of(context).showSnackBar(...);
   }
@@ -957,6 +979,11 @@ void onEffect(LoginEffect effect) {
 
 Effect를 "소비"하는 패턴입니다.
 
+> **주의**: `OneTimeEffect<T>` 래퍼를 사용하면 `BaseBloc<Event, State, Effect>`의 Effect 타입 파라미터가
+> `OneTimeEffect<Effect>`로 변경되어야 합니다. 기존 `BaseBloc`을 그대로 사용하려면
+> `effectStream`의 타입을 `Stream<OneTimeEffect<Effect>>`로 별도 관리하거나,
+> `BaseBloc`의 제네릭 시그니처를 수정해야 합니다. 아래 예시는 독립적으로 사용하는 경우입니다.
+
 ```dart
 class OneTimeEffect<T> {
   final T effect;
@@ -971,7 +998,10 @@ class OneTimeEffect<T> {
   }
 }
 
-// BaseBloc에서
+// BaseBloc과 별도로 사용하는 경우:
+// effectStream 타입이 Stream<OneTimeEffect<Effect>>가 되어야 함
+final _effectController = StreamController<OneTimeEffect<Effect>>.broadcast();
+
 void emitEffect(Effect effect) {
   _effectController.add(OneTimeEffect(effect));
 }
@@ -1059,28 +1089,53 @@ class AuthState {
 }
 ```
 
-#### State 기반 Navigation (BlocListener)
+#### State 기반 Navigation (GoRouter redirect 패턴 - 권장)
+
+> **주의**: `BlocListener`를 `MaterialApp` 위에 배치하면 Navigator context가 없어 crash가 발생합니다.
+> GoRouter의 `redirect`를 사용하면 이 문제를 안전하게 해결할 수 있습니다.
 
 ```dart
-class AppWrapper extends StatelessWidget {
+// GoRouter 설정에서 redirect로 인증 상태 기반 Navigation 처리
+GoRouter router(AuthBloc authBloc) => GoRouter(
+  redirect: (context, state) {
+    final isLoggedIn = authBloc.state.isLoggedIn;
+    final isOnLogin = state.matchedLocation == '/login';
+
+    if (!isLoggedIn && !isOnLogin) return '/login';
+    if (isLoggedIn && isOnLogin) return '/home';
+    return null; // redirect 불필요
+  },
+  routes: [
+    GoRoute(path: '/home', builder: (_, __) => const HomePage()),
+    GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
+  ],
+);
+
+// 또는 MaterialApp 안쪽에서 BlocListener 사용
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listenWhen: (prev, curr) => prev.isLoggedIn != curr.isLoggedIn,
-      listener: (context, state) {
-        if (state.isLoggedIn) {
-          Navigator.pushReplacementNamed(context, '/home');
-        } else {
-          Navigator.pushReplacementNamed(context, '/login');
-        }
-      },
-      child: MaterialApp(...),
+    return MaterialApp(
+      home: BlocListener<AuthBloc, AuthState>(
+        listenWhen: (prev, curr) => prev.isLoggedIn != curr.isLoggedIn,
+        listener: (context, state) {
+          if (state.isLoggedIn) {
+            context.go('/home');
+          } else {
+            context.go('/login');
+          }
+        },
+        child: const LoginPage(),
+      ),
     );
   }
 }
 ```
 
 **장점**:
+- Navigator context crash 방지 (MaterialApp 안쪽에 배치)
 - 유실 없음 (State가 유지되므로)
 - 중복 없음 (listenWhen 조건부)
 - Effect보다 안정적
@@ -1179,6 +1234,9 @@ mixin BlocEffectMixin<T extends StatefulWidget,
 #### Effect Stream 테스트
 
 ```dart
+// mocktail 사용 (package:mocktail/mocktail.dart)
+import 'package:mocktail/mocktail.dart';
+
 void main() {
   late LoginBloc bloc;
   late MockAuthRepository mockAuthRepo;
@@ -1192,7 +1250,7 @@ void main() {
 
   test('로그인 성공 시 NavigateToHome Effect 발행', () async {
     // Arrange
-    when(mockAuthRepo.login(any, any)).thenAnswer((_) async => User());
+    when(() => mockAuthRepo.login(any(), any())).thenAnswer((_) async => User());
 
     // Act
     final effects = <LoginEffect>[];
@@ -1213,7 +1271,7 @@ void main() {
 blocTest<LoginBloc, LoginState>(
   '로그인 실패 시 에러 Effect 발행',
   build: () {
-    when(mockAuthRepo.login(any, any)).thenThrow(Exception('실패'));
+    when(() => mockAuthRepo.login(any(), any())).thenThrow(Exception('실패'));
     return LoginBloc(authRepository: mockAuthRepo);
   },
   act: (bloc) async {
@@ -1222,7 +1280,7 @@ blocTest<LoginBloc, LoginState>(
     bloc.effectStream.listen(effects.add);
 
     bloc.add(LoginSubmitted(email: 'a', password: 'b'));
-    await Future.delayed(Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 100));
 
     // Assert in act (또는 별도 테스트로 분리)
     expect(effects, contains(isA<ShowErrorDialog>()));
@@ -1333,8 +1391,8 @@ class CartBloc extends BaseBloc<CartEvent, CartState, CartEffect> {
   }
 
   @override
-  Future<void> close() {
-    _authSub.cancel();  // 구독 해제 필수!
+  Future<void> close() async {
+    await _authSub.cancel();  // 구독 해제 필수!
     return super.close();
   }
 }
@@ -1355,7 +1413,7 @@ class _AppWrapperState extends State<AppWrapper>
         context.read<CartBloc>().add(ClearCart());
         context.read<ProfileBloc>().add(ClearProfile());
         context.read<SettingsBloc>().add(ResetSettings());
-        Navigator.pushReplacementNamed(context, '/login');
+        context.go('/login');
     }
   }
 }
@@ -1455,8 +1513,8 @@ class CounterCubit extends BaseCubit<int, CounterEffect> {
 | 버전 | 변경 사항 | Effect 영향 |
 |------|-----------|-------------|
 | v7.x | Cubit/Bloc 분리 | - |
-| v8.0 | `on<Event>` 핸들러 방식 | emit 위치 주의 |
-| v8.1+ | `Bloc.observer` deprecated | EffectObserver 별도 관리 |
+| v8.0 | `on<Event>` 핸들러 방식, `BlocOverrides`로 observer 대체 | emit 위치 주의 |
+| v8.1+ | `Bloc.observer` 복원 (`BlocOverrides` deprecated) | 기존 observer 패턴 사용 가능 |
 | v9.x | `emit.forEach` 추가 | Stream Effect와 혼용 주의 |
 
 #### v8.x 필수: isClosed 체크
@@ -1558,7 +1616,7 @@ BlocListener<LoginBloc, LoginState>(
   listener: (context, state) {
     handleEffect(state.uiEffect!);
   },
-  child: LoginForm(),
+  child: const LoginForm(),
 )
 
 // After: BlocEffectMixin
@@ -1734,8 +1792,8 @@ void onEffect(LoginEffect effect) {
         ),
       );
     },
-    navigateToHome: () => Navigator.pushReplacementNamed(context, '/home'),
-    navigateToSignUp: () => Navigator.pushNamed(context, '/signup'),
+    navigateToHome: () => context.go('/home'),
+    navigateToSignUp: () => context.push('/signup'),
   );
 }
 ```
@@ -1785,11 +1843,13 @@ class LoginBloc extends BaseBloc<LoginEvent, LoginState, LoginEffect> {
 // main.dart
 void main() {
   configureDependencies();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 // App
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -1944,3 +2004,7 @@ Navigation을 State 기반으로 처리하도록 개선하세요.
 - [ ] Effect 유실 vs 중복 실행 문제를 이해하고 적절히 대응할 수 있다
 - [ ] Navigation을 State 기반으로 처리하는 것이 Effect보다 안전한 이유를 설명할 수 있다
 - [ ] mounted 체크를 통해 dispose 후 Effect 처리 오류를 방지할 수 있다
+
+---
+
+**다음 문서:** [Freezed - 불변 데이터 모델](./Freezed.md)

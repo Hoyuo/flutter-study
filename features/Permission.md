@@ -1174,6 +1174,8 @@ dependencies:
   app_tracking_transparency: ^2.0.0
 
 // lib/services/tracking_service.dart
+import 'dart:io';
+
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 
 class TrackingService {
