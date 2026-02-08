@@ -64,25 +64,19 @@
 
 ### 모듈화 수준
 
-```
-┌─────────────────────────────────────────────────────┐
-│                   App Layer                         │
-│        (Composition Root, DI, Router)               │
-└──────────────────┬──────────────────────────────────┘
-                   │
-        ┌──────────┼──────────┐
-        ▼          ▼          ▼
-┌──────────┐ ┌──────────┐ ┌──────────┐
-│ Feature  │ │ Feature  │ │ Feature  │
-│ Module A │ │ Module B │ │ Module C │
-└─────┬────┘ └─────┬────┘ └─────┬────┘
-      │            │            │
-      └────────────┼────────────┘
-                   ▼
-         ┌───────────────────┐
-         │   Core Modules    │
-         │  (Network, Auth)  │
-         └───────────────────┘
+```mermaid
+flowchart TD
+    App["App Layer<br/>Composition Root, DI, Router"]
+    FA["Feature Module A"]
+    FB["Feature Module B"]
+    FC["Feature Module C"]
+    Core["Core Modules<br/>Network, Auth"]
+    App --> FA
+    App --> FB
+    App --> FC
+    FA --> Core
+    FB --> Core
+    FC --> Core
 ```
 
 ---

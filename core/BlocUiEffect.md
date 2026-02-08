@@ -296,10 +296,10 @@ class NavigateToHome extends LoginUiEffect {
 | `BlocListener` | Side Effect 실행 | 상태 변경마다 callback 실행 (rebuild 없음) |
 | `BlocConsumer` | 둘 다 | 위 두 가지 결합 |
 
-```
-State 변경
-    ├──→ BlocBuilder  ──→ UI Rebuild (여러 번 가능)
-    └──→ BlocListener ──→ Side Effect (1회만 실행)
+```mermaid
+flowchart LR
+    S["State 변경"] --> B["BlocBuilder"] --> R["UI Rebuild<br/>(여러 번 가능)"]
+    S --> L["BlocListener"] --> E["Side Effect<br/>(1회만 실행)"]
 ```
 
 > **BlocListener 기본 사용법**: BlocListener, MultiBlocListener, BlocConsumer의 기본 사용법과 문법은 [Bloc](./Bloc.md#8-ui-연동) 참조

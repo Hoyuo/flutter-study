@@ -31,26 +31,12 @@
 
 ### 1.2 환경 구조
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Build Variants                        │
-│   (dev / staging / prod) × (KR / JP / TW)               │
-└─────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────┐
-│                    Environment Config                    │
-│   ├── API Base URL                                      │
-│   ├── Country Code                                      │
-│   ├── Default Language                                  │
-│   └── Feature Flags                                     │
-└─────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────┐
-│                    Single Codebase                       │
-│   (동일한 코드가 모든 국가에서 실행)                       │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    BV["Build Variants<br/>(dev / staging / prod) x (KR / JP / TW)"]
+    EC["Environment Config<br/>- API Base URL<br/>- Country Code<br/>- Default Language<br/>- Feature Flags"]
+    SC["Single Codebase<br/>(동일한 코드가 모든 국가에서 실행)"]
+    BV --> EC --> SC
 ```
 
 ### 1.3 지원 국가

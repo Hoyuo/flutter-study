@@ -1125,22 +1125,13 @@ class _NotificationTypeTileState extends State<_NotificationTypeTile> {
 
 ### 11.3 앱 상태별 동작
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    FCM 메시지 수신 흐름                          │
-├─────────────────┬───────────────────┬───────────────────────────┤
-│ 앱 상태          │ Notification Msg  │ Data Message              │
-├─────────────────┼───────────────────┼───────────────────────────┤
-│ Foreground      │ onMessage ✓       │ onMessage ✓               │
-│                 │ 알림 표시 안됨     │ 알림 표시 안됨             │
-├─────────────────┼───────────────────┼───────────────────────────┤
-│ Background      │ 시스템 알림 표시   │ onBackgroundMessage ✓     │
-│                 │ onMessage 안됨 ❌  │ 직접 알림 표시 필요        │
-├─────────────────┼───────────────────┼───────────────────────────┤
-│ Terminated      │ 시스템 알림 표시   │ onBackgroundMessage ✓     │
-│                 │ 탭 시 initial msg │ 직접 알림 표시 필요        │
-└─────────────────┴───────────────────┴───────────────────────────┘
-```
+**FCM 메시지 수신 흐름**
+
+| 앱 상태 | Notification Msg | Data Message |
+|---------|-----------------|-------------|
+| Foreground | onMessage ✓ / 알림 표시 안됨 | onMessage ✓ / 알림 표시 안됨 |
+| Background | 시스템 알림 표시 / onMessage 안됨 | onBackgroundMessage ✓ / 직접 알림 표시 필요 |
+| Terminated | 시스템 알림 표시 / 탭 시 initial msg | onBackgroundMessage ✓ / 직접 알림 표시 필요 |
 
 ### 11.4 Data Message 처리 (권장 패턴)
 

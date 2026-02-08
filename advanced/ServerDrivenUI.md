@@ -2413,35 +2413,17 @@ class SchemaAssetDataSource {
 
 ### 8.1 3-Tier 캐싱 아키텍처
 
-```
-┌─────────────────────────────────────────┐
-│         Schema Request Flow             │
-└─────────────────────────────────────────┘
-            │
-            ▼
-    ┌──────────────┐
-    │  Tier 1:     │  ← 가장 빠름 (메모리)
-    │ Memory Cache │    TTL: 5분
-    └──────────────┘
-            │ Cache Miss
-            ▼
-    ┌──────────────┐
-    │  Tier 2:     │  ← 빠름 (디스크)
-    │  Disk Cache  │    TTL: 24시간
-    │   (Hive)     │
-    └──────────────┘
-            │ Cache Miss
-            ▼
-    ┌──────────────┐
-    │  Tier 3:     │  ← 느림 (네트워크)
-    │ Remote API   │    Always fresh
-    └──────────────┘
-            │ Network Fail
-            ▼
-    ┌──────────────┐
-    │ Fallback:    │  ← 최후 수단 (번들 에셋)
-    │ Asset Bundle │    항상 사용 가능
-    └──────────────┘
+```mermaid
+flowchart TD
+    SRF["Schema Request Flow"]
+    T1["Tier 1: Memory Cache<br/>가장 빠름 - 메모리<br/>TTL: 5분"]
+    T2["Tier 2: Disk Cache - Hive<br/>빠름 - 디스크<br/>TTL: 24시간"]
+    T3["Tier 3: Remote API<br/>느림 - 네트워크<br/>Always fresh"]
+    FB["Fallback: Asset Bundle<br/>최후 수단 - 번들 에셋<br/>항상 사용 가능"]
+    SRF --> T1
+    T1 -->|Cache Miss| T2
+    T2 -->|Cache Miss| T3
+    T3 -->|Network Fail| FB
 ```
 
 ### 8.2 SchemaCache 구현

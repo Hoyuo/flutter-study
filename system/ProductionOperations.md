@@ -745,23 +745,16 @@ if __name__ == "__main__":
 
 ### 4.1 99.9% 달성 전략
 
-```
-┌──────────────────────────────────────────────────────────┐
-│         Crash-free Rate 개선 전략                         │
-├──────────────────────────────────────────────────────────┤
-│                                                           │
-│  현재: 99.5% (500명 중 2.5명 크래시)                      │
-│  목표: 99.9% (500명 중 0.5명 크래시)                      │
-│                                                           │
-│  개선 방법:                                               │
-│  1. Top 5 크래시 수정 → +0.2% 개선                       │
-│  2. Null safety 강화 → +0.1% 개선                        │
-│  3. OOM 방지 → +0.05% 개선                               │
-│  4. API timeout 처리 → +0.05% 개선                       │
-│  5. 에러 경계 추가 → +0.05% 개선                         │
-│                                                           │
-│  총 개선: +0.45% → 99.95% 달성                           │
-└──────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Current["현재: 99.5%<br/>500명 중 2.5명 크래시"]
+    S1["1. Top 5 크래시 수정<br/>+0.2% 개선"]
+    S2["2. Null safety 강화<br/>+0.1% 개선"]
+    S3["3. OOM 방지<br/>+0.05% 개선"]
+    S4["4. API timeout 처리<br/>+0.05% 개선"]
+    S5["5. 에러 경계 추가<br/>+0.05% 개선"]
+    Result["목표 달성: 99.95%<br/>총 개선: +0.45%"]
+    Current --> S1 --> S2 --> S3 --> S4 --> S5 --> Result
 ```
 
 ### 4.2 크래시 방지 패턴
@@ -1394,34 +1387,14 @@ class DynamicConfig {
 
 ### 8.1 단계적 출시 전략
 
-```
-┌──────────────────────────────────────────────────────────┐
-│            Phased Rollout Strategy                        │
-├──────────────────────────────────────────────────────────┤
-│                                                           │
-│  Day 1: 1% (Internal testers)                            │
-│    ├─ Crash-free rate monitoring                         │
-│    ├─ Critical bug checks                                │
-│    └─ Performance metrics                                │
-│                                                           │
-│  Day 2: 5% (Early adopters)                              │
-│    ├─ User feedback collection                           │
-│    ├─ Usage pattern analysis                             │
-│    └─ Error rate monitoring                              │
-│                                                           │
-│  Day 4: 20% (General users)                              │
-│    ├─ Load testing                                       │
-│    ├─ Infrastructure scaling                             │
-│    └─ Cost analysis                                      │
-│                                                           │
-│  Day 7: 50% (Mainstream)                                 │
-│    ├─ A/B test results                                   │
-│    ├─ Business metrics                                   │
-│    └─ Customer support load                              │
-│                                                           │
-│  Day 10: 100% (Full rollout)                             │
-│    └─ Post-launch monitoring                             │
-└──────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    D1["Day 1: 1% - Internal testers<br/>Crash-free rate monitoring<br/>Critical bug checks<br/>Performance metrics"]
+    D2["Day 2: 5% - Early adopters<br/>User feedback collection<br/>Usage pattern analysis<br/>Error rate monitoring"]
+    D4["Day 4: 20% - General users<br/>Load testing<br/>Infrastructure scaling<br/>Cost analysis"]
+    D7["Day 7: 50% - Mainstream<br/>A/B test results<br/>Business metrics<br/>Customer support load"]
+    D10["Day 10: 100% - Full rollout<br/>Post-launch monitoring"]
+    D1 --> D2 --> D4 --> D7 --> D10
 ```
 
 ### 8.2 자동 롤백 시스템

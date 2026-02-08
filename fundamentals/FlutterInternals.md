@@ -180,33 +180,29 @@ class RenderBox extends RenderObject {
 
 ### 3개 트리 관계도
 
-```
-┌─────────────────────────────────────────────────┐
-│ Widget Tree (설정/구성, 매번 재생성)              │
-├─────────────────────────────────────────────────┤
-│ MaterialApp                                     │
-│   └─ Scaffold                                   │
-│       └─ Container                              │
-│           └─ Text                               │
-└─────────────────────────────────────────────────┘
-                    ↓ createElement()
-┌─────────────────────────────────────────────────┐
-│ Element Tree (생명주기 관리, 재사용)             │
-├─────────────────────────────────────────────────┤
-│ RootElement                                     │
-│   └─ StatefulElement (Scaffold)                │
-│       └─ ComponentElement (Container)          │
-│           └─ LeafElement (Text)                │
-└─────────────────────────────────────────────────┘
-                    ↓ createRenderObject()
-┌─────────────────────────────────────────────────┐
-│ RenderObject Tree (레이아웃/페인팅)              │
-├─────────────────────────────────────────────────┤
-│ RenderView                                      │
-│   └─ RenderScaffold                            │
-│       └─ RenderDecoratedBox (Container)        │
-│           └─ RenderParagraph (Text)            │
-└─────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph WT["Widget Tree (설정/구성, 매번 재생성)"]
+        W1["MaterialApp"] --> W2["Scaffold"]
+        W2 --> W3["Container"]
+        W3 --> W4["Text"]
+    end
+
+    WT -->|"createElement()"| ET
+
+    subgraph ET["Element Tree (생명주기 관리, 재사용)"]
+        E1["RootElement"] --> E2["StatefulElement (Scaffold)"]
+        E2 --> E3["ComponentElement (Container)"]
+        E3 --> E4["LeafElement (Text)"]
+    end
+
+    ET -->|"createRenderObject()"| RT
+
+    subgraph RT["RenderObject Tree (레이아웃/페인팅)"]
+        R1["RenderView"] --> R2["RenderScaffold"]
+        R2 --> R3["RenderDecoratedBox (Container)"]
+        R3 --> R4["RenderParagraph (Text)"]
+    end
 ```
 
 ### Widget-Element-RenderObject 생성 흐름
@@ -297,35 +293,14 @@ class _MyWidgetState extends State<MyWidget> {
 
 Flutter 렌더링은 **4단계 파이프라인**을 거칩니다:
 
-```
-┌─────────────────────────────────────────────────────────┐
-│ 1. Build Phase                                          │
-│    - Widget.build() 호출                                │
-│    - Widget 트리 생성                                    │
-│    - Element 업데이트/생성                               │
-└─────────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────────┐
-│ 2. Layout Phase                                         │
-│    - RenderObject.performLayout() 호출                  │
-│    - Constraints 전파 (부모 → 자식)                     │
-│    - Size 계산 (자식 → 부모)                            │
-│    - Position 결정 (부모)                               │
-└─────────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────────┐
-│ 3. Paint Phase                                          │
-│    - RenderObject.paint() 호출                          │
-│    - PaintingContext에 그리기 명령 기록                  │
-│    - Layer 트리 생성                                     │
-└─────────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────────┐
-│ 4. Composite Phase                                      │
-│    - Layer 트리를 Scene으로 변환                         │
-│    - GPU에 전송 (Impeller/Skia 엔진)                     │
-│    - 래스터화 및 화면 출력                               │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    B["1. Build Phase<br/>- Widget.build() 호출<br/>- Widget 트리 생성<br/>- Element 업데이트/생성"]
+    L["2. Layout Phase<br/>- RenderObject.performLayout() 호출<br/>- Constraints 전파 (부모 → 자식)<br/>- Size 계산 (자식 → 부모)<br/>- Position 결정 (부모)"]
+    P["3. Paint Phase<br/>- RenderObject.paint() 호출<br/>- PaintingContext에 그리기 명령 기록<br/>- Layer 트리 생성"]
+    C["4. Composite Phase<br/>- Layer 트리를 Scene으로 변환<br/>- GPU에 전송 (Impeller/Skia 엔진)<br/>- 래스터화 및 화면 출력"]
+
+    B --> L --> P --> C
 ```
 
 ### 파이프라인 트리거
@@ -1066,18 +1041,16 @@ void addToScene(ui.SceneBuilder builder) {
 
 ### GPU 래스터화
 
-```
-┌──────────────────────────────────────────────────┐
-│ Flutter Engine (C++)                             │
-├──────────────────────────────────────────────────┤
-│ 1. Scene을 렌더링 엔진에 전달                    │
-│    (Impeller: iOS/Android/macOS 기본 렌더러)    │
-│    (Skia: fallback 또는 명시적 비활성화 시)      │
-│ 2. 렌더링 엔진이 Scene을 GPU 명령으로 변환       │
-│ 3. Metal/Vulkan/OpenGL을 통해 GPU에 전송         │
-│ 4. GPU가 래스터화 (픽셀로 변환)                  │
-│ 5. 화면 출력                                      │
-└──────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Engine["Flutter Engine (C++)"]
+        S1["1. Scene을 렌더링 엔진에 전달<br/>(Impeller: iOS/Android/macOS 기본 렌더러)<br/>(Skia: fallback 또는 명시적 비활성화 시)"]
+        S2["2. 렌더링 엔진이 Scene을 GPU 명령으로 변환"]
+        S3["3. Metal/Vulkan/OpenGL을 통해 GPU에 전송"]
+        S4["4. GPU가 래스터화 (픽셀로 변환)"]
+        S5["5. 화면 출력"]
+        S1 --> S2 --> S3 --> S4 --> S5
+    end
 ```
 
 ### Compositing Bits
@@ -1156,40 +1129,17 @@ void _invokePersistentFrameCallbacks() {
 
 ### 전체 프레임 흐름
 
-```
-┌─────────────────────────────────────────────────┐
-│ 1. 이벤트 (setState, 애니메이션 등)              │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ 2. scheduleFrame() 호출                         │
-│    - VSync 신호 요청                             │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ 3. VSync 신호 도착 (16.67ms 후, 60fps 기준)     │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ 4. handleBeginFrame()                           │
-│    - Transient callbacks (애니메이션)            │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ 5. handleDrawFrame()                            │
-│    - Build phase (dirty elements)               │
-│    - Layout phase (dirty render objects)        │
-│    - Paint phase (repaint boundaries)           │
-│    - Composite phase (scene → GPU)              │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ 6. Post-frame callbacks                         │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ 7. 화면 출력                                     │
-└─────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    F1["1. 이벤트 (setState, 애니메이션 등)"]
+    F2["2. scheduleFrame() 호출<br/>- VSync 신호 요청"]
+    F3["3. VSync 신호 도착 (16.67ms 후, 60fps 기준)"]
+    F4["4. handleBeginFrame()<br/>- Transient callbacks (애니메이션)"]
+    F5["5. handleDrawFrame()<br/>- Build phase (dirty elements)<br/>- Layout phase (dirty render objects)<br/>- Paint phase (repaint boundaries)<br/>- Composite phase (scene → GPU)"]
+    F6["6. Post-frame callbacks"]
+    F7["7. 화면 출력"]
+
+    F1 --> F2 --> F3 --> F4 --> F5 --> F6 --> F7
 ```
 
 ### Frame Budget (프레임 예산)
@@ -1488,38 +1438,17 @@ class MyPainter extends CustomPainter {
 
 ### 터치 이벤트 플로우
 
-```
-┌─────────────────────────────────────────────────┐
-│ 1. 플랫폼에서 터치 이벤트 발생                   │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ 2. GestureBinding.handlePointerEvent()          │
-│    - PointerDownEvent, PointerMoveEvent 등      │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ 3. Hit Test (어떤 RenderObject가 터치되었나?)   │
-│    - RenderView부터 재귀적으로 hitTest() 호출    │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ 4. HitTestResult에 RenderObject들 등록          │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ 5. Gesture Recognizer에 이벤트 전달             │
-│    - TapGestureRecognizer, PanGestureRecognizer │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ 6. Gesture Arena (승자 결정)                    │
-│    - 여러 Recognizer가 경쟁                      │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ 7. 콜백 호출 (onTap, onPanUpdate 등)            │
-└─────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    T1["1. 플랫폼에서 터치 이벤트 발생"]
+    T2["2. GestureBinding.handlePointerEvent()<br/>- PointerDownEvent, PointerMoveEvent 등"]
+    T3["3. Hit Test (어떤 RenderObject가 터치되었나?)<br/>- RenderView부터 재귀적으로 hitTest() 호출"]
+    T4["4. HitTestResult에 RenderObject들 등록"]
+    T5["5. Gesture Recognizer에 이벤트 전달<br/>- TapGestureRecognizer, PanGestureRecognizer"]
+    T6["6. Gesture Arena (승자 결정)<br/>- 여러 Recognizer가 경쟁"]
+    T7["7. 콜백 호출 (onTap, onPanUpdate 등)"]
+
+    T1 --> T2 --> T3 --> T4 --> T5 --> T6 --> T7
 ```
 
 ### Hit Test 구현
@@ -1632,28 +1561,14 @@ GestureDetector(
 
 ### Platform Channel 아키텍처
 
-```
-┌─────────────────────────────────────────────────┐
-│ Dart (Flutter Framework)                        │
-├─────────────────────────────────────────────────┤
-│ MethodChannel / EventChannel / BasicMessageChannel │
-└─────────────────────────────────────────────────┘
-                    ↓ BinaryMessenger
-┌─────────────────────────────────────────────────┐
-│ StandardMessageCodec (직렬화)                    │
-│ - Dart 객체 → ByteData                          │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ Engine (C++)                                    │
-│ - PlatformMessageHandler                        │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ Platform (iOS/Android)                          │
-│ - MethodCallHandler (Swift/Kotlin)             │
-│ - ByteData → Native 객체 (역직렬화)              │
-└─────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    D["Dart (Flutter Framework)<br/>MethodChannel / EventChannel / BasicMessageChannel"]
+    S["StandardMessageCodec (직렬화)<br/>Dart 객체 → ByteData"]
+    E["Engine (C++)<br/>PlatformMessageHandler"]
+    P["Platform (iOS/Android)<br/>MethodCallHandler (Swift/Kotlin)<br/>ByteData → Native 객체 (역직렬화)"]
+
+    D -->|"BinaryMessenger"| S --> E --> P
 ```
 
 ### MethodChannel 사용

@@ -343,16 +343,13 @@ class _JankExampleState extends State<JankExample> {
 
 프레임 선택 시 **Build/Layout/Paint 이벤트** 표시:
 
-```
-┌─────────────────────────────────────────────┐
-│ Frame #123 (18.5ms - JANK!)                 │
-├─────────────────────────────────────────────┤
-│ ├─ Build (12.3ms) ← 문제!                   │
-│ │   ├─ MyWidget.build (10.2ms)              │
-│ │   └─ ExpensiveWidget.build (8.1ms)        │
-│ ├─ Layout (3.2ms)                           │
-│ └─ Paint (3.0ms)                            │
-└─────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    F["Frame #123 (18.5ms - JANK!)"] --> B["Build (12.3ms) -- 문제!"]
+    F --> L["Layout (3.2ms)"]
+    F --> P["Paint (3.0ms)"]
+    B --> MW["MyWidget.build (10.2ms)"]
+    B --> EW["ExpensiveWidget.build (8.1ms)"]
 ```
 
 **Timeline 분석 방법:**

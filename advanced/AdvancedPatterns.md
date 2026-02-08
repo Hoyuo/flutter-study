@@ -135,14 +135,12 @@ class OrderRepositoryImpl implements OrderRepository {
 
 Ports & Adapters 패턴으로 도메인을 외부 기술로부터 격리합니다.
 
-```
-     Primary Adapters           Domain Core         Secondary Adapters
-     (Driving Side)                                   (Driven Side)
-    ┌──────────────┐          ┌──────────┐          ┌──────────────┐
-    │ REST API     │          │          │          │  Database    │
-    │ Flutter UI   │──────────│  Domain  │──────────│  External API│
-    │ CLI          │          │          │          │  Message Q   │
-    └──────────────┘          └──────────┘          └──────────────┘
+```mermaid
+flowchart LR
+    PA["Primary Adapters - Driving Side<br/>REST API / Flutter UI / CLI"]
+    D["Domain Core"]
+    SA["Secondary Adapters - Driven Side<br/>Database / External API / Message Q"]
+    PA --> D --> SA
 ```
 
 ### 2.2 Port 정의
@@ -234,13 +232,12 @@ void main() {
 
 분산 트랜잭션을 관리하는 패턴입니다.
 
-```
-정상 흐름
-Step 1 ──> Step 2 ──> Step 3 ──> Step 4
-  │          │          │ ✗
-  │          │          └─────> Compensation
-  │          └────────────────> Compensation  
-  └───────────────────────────> Compensation
+```mermaid
+flowchart LR
+    S1["Step 1"] --> S2["Step 2"] --> S3["Step 3"] --> S4["Step 4"]
+    S3 -. "실패 시" .-> C3["Compensation 3"]
+    S2 -. "보상" .-> C2["Compensation 2"]
+    S1 -. "보상" .-> C1["Compensation 1"]
 ```
 
 ### 3.2 Saga 구현
@@ -412,15 +409,19 @@ class OrderRepositoryImpl implements OrderRepository {
 
 CQRS(Command Query Responsibility Segregation)는 Command(쓰기)와 Query(읽기)의 책임을 분리하는 패턴입니다. 읽기와 쓰기의 성능 요구사항이 다를 때, 또는 복잡한 도메인 로직과 단순한 조회 로직을 분리할 때 유용합니다.
 
-```
-Command Side                  Query Side
-┌──────────────┐            ┌──────────────┐
-│  Command     │            │   Query      │
-│  Handler     │            │   Handler    │
-│      ↓       │            │      ↓       │
-│ Write Model  │──Events──→ │  Read Model  │
-│ (Normalized) │            │(Denormalized)│
-└──────────────┘            └──────────────┘
+```mermaid
+flowchart LR
+    subgraph CS["Command Side"]
+        CH["Command Handler"]
+        WM["Write Model<br/>Normalized"]
+        CH --> WM
+    end
+    subgraph QS["Query Side"]
+        QH["Query Handler"]
+        RM["Read Model<br/>Denormalized"]
+        QH --> RM
+    end
+    WM -->|Events| RM
 ```
 
 **CQRS의 상세 구현과 Bloc 통합은 [AdvancedStateManagement](./AdvancedStateManagement.md#5-cqrs-패턴) 참조**
@@ -433,19 +434,16 @@ Command Side                  Query Side
 
 Event Sourcing은 현재 상태를 직접 저장하는 대신, 상태 변경을 발생시킨 모든 이벤트를 저장하는 패턴입니다. 감사 로그가 필수적이거나, 시간 여행 디버깅이 필요하거나, 복잡한 Undo/Redo 기능이 필요할 때 적합합니다.
 
-```
-Traditional                Event Sourcing
-┌─────────┐               ┌───────────────┐
-│ Current │               │ Event Stream  │
-│  State  │               │ 1. Created    │
-│ status: │               │ 2. Confirmed  │
-│ SHIPPED │               │ 3. Shipped    │
-└─────────┘               └───────────────┘
-                                 ↓ Replay
-                          ┌─────────────┐
-                          │   Current   │
-                          │    State    │
-                          └─────────────┘
+```mermaid
+flowchart TD
+    subgraph Traditional
+        TS["Current State<br/>status: SHIPPED"]
+    end
+    subgraph EventSourcing["Event Sourcing"]
+        ES["Event Stream<br/>1. Created<br/>2. Confirmed<br/>3. Shipped"]
+        CS["Current State"]
+        ES -->|Replay| CS
+    end
 ```
 
 **Event Sourcing의 상세 구현, Aggregate 패턴, Bloc 통합, Snapshot 최적화는 [AdvancedStateManagement](./AdvancedStateManagement.md#4-event-sourcing-패턴) 참조**

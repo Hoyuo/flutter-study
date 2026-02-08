@@ -181,20 +181,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 ## 6. 의존성 방향
 
-```
-┌─────────────────┐
-│  Presentation   │ → Screen, Bloc, Widget
-└────────┬────────┘
-         │ depends on
-         ▼
-┌─────────────────┐
-│     Domain      │ → Entity, UseCase, Repository(Interface), Failure
-└────────┬────────┘
-         │ implemented by
-         ▼
-┌─────────────────┐
-│      Data       │ → DTO, DataSource, Mapper, Repository(Impl)
-└─────────────────┘
+```mermaid
+flowchart TD
+    P["Presentation Layer<br/>Screen, Bloc, Widget"]
+    D["Domain Layer<br/>Entity, UseCase, Repository Interface, Failure"]
+    Da["Data Layer<br/>DTO, DataSource, Mapper, Repository Impl"]
+    P -->|depends on| D
+    D -->|implemented by| Da
 ```
 
 - **Domain 레이어는 외부 의존성 없음** (순수 Dart)
@@ -205,20 +198,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 ### 7.1 라우팅은 App에서 중앙 관리
 
+```mermaid
+flowchart TD
+    App["App - Composition Root<br/>Router, DI 설정, 모듈 조합"]
+    H["home"]
+    S["search"]
+    B["booking"]
+    V["vendor_detail"]
+    App -->|depends on| H
+    App -->|depends on| S
+    App -->|depends on| B
+    App -->|depends on| V
 ```
-┌─────────────────────────────────┐
-│              App                │  ← Composition Root
-│  (Router, DI 설정, 모듈 조합)    │     모든 feature를 알고 조합
-└──────────────┬──────────────────┘
-               │ depends on
-    ┌──────────┼──────────┬────────────┐
-    ▼          ▼          ▼            ▼
-┌───────┐ ┌───────┐ ┌─────────┐ ┌──────────┐
-│ home  │ │search │ │ booking │ │vendor_   │
-│       │ │       │ │         │ │detail    │
-└───────┘ └───────┘ └─────────┘ └──────────┘
-   (서로를 모름 - 완전히 독립적)
-```
+
+> 서로를 모름 - 완전히 독립적
 
 ### 7.2 이유: Feature 모듈 간 순환 의존성 방지
 

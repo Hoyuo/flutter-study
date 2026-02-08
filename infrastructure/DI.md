@@ -299,23 +299,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
 ### 5.3 생명주기 비교
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                        GetIt                             │
-│  ┌─────────────────────────────────────────────────────┐ │
-│  │  UseCase, Repository, DataSource (싱글톤/팩토리)     │ │
-│  │  앱 전체 생명주기 동안 유지                          │ │
-│  └─────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────┐
-│                    BlocProvider                          │
-│  ┌─────────────────────────────────────────────────────┐ │
-│  │  Bloc (화면별 생성)                                  │ │
-│  │  위젯 트리 생명주기와 동일                           │ │
-│  │  화면 dispose 시 자동 close                          │ │
-│  └─────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph GetIt["GetIt - 앱 전체 생명주기"]
+        G1["UseCase, Repository, DataSource<br/>싱글톤/팩토리<br/>앱 전체 생명주기 동안 유지"]
+    end
+    subgraph BlocProvider["BlocProvider - 위젯 트리 생명주기"]
+        B1["Bloc - 화면별 생성<br/>위젯 트리 생명주기와 동일<br/>화면 dispose 시 자동 close"]
+    end
 ```
 
 ## 6. 환경별 설정
@@ -461,20 +452,9 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
 
 ### 7.3 의존성 방향
 
-```
-┌─────────────────┐
-│       App       │ ← main.dart, configureDependencies
-└────────┬────────┘
-         │ uses
-         ▼
-┌─────────────────┐
-│    Features     │ ← home, auth, profile
-└────────┬────────┘
-         │ uses
-         ▼
-┌─────────────────┐
-│      Core       │ ← core_network, core_utils
-└─────────────────┘
+```mermaid
+flowchart TD
+    A["App<br/>(main.dart, configureDependencies)"] -->|uses| F["Features<br/>(home, auth, profile)"] -->|uses| C["Core<br/>(core_network, core_utils)"]
 ```
 
 ## 8. Module 어노테이션

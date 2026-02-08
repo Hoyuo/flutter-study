@@ -17,10 +17,12 @@
 
 **전체 문서 분류 (56개)**
 
-```
-Beginner 기초 (5) ──> Junior 필수 (10) ──> Mid-level 실무 (16) ──> Senior 심화 (10)
-                                                                        │
-                                                              프로젝트별 선택 (8)
+```mermaid
+flowchart LR
+    A["Beginner 기초 (5)"] --> B["Junior 필수 (10)"]
+    B --> C["Mid-level 실무 (16)"]
+    C --> D["Senior 심화 (10)"]
+    D --> E["프로젝트별 선택 (8)"]
 ```
 
 ---
@@ -323,32 +325,16 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
 
 실시간 통신, 미디어 처리, 소셜 기능이 핵심인 앱
 
-```
-[Junior 필수 10개 완료]
-    │
-    ▼
- 1. networking/WebSocket.md          ← 실시간 메시지 통신
-    │
-    ▼
- 2. infrastructure/Firebase.md       ← Auth + Firestore + FCM
-    │
-    ▼
- 3. features/PushNotification.md     ← 채팅 알림
-    │
-    ▼
- 4. features/ImageHandling.md        ← 프로필/채팅 이미지
-    │
-    ▼
- 5. features/CameraMedia.md (*)      ← 사진/영상 촬영 공유
-    │
-    ▼
- 6. features/Pagination.md           ← 메시지/피드 무한 스크롤
-    │
-    ▼
- 7. features/DeepLinking.md (*)      ← 초대 링크, 프로필 공유
-    │
-    ▼
- 8. advanced/OfflineSupport.md       ← 오프라인 메시지 큐잉
+```mermaid
+flowchart TD
+    A["Junior 필수 10개 완료"] --> B["1. networking/WebSocket.md<br/>실시간 메시지 통신"]
+    B --> C["2. infrastructure/Firebase.md<br/>Auth + Firestore + FCM"]
+    C --> D["3. features/PushNotification.md<br/>채팅 알림"]
+    D --> E["4. features/ImageHandling.md<br/>프로필/채팅 이미지"]
+    E --> F["5. features/CameraMedia.md (*)<br/>사진/영상 촬영 공유"]
+    F --> G["6. features/Pagination.md<br/>메시지/피드 무한 스크롤"]
+    G --> H["7. features/DeepLinking.md (*)<br/>초대 링크, 프로필 공유"]
+    H --> I["8. advanced/OfflineSupport.md<br/>오프라인 메시지 큐잉"]
 ```
 
 **핵심 기술 조합:** WebSocket + Firebase Auth + Firestore + FCM + Image 처리
@@ -366,32 +352,16 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
 
 위치 기반 서비스, 실시간 추적, 결제가 핵심인 앱
 
-```
-[Junior 필수 10개 완료]
-    │
-    ▼
- 1. infrastructure/Firebase.md       ← Auth + Firestore 실시간 DB
-    │
-    ▼
- 2. features/MapsGeolocation.md (*)  ← 지도 + 위치 추적
-    │
-    ▼
- 3. networking/WebSocket.md          ← 실시간 위치/주문 상태
-    │
-    ▼
- 4. features/Permission.md           ← 위치 권한 관리
-    │
-    ▼
- 5. features/PushNotification.md     ← 주문/배달 상태 알림
-    │
-    ▼
- 6. features/InAppPurchase.md        ← 결제 연동 (참고)
-    │
-    ▼
- 7. system/Performance.md            ← 지도 렌더링 최적화
-    │
-    ▼
- 8. system/Observability.md          ← 주문 실패 모니터링 및 로깅
+```mermaid
+flowchart TD
+    A["Junior 필수 10개 완료"] --> B["1. infrastructure/Firebase.md<br/>Auth + Firestore 실시간 DB"]
+    B --> C["2. features/MapsGeolocation.md (*)<br/>지도 + 위치 추적"]
+    C --> D["3. networking/WebSocket.md<br/>실시간 위치/주문 상태"]
+    D --> E["4. features/Permission.md<br/>위치 권한 관리"]
+    E --> F["5. features/PushNotification.md<br/>주문/배달 상태 알림"]
+    F --> G["6. features/InAppPurchase.md<br/>결제 연동 (참고)"]
+    G --> H["7. system/Performance.md<br/>지도 렌더링 최적화"]
+    H --> I["8. system/Observability.md<br/>주문 실패 모니터링 및 로깅"]
 ```
 
 **핵심 기술 조합:** Google Maps + Geolocator + WebSocket + Firebase + FCM
@@ -409,32 +379,16 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
 
 미디어 재생, 콘텐츠 탐색, 공유 기능이 핵심인 앱
 
-```
-[Junior 필수 10개 완료]
-    │
-    ▼
- 1. features/DeepLinking.md (*)      ← 콘텐츠 공유 링크
-    │
-    ▼
- 2. features/CameraMedia.md (*)      ← 미디어 촬영/편집
-    │
-    ▼
- 3. features/ImageHandling.md        ← 이미지 캐싱/최적화
-    │
-    ▼
- 4. features/Animation.md            ← 풍부한 UI 전환 효과
-    │
-    ▼
- 5. features/CustomPainting.md (*)   ← 커스텀 차트/그래픽
-    │
-    ▼
- 6. features/Pagination.md           ← 콘텐츠 피드 무한 스크롤
-    │
-    ▼
- 7. system/Performance.md            ← 이미지/영상 렌더링 최적화
-    │
-    ▼
- 8. system/Observability.md          ← 콘텐츠 소비 추적 및 분석
+```mermaid
+flowchart TD
+    A["Junior 필수 10개 완료"] --> B["1. features/DeepLinking.md (*)<br/>콘텐츠 공유 링크"]
+    B --> C["2. features/CameraMedia.md (*)<br/>미디어 촬영/편집"]
+    C --> D["3. features/ImageHandling.md<br/>이미지 캐싱/최적화"]
+    D --> E["4. features/Animation.md<br/>풍부한 UI 전환 효과"]
+    E --> F["5. features/CustomPainting.md (*)<br/>커스텀 차트/그래픽"]
+    F --> G["6. features/Pagination.md<br/>콘텐츠 피드 무한 스크롤"]
+    G --> H["7. system/Performance.md<br/>이미지/영상 렌더링 최적화"]
+    H --> I["8. system/Observability.md<br/>콘텐츠 소비 추적 및 분석"]
 ```
 
 **핵심 기술 조합:** Deep Link + Media 처리 + Animation + Custom Painting + 캐싱
@@ -464,38 +418,51 @@ Junior 필수 10개 문서를 완료한 후, 프로젝트 특성에 맞는 추�
 
 ### 의존성 다이어그램
 
-```
-DartAdvanced ──> WidgetFundamentals ──> LayoutSystem ──> FlutterInternals
-                        │                                       │
-                        ▼                                       ▼
-Architecture ─┬─> DI ──> Bloc ──> Freezed ──> Networking_Dio ──> Networking_Retrofit
-              │                     │
-              │                     ├──> ErrorHandling (core) ──> Fpdart
-              │                     │
-              │                     ├──> BlocUiEffect
-              │                     │
-              │                     └──> Navigation ──> DeepLinking (*)
-              │
-              ├─> Environment ──> CICD 심화 (infra) ──> StoreSubmission
-              │
-              ├─> DesignSystem (fund) ──> ResponsiveDesign
-              │          └──> Accessibility
-              │
-              ├─> Testing (기본+심화 통합)
-              │
-              ├─> Performance (기본+심화 통합) ──> DevToolsProfiling
-              │
-              ├─> Security (통합: 기본 + 고급 보안)
-              │
-              ├─> LocalStorage ──> CachingStrategy
-              │
-              ├─> Observability (sys) [Analytics + Monitoring + Logging 통합]
-              │
-              ├─> ModularArchitecture ──> AdvancedPatterns
-              │
-              ├─> PlatformIntegration (infra)
-              │
-              └─> Isolates (sys)
+```mermaid
+flowchart TD
+    DA["DartAdvanced"] --> WF["WidgetFundamentals"]
+    WF --> LS["LayoutSystem"]
+    LS --> FI["FlutterInternals"]
+
+    WF --> Arch["Architecture"]
+    FI --> NR["Networking_Retrofit"]
+
+    Arch --> DI["DI"]
+    DI --> Bloc["Bloc"]
+    Bloc --> Frzd["Freezed"]
+    Frzd --> ND["Networking_Dio"]
+    ND --> NR
+
+    Bloc --> EH["ErrorHandling (core)"]
+    EH --> FP["Fpdart"]
+
+    Bloc --> BUE["BlocUiEffect"]
+
+    Bloc --> Nav["Navigation"]
+    Nav --> DL["DeepLinking (*)"]
+
+    Arch --> Env["Environment"]
+    Env --> CICD["CICD 심화 (infra)"]
+    CICD --> SS["StoreSubmission"]
+
+    Arch --> DS["DesignSystem (fund)"]
+    DS --> RD["ResponsiveDesign"]
+    DS --> Acc["Accessibility"]
+
+    Arch --> Test["Testing<br/>(기본+심화 통합)"]
+    Arch --> Perf["Performance<br/>(기본+심화 통합)"]
+    Perf --> DTP["DevToolsProfiling"]
+
+    Arch --> Sec["Security<br/>(통합: 기본 + 고급 보안)"]
+    Arch --> LSt["LocalStorage"]
+    LSt --> CS["CachingStrategy"]
+
+    Arch --> Obs["Observability (sys)<br/>Analytics + Monitoring + Logging 통합"]
+    Arch --> MA["ModularArchitecture"]
+    MA --> AP["AdvancedPatterns"]
+
+    Arch --> PI["PlatformIntegration (infra)"]
+    Arch --> Iso["Isolates (sys)"]
 ```
 
 ---

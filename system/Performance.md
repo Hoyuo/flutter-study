@@ -1709,39 +1709,13 @@ dart run build_runner build --delete-conflicting-outputs
 
 ## 심화: 렌더링 파이프라인 상세
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 1. Build Phase (UI Thread)                                  │
-│    - Widget.build() 호출                                     │
-│    - RenderObject 생성/업데이트                              │
-│    - Constraints 전파 시작                                   │
-│    - 목표: < 4ms                                             │
-└─────────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────┐
-│ 2. Layout Phase (UI Thread)                                 │
-│    - RenderObject.performLayout() 호출                       │
-│    - Size/Position 계산                                      │
-│    - Constraints 적용 (BoxConstraints, SliverConstraints)   │
-│    - 목표: < 4ms                                             │
-└─────────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────┐
-│ 3. Paint Phase (UI Thread)                                  │
-│    - RenderObject.paint() 호출                               │
-│    - Canvas 명령 기록 (drawRect, drawPath 등)               │
-│    - Layer Tree 구성                                         │
-│    - 목표: < 4ms                                             │
-└─────────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────┐
-│ 4. Composite Phase (Raster Thread)                          │
-│    - Layer Tree → Scene 변환                                 │
-│    - GPU 명령 생성 (Impeller/Skia)                          │
-│    - Texture 업로드                                          │
-│    - 최종 렌더링                                             │
-│    - 목표: < 4ms                                             │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    B["1. Build Phase (UI Thread)<br/>- Widget.build() 호출<br/>- RenderObject 생성/업데이트<br/>- Constraints 전파 시작<br/>- 목표: < 4ms"]
+    L["2. Layout Phase (UI Thread)<br/>- RenderObject.performLayout() 호출<br/>- Size/Position 계산<br/>- Constraints 적용 (BoxConstraints, SliverConstraints)<br/>- 목표: < 4ms"]
+    P["3. Paint Phase (UI Thread)<br/>- RenderObject.paint() 호출<br/>- Canvas 명령 기록 (drawRect, drawPath 등)<br/>- Layer Tree 구성<br/>- 목표: < 4ms"]
+    C["4. Composite Phase (Raster Thread)<br/>- Layer Tree to Scene 변환<br/>- GPU 명령 생성 (Impeller/Skia)<br/>- Texture 업로드<br/>- 최종 렌더링<br/>- 목표: < 4ms"]
+    B --> L --> P --> C
 ```
 
 **병목 지점 식별:**
@@ -2276,14 +2250,9 @@ Flutter 3.7+부터 GLSL Fragment Shader를 직접 작성 가능합니다.
 
 ### GLSL → SPIR-V 컴파일 파이프라인
 
-```
-┌──────────────┐      ┌──────────────┐      ┌──────────────┐
-│ custom.frag  │ ───→ │ SPIR-V       │ ───→ │ Flutter App  │
-│ (GLSL)       │      │ Bytecode     │      │ (Runtime)    │
-└──────────────┘      └──────────────┘      └──────────────┘
-     ↑                      ↑
-     │                      │
-  개발자 작성          flutter build 시 자동 컴파일
+```mermaid
+flowchart LR
+    A["custom.frag<br/>(GLSL)"] -->|"flutter build 시<br/>자동 컴파일"| B["SPIR-V<br/>Bytecode"] --> C["Flutter App<br/>(Runtime)"]
 ```
 
 ### 실전 예제: Wave Effect Shader
@@ -3178,15 +3147,13 @@ flutter:
 ### Timeline 분석
 
 **CPU Flame Graph 읽기:**
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-│ build() - 12ms                       │ ← 전체 빌드 시간
-│  ├─ Layout - 5ms                     │
-│  │  └─ RenderFlex.performLayout()   │
-│  ├─ Paint - 4ms                      │
-│  │  └─ CustomPaint.paint()          │
-│  └─ Composite - 3ms                  │
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```mermaid
+flowchart LR
+    B["build() - 12ms"] --> L["Layout - 5ms"]
+    B --> P["Paint - 4ms"]
+    B --> C["Composite - 3ms"]
+    L --> LR["RenderFlex.performLayout()"]
+    P --> CP["CustomPaint.paint()"]
 ```
 
 **병목 식별 체크리스트:**
