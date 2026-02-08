@@ -112,9 +112,9 @@ dependencies:
 
 dev_dependencies:
   drift_dev: ^2.25.0               # Drift 코드 생성기
-  isar_plus_generator: ^1.2.1
+  isar_generator: ^3.1.0+1
   build_runner: ^2.11.0
-  injectable_generator: ^2.7.1
+  injectable_generator: ^2.12.0
 ```
 
 ## 3. SharedPreferences
@@ -1202,13 +1202,15 @@ Stream<List<User>> watchUsers() {
 class UserListScreen extends StatelessWidget {
   final AppDatabase db;
 
+  const UserListScreen({super.key, required this.db});
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<User>>(
       stream: db.userDao.watchAllUsers(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return CircularProgressIndicator();
+          return const CircularProgressIndicator();
         }
 
         final users = snapshot.data!;

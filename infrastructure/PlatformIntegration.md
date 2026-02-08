@@ -1761,7 +1761,7 @@ class _ManagedNativeViewState extends State<ManagedNativeView>
 > 📖 **Conditional Import 상세 패턴 및 구현 예제**는 [FlutterMultiPlatform.md](../infrastructure/FlutterMultiPlatform.md#52-conditional-import-패턴)를 참조하세요.
 
 **핵심 개념:**
-- `export ... if (dart.library.io) ... if (dart.library.html)` 문법 사용
+- `export ... if (dart.library.io) ... if (dart.library.js_interop)` 문법 사용
 - Stub 파일로 공통 인터페이스 정의
 - 컴파일 타임에 플랫폼별 파일 자동 선택
 

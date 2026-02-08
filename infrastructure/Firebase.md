@@ -113,11 +113,11 @@ dependencies:
   # State Management & DI
   flutter_bloc: ^9.1.1
   injectable: ^2.7.1
-  get_it: ^8.0.3
+  get_it: ^9.2.0
 
   # Functional Programming
   fpdart: ^1.2.0
-  freezed_annotation: ^3.2.5
+  freezed_annotation: ^3.1.0
 
   # Code Generation
   json_annotation: ^4.10.0
@@ -126,7 +126,7 @@ dev_dependencies:
   build_runner: ^2.11.0
   freezed: ^3.2.5
   json_serializable: ^6.12.0
-  injectable_generator: ^2.7.1
+  injectable_generator: ^2.12.0
 ```
 
 ### 2.3 firebase_options.dart 생성
@@ -948,10 +948,9 @@ part 'posts_event.dart';
 part 'posts_state.dart';
 part 'posts_bloc.freezed.dart';
 
-// ⚠️ 주의: DI.md 가이드에서는 Bloc을 GetIt에 등록하지 않을 것을 권장합니다.
+// ⚠️ 주의: DI.md 가이드에 따라 Bloc은 GetIt에 등록하지 않습니다.
 // 실제 프로젝트에서는 BlocProvider를 통해 Bloc을 제공하세요.
-// 이 예제는 Firebase 연동 패턴 학습용으로만 참고하세요.
-@injectable
+// 아래 예제는 Firebase 연동 패턴 학습용입니다.
 class PostsBloc extends Bloc<PostsEvent, PostsState> {
   final PostRepository _postRepository;
   StreamSubscription? _postsSubscription;
@@ -1122,10 +1121,9 @@ part 'upload_event.dart';
 part 'upload_state.dart';
 part 'upload_bloc.freezed.dart';
 
-// ⚠️ 주의: DI.md 가이드에서는 Bloc을 GetIt에 등록하지 않을 것을 권장합니다.
+// ⚠️ 주의: DI.md 가이드에 따라 Bloc은 GetIt에 등록하지 않습니다.
 // 실제 프로젝트에서는 BlocProvider를 통해 Bloc을 제공하세요.
-// 이 예제는 Firebase 연동 패턴 학습용으로만 참고하세요.
-@injectable
+// 아래 예제는 Firebase 연동 패턴 학습용입니다.
 class UploadBloc extends Bloc<UploadEvent, UploadState> {
   final StorageRepository _storageRepository;
 

@@ -72,7 +72,7 @@ description: WebSocket 실시간 채팅 앱
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -87,14 +87,14 @@ dependencies:
   bloc_concurrency: ^0.3.0
 
   # 의존성 주입
-  get_it: ^8.0.3
+  get_it: ^9.2.0
   injectable: ^2.7.1
 
   # 함수형 프로그래밍
   fpdart: ^1.2.0
 
   # 코드 생성
-  freezed_annotation: ^3.2.5
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.10.0
 
   # 유틸리티
@@ -112,7 +112,7 @@ dev_dependencies:
   build_runner: ^2.11.0
   freezed: ^3.2.5
   json_serializable: ^6.12.0
-  injectable_generator: ^2.7.1
+  injectable_generator: ^2.12.0
 
   # 테스트
   mocktail: ^1.0.4

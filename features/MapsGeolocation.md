@@ -51,7 +51,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -65,10 +65,10 @@ dependencies:
 
   # Dependency Injection
   injectable: ^2.7.1
-  get_it: ^8.0.3
+  get_it: ^9.2.0
 
   # Code Generation
-  freezed_annotation: ^3.2.5
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.10.0
 
   # Maps & Location
@@ -94,14 +94,14 @@ dev_dependencies:
   build_runner: ^2.11.0
   freezed: ^3.2.5
   json_serializable: ^6.12.0
-  injectable_generator: ^2.7.1
+  injectable_generator: ^2.12.0
 
   # Testing
   bloc_test: ^10.0.0
   mocktail: ^1.0.4
 
   # Linting
-  flutter_lints: ^4.0.0
+  lints: ^6.1.0
 ```
 
 ### 2.2 Android 설정
@@ -121,6 +121,7 @@ dev_dependencies:
         android:icon="@mipmap/ic_launcher">
 
         <!-- Google Maps API Key -->
+        <!-- ⚠️ 보안 경고: API 키는 환경 변수 또는 보안 저장소에서 관리하세요 -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="YOUR_ANDROID_API_KEY_HERE"/>
@@ -1515,6 +1516,7 @@ abstract class LocationRemoteDataSource {
 class LocationRemoteDataSourceImpl implements LocationRemoteDataSource {
   final http.Client _client;
   static const String _baseUrl = 'https://maps.googleapis.com/maps/api';
+  // ⚠️ 보안 경고: API 키는 환경 변수 또는 보안 저장소에서 관리하세요
   static const String _apiKey = 'YOUR_API_KEY_HERE';
 
   LocationRemoteDataSourceImpl(this._client);

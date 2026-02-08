@@ -224,8 +224,8 @@ on<SearchQueryChanged>(
   transformer: restartable(), // 이전 요청 취소
 )
 
-// debounce는 bloc_concurrency에 포함되어 있지 않으므로 커스텀 구현
-// restartable()을 기반으로 타이머를 활용한 디바운스 트랜스포머
+// 📝 debounce 구현: bloc_concurrency에는 debounce가 포함되어 있지 않으므로 커스텀 구현이 필요합니다.
+// restartable()을 기반으로 타이머를 활용하여 연속된 이벤트를 지연시키고, 마지막 이벤트만 처리합니다.
 EventTransformer<T> debounce<T>(Duration duration) {
   return (events, mapper) {
     return restartable<T>().call(

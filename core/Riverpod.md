@@ -108,7 +108,7 @@ dependencies:
   fpdart: ^1.2.0
 
   # 불변 데이터 클래스
-  freezed_annotation: ^3.2.5
+  freezed_annotation: ^3.1.0
 
 dev_dependencies:
   # Build Runner

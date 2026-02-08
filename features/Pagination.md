@@ -20,7 +20,7 @@
 dependencies:
   rxdart: ^0.28.0
   flutter_bloc: ^9.1.1
-  freezed_annotation: ^3.2.5
+  freezed_annotation: ^3.1.0
   fpdart: ^1.2.0
   injectable: ^2.7.1
   shimmer: ^3.0.0  # Skeleton Loader 섹션

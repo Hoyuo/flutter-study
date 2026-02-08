@@ -15,18 +15,18 @@
 > ```yaml
 > dependencies:
 >   flutter_bloc: ^9.1.1
->   freezed_annotation: ^3.2.5
+>   freezed_annotation: ^3.1.0
 >   fpdart: ^1.2.0
->   get_it: ^8.0.3
+>   get_it: ^9.2.0
 >   injectable: ^2.7.1
->   go_router: ^14.8.1
->   dio: ^5.8.0+1
->   app_links: ^6.4.0
+>   go_router: ^17.1.0
+>   dio: ^5.9.1
+>   app_links: ^7.0.0
 >
 > dev_dependencies:
 >   freezed: ^3.2.5
 >   json_serializable: ^6.12.0
->   injectable_generator: ^2.7.1
+>   injectable_generator: ^2.12.0
 >   build_runner: ^2.11.0
 > ```
 
@@ -534,7 +534,7 @@ final router = GoRouter(
 ```dart
 // Requires: app_links package
 // dependencies:
-//   app_links: ^6.4.0
+//   app_links: ^7.0.0
 
 // 딥링크 핸들러
 class DeepLinkHandler {

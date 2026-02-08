@@ -334,7 +334,7 @@ class _ElementReuseExampleState extends State<ElementReuseExample> {
 // _ColoredBox: 탭 횟수를 내부 State로 관리하는 예제 위젯
 class _ColoredBox extends StatefulWidget {
   final Color color;
-  const _ColoredBox({required this.color});
+  const _ColoredBox({super.key, required this.color});
 
   @override
   State<_ColoredBox> createState() => _ColoredBoxState();

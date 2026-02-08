@@ -1874,7 +1874,7 @@ StreamBuilder<int>(
     if (snapshot.hasData) {
       return Text('Battery: ${snapshot.data}%');
     }
-    return CircularProgressIndicator();
+    return const CircularProgressIndicator();
   },
 )
 ```

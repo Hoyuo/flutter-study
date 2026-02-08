@@ -134,7 +134,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -144,23 +144,23 @@ dependencies:
   flutter_bloc: ^9.1.1
 
   # 네트워킹
-  dio: ^5.8.0+1
+  dio: ^5.9.1
   retrofit: ^4.5.0
   pretty_dio_logger: ^1.4.0
 
   # JSON 직렬화
   json_annotation: ^4.10.0
-  freezed_annotation: ^3.2.5
+  freezed_annotation: ^3.1.0
 
   # 함수형 프로그래밍
   fpdart: ^1.2.0
 
   # 의존성 주입
-  get_it: ^8.0.3
+  get_it: ^9.2.0
   injectable: ^2.7.1
 
   # 라우팅
-  go_router: ^14.8.1
+  go_router: ^17.1.0
 
   # 캐싱
   hive: ^2.2.3  # 유지보수 모드 - Hive 4.x(CE) 또는 Drift 검토 권장
@@ -178,14 +178,14 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
+  lints: ^6.1.0
 
   # 코드 생성
   build_runner: ^2.11.0
   json_serializable: ^6.12.0
   freezed: ^3.2.5
   retrofit_generator: ^9.1.4
-  injectable_generator: ^2.7.0
+  injectable_generator: ^2.12.0
   hive_generator: ^2.0.1
 
   # 테스트

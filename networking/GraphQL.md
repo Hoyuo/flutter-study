@@ -61,7 +61,7 @@ description: GraphQL Flutter application
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -80,19 +80,19 @@ dependencies:
 
   # Dependency Injection
   injectable: ^2.7.1
-  get_it: ^8.0.3
+  get_it: ^9.2.0
 
   # Functional Programming
   fpdart: ^1.2.0
 
   # Code Generation
-  freezed_annotation: ^3.2.5
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.10.0
   built_value: ^8.9.2
 
   # Utils
   equatable: ^2.0.8
-  dio: ^5.8.0+1
+  dio: ^5.9.1
 
 dev_dependencies:
   flutter_test:
@@ -102,7 +102,7 @@ dev_dependencies:
   build_runner: ^2.11.0
   freezed: ^3.2.5
   json_serializable: ^6.12.0
-  injectable_generator: ^2.7.1
+  injectable_generator: ^2.12.0
   ferry_generator: ^0.10.0
   gql_code_builder: ^0.8.0
 

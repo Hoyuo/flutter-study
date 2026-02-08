@@ -30,7 +30,7 @@
 # pubspec.yaml (2026년 2월 기준)
 dependencies:
   # 공식 Flutter 인앱 결제 패키지
-  in_app_purchase: ^3.2.0
+  in_app_purchase: ^3.2.3
 
   # 또는 RevenueCat (권장 - 서버 인프라 포함)
   purchases_flutter: ^8.10.0
@@ -39,7 +39,7 @@ dependencies:
   flutter_bloc: ^9.1.1
 
   # 네트워크
-  dio: ^5.8.0+1
+  dio: ^5.9.1
 ```
 
 ### Android 설정
@@ -421,6 +421,22 @@ class IAPService {
 /// StoreKit 2 마이그레이션:
 /// - in_app_purchase_storekit2 패키지 사용 고려
 /// - iOS 15+ 타겟 시 네이티브 StoreKit 2 사용 가능
+///
+/// > **⚠️ StoreKit 2 마이그레이션 필수 (2026년 2월 기준)**
+/// >
+/// > StoreKit 1 API는 iOS 18+에서 deprecated되었으며, Apple은 새 프로젝트에서
+/// > StoreKit 2 사용을 강력히 권장합니다. 기존 프로젝트도 점진적 마이그레이션을 계획하세요.
+/// >
+/// > **마이그레이션 경로:**
+/// > 1. iOS 15+ 타겟: 네이티브 StoreKit 2 + MethodChannel
+/// > 2. iOS 13-14 호환 필요: in_app_purchase_storekit2 패키지 (bridging 제공)
+/// > 3. 혼합 환경: StoreKit 2 우선, fallback으로 StoreKit 1 유지
+/// >
+/// > StoreKit 2 주요 개선사항:
+/// > - async/await 기반 현대적 API
+/// > - Transaction 자동 갱신 및 관리
+/// > - 서버 검증 간소화 (JWS 서명)
+/// > - 구독 상태 실시간 모니터링
 class PaymentQueueDelegate implements SKPaymentQueueDelegateWrapper {
   @override
   bool shouldContinueTransaction(

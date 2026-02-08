@@ -8,8 +8,8 @@ Toast, Dialog, Navigation 등 일회성 이벤트 처리 패턴에 대한 가이
 
 > **Package Versions (2026년 2월 기준)**
 > - flutter_bloc: ^9.1.1 | bloc: ^9.0.0
-> - freezed: ^3.2.5 | freezed_annotation: ^3.2.5
-> - go_router: ^14.8.1
+> - freezed: ^3.2.5 | freezed_annotation: ^3.1.0
+> - go_router: ^17.1.0
 > - mocktail: ^1.0.4
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:

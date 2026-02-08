@@ -1885,4 +1885,4 @@ Samsung Galaxy Fold와 같은 폴더블 디바이스를 고려한 이메일 앱�
 - flutter_bloc: ^9.1.1
 - freezed: ^3.2.5
 - fpdart: ^1.2.0
-- go_router: ^14.8.1
+- go_router: ^17.1.0

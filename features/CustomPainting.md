@@ -3244,7 +3244,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -3255,7 +3255,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0  # ⚠️ flutter_lints는 deprecated되었습니다. 최신 프로젝트에서는 lints 패키지를 사용하세요.
+  lints: ^6.1.0
   bloc_test: ^10.0.0  # flutter_bloc ^9.1.1과 호환됩니다
 
 flutter:

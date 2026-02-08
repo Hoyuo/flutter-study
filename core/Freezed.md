@@ -7,7 +7,7 @@
 Dart에서 불변(immutable) 데이터 클래스를 쉽게 생성하기 위한 Freezed 패키지 사용 가이드입니다.
 
 > **Package Versions (2026년 2월 기준)**
-> - freezed: ^3.2.5 | freezed_annotation: ^3.2.5
+> - freezed: ^3.2.5 | freezed_annotation: ^3.1.0
 > - json_serializable: ^6.12.0 | json_annotation: ^4.10.0
 > - build_runner: ^2.11.0
 
@@ -152,7 +152,7 @@ dev_dependencies:
 ```yaml
 # pubspec.yaml - Freezed 3.x (신규 프로젝트)
 dependencies:
-  freezed_annotation: ^3.2.5
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.10.0
 
 dev_dependencies:
@@ -638,8 +638,13 @@ class Event with _$Event {
 DateTime _dateFromJson(String json) => DateTime.parse(json);
 String _dateToJson(DateTime date) => date.toIso8601String();
 
-// Flutter 3.27+: Color.fromARGB32() 사용 (Color(int) 생성자는 deprecated)
-Color _colorFromJson(int json) => Color.fromARGB32(json);
+// Flutter 3.38+: Color.fromARGB() 사용 (Color(int)과 Color.fromARGB32()는 제거됨)
+Color _colorFromJson(int json) => Color.fromARGB(
+  (json >> 24) & 0xFF,
+  (json >> 16) & 0xFF,
+  (json >> 8) & 0xFF,
+  json & 0xFF,
+);
 // Flutter 3.27+ (Dart 3.6+): toARGB32() 사용
 // Flutter 3.27 미만: color.value 사용
 int _colorToJson(Color color) => color.toARGB32();

@@ -1922,7 +1922,9 @@ class MasonryLayoutDelegate extends MultiChildLayoutDelegate {
 }
 
 class MasonryLayoutExample extends StatelessWidget {
-  final itemHeights = [120.0, 200.0, 150.0, 180.0, 100.0, 220.0, 
+  const MasonryLayoutExample({super.key});
+
+  final itemHeights = [120.0, 200.0, 150.0, 180.0, 100.0, 220.0,
                        140.0, 190.0, 160.0, 130.0, 210.0, 170.0];
 
   @override

@@ -159,62 +159,62 @@ class LoginForm extends StatelessWidget {
 ```dart
 /// 색상 팔레트
 ///
-/// Flutter 3.27+: Color(int) 생성자는 deprecated → Color.fromARGB32(int) 사용
+/// Flutter 3.38+: Color.fromARGB() 사용 (Color(int)과 Color.fromARGB32()는 제거됨)
 class ColorTokens {
   // Primary Colors
-  static const primary50 = Color.fromARGB32(0xFFE3F2FD);
-  static const primary100 = Color.fromARGB32(0xFFBBDEFB);
-  static const primary200 = Color.fromARGB32(0xFF90CAF9);
-  static const primary300 = Color.fromARGB32(0xFF64B5F6);
-  static const primary400 = Color.fromARGB32(0xFF42A5F5);
-  static const primary500 = Color.fromARGB32(0xFF2196F3); // Main
-  static const primary600 = Color.fromARGB32(0xFF1E88E5);
-  static const primary700 = Color.fromARGB32(0xFF1976D2);
-  static const primary800 = Color.fromARGB32(0xFF1565C0);
-  static const primary900 = Color.fromARGB32(0xFF0D47A1);
+  static const primary50 = Color(0xFFE3F2FD);
+  static const primary100 = Color(0xFFBBDEFB);
+  static const primary200 = Color(0xFF90CAF9);
+  static const primary300 = Color(0xFF64B5F6);
+  static const primary400 = Color(0xFF42A5F5);
+  static const primary500 = Color(0xFF2196F3); // Main
+  static const primary600 = Color(0xFF1E88E5);
+  static const primary700 = Color(0xFF1976D2);
+  static const primary800 = Color(0xFF1565C0);
+  static const primary900 = Color(0xFF0D47A1);
 
   // Secondary Colors
-  static const secondary50 = Color.fromARGB32(0xFFF3E5F5);
-  static const secondary100 = Color.fromARGB32(0xFFE1BEE7);
-  static const secondary200 = Color.fromARGB32(0xFFCE93D8);
-  static const secondary300 = Color.fromARGB32(0xFFBA68C8);
-  static const secondary400 = Color.fromARGB32(0xFFAB47BC);
-  static const secondary500 = Color.fromARGB32(0xFF9C27B0); // Main
-  static const secondary600 = Color.fromARGB32(0xFF8E24AA);
-  static const secondary700 = Color.fromARGB32(0xFF7B1FA2);
-  static const secondary800 = Color.fromARGB32(0xFF6A1B9A);
-  static const secondary900 = Color.fromARGB32(0xFF4A148C);
+  static const secondary50 = Color(0xFFF3E5F5);
+  static const secondary100 = Color(0xFFE1BEE7);
+  static const secondary200 = Color(0xFFCE93D8);
+  static const secondary300 = Color(0xFFBA68C8);
+  static const secondary400 = Color(0xFFAB47BC);
+  static const secondary500 = Color(0xFF9C27B0); // Main
+  static const secondary600 = Color(0xFF8E24AA);
+  static const secondary700 = Color(0xFF7B1FA2);
+  static const secondary800 = Color(0xFF6A1B9A);
+  static const secondary900 = Color(0xFF4A148C);
 
   // Neutral Colors (Grayscale)
-  static const neutral0 = Color.fromARGB32(0xFFFFFFFF);
-  static const neutral50 = Color.fromARGB32(0xFFFAFAFA);
-  static const neutral100 = Color.fromARGB32(0xFFF5F5F5);
-  static const neutral200 = Color.fromARGB32(0xFFEEEEEE);
-  static const neutral300 = Color.fromARGB32(0xFFE0E0E0);
-  static const neutral400 = Color.fromARGB32(0xFFBDBDBD);
-  static const neutral500 = Color.fromARGB32(0xFF9E9E9E);
-  static const neutral600 = Color.fromARGB32(0xFF757575);
-  static const neutral700 = Color.fromARGB32(0xFF616161);
-  static const neutral800 = Color.fromARGB32(0xFF424242);
-  static const neutral900 = Color.fromARGB32(0xFF212121);
-  static const neutral1000 = Color.fromARGB32(0xFF000000);
+  static const neutral0 = Color(0xFFFFFFFF);
+  static const neutral50 = Color(0xFFFAFAFA);
+  static const neutral100 = Color(0xFFF5F5F5);
+  static const neutral200 = Color(0xFFEEEEEE);
+  static const neutral300 = Color(0xFFE0E0E0);
+  static const neutral400 = Color(0xFFBDBDBD);
+  static const neutral500 = Color(0xFF9E9E9E);
+  static const neutral600 = Color(0xFF757575);
+  static const neutral700 = Color(0xFF616161);
+  static const neutral800 = Color(0xFF424242);
+  static const neutral900 = Color(0xFF212121);
+  static const neutral1000 = Color(0xFF000000);
 
   // Semantic Colors
-  static const success = Color.fromARGB32(0xFF4CAF50);
-  static const successLight = Color.fromARGB32(0xFFE8F5E9);
-  static const successDark = Color.fromARGB32(0xFF2E7D32);
+  static const success = Color(0xFF4CAF50);
+  static const successLight = Color(0xFFE8F5E9);
+  static const successDark = Color(0xFF2E7D32);
 
-  static const error = Color.fromARGB32(0xFFF44336);
-  static const errorLight = Color.fromARGB32(0xFFFFEBEE);
-  static const errorDark = Color.fromARGB32(0xFFC62828);
+  static const error = Color(0xFFF44336);
+  static const errorLight = Color(0xFFFFEBEE);
+  static const errorDark = Color(0xFFC62828);
 
-  static const warning = Color.fromARGB32(0xFFFF9800);
-  static const warningLight = Color.fromARGB32(0xFFFFF3E0);
-  static const warningDark = Color.fromARGB32(0xFFE65100);
+  static const warning = Color(0xFFFF9800);
+  static const warningLight = Color(0xFFFFF3E0);
+  static const warningDark = Color(0xFFE65100);
 
-  static const info = Color.fromARGB32(0xFF2196F3);
-  static const infoLight = Color.fromARGB32(0xFFE3F2FD);
-  static const infoDark = Color.fromARGB32(0xFF1565C0);
+  static const info = Color(0xFF2196F3);
+  static const infoLight = Color(0xFFE3F2FD);
+  static const infoDark = Color(0xFF1565C0);
 }
 ```
 
@@ -936,7 +936,13 @@ extension ColorFromHex on String {
     if (hex.length == 6) {
       hex = 'FF$hex';
     }
-    return Color.fromARGB32(int.parse(hex, radix: 16));
+    final value = int.parse(hex, radix: 16);
+    return Color.fromARGB(
+      (value >> 24) & 0xFF,
+      (value >> 16) & 0xFF,
+      (value >> 8) & 0xFF,
+      value & 0xFF,
+    );
   }
 }
 ```
@@ -1586,7 +1592,7 @@ Figma에서 Design Tokens 추출 및 Flutter 코드 생성:
 
 // 자동 생성된 Dart 코드
 class FigmaTokens {
-  static const primary500 = Color.fromARGB32(0xFF2196F3);
+  static const primary500 = Color(0xFF2196F3);
   static const spacingMd = 16.0;
 }
 ```
@@ -2099,4 +2105,4 @@ Atomic Design 원칙에 따라 다음 컴포넌트를 구현하세요:
 - flutter_bloc: ^9.1.1
 - freezed: ^3.2.5
 - fpdart: ^1.2.0
-- go_router: ^14.8.1
+- go_router: ^17.1.0

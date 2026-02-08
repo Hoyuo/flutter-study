@@ -386,7 +386,8 @@ class AESEncryption {
     String password, {
     int iterations = 600000,  // OWASP 2024 권장
   }) {
-    // ⚠️ 프로덕션에서는 랜덤 salt를 생성하고 해시와 함께 저장하세요
+    // ⚠️ **보안 경고**: Salt는 절대 소스 코드에 하드코딩하지 마세요! 환경 변수 또는 보안 저장소를 사용하세요.
+    // 프로덕션에서는 랜덤 salt를 생성하고 해시와 함께 저장하세요
     // final salt = generateRandomSalt(); // 권장
     final salt = utf8.encode('flutter_app_salt');  // 예시용 - 프로덕션 사용 금지!
     final key = PBKDF2.derive(
@@ -696,7 +697,7 @@ object KeystoreManager {
 ```yaml
 # pubspec.yaml
 dependencies:
-  dio: ^5.8.0+1
+  dio: ^5.9.1
   dio_http2_adapter: ^2.0.0
 ```
 

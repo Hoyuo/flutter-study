@@ -115,7 +115,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -129,16 +129,16 @@ dependencies:
   fpdart: ^1.2.0
 
   # Code Generation
-  freezed_annotation: ^3.2.5
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.10.0
 
   # Dependency Injection
   injectable: ^2.7.1
-  get_it: ^8.0.3
+  get_it: ^9.2.0
 
   # Responsive Design
   responsive_framework: ^1.5.1
-  flutter_adaptive_scaffold: ^0.2.3
+  flutter_adaptive_scaffold: ^0.2.3  # ⚠️ DISCONTINUED - Flutter 공식 adaptive_layout 또는 자체 반응형 레이아웃 구현 권장
 
   # Platform Detection
   universal_io: ^2.2.2
@@ -166,10 +166,10 @@ dev_dependencies:
   build_runner: ^2.11.0
   freezed: ^3.2.5
   json_serializable: ^6.12.0
-  injectable_generator: ^2.7.1
+  injectable_generator: ^2.12.0
 
   # Linting
-  flutter_lints: ^4.0.0
+  lints: ^6.1.0
 
   # Testing
   bloc_test: ^10.0.0
@@ -632,7 +632,7 @@ class PlatformService {
 ```dart
 // lib/core/platform/platform_service.dart
 export 'conditional_imports/platform_stub.dart'
-    if (dart.library.html) 'conditional_imports/platform_web.dart'
+    if (dart.library.js_interop) 'conditional_imports/platform_web.dart'
     if (dart.library.io) 'conditional_imports/platform_io.dart';
 ```
 
@@ -2309,6 +2309,6 @@ Web에서는 html 렌더러, 모바일에서는 네이티브 기능을 사용하
 ## Self-Check
 
 - [ ] Flutter Web 빌드와 배포(Firebase Hosting 등)를 수행할 수 있는가?
-- [ ] 조건부 Import(`dart:io` vs `dart:html`)를 사용할 수 있는가?
+- [ ] 조건부 Import(`dart:io` vs `dart:js_interop`)를 사용할 수 있는가?
 - [ ] 반응형 UI를 LayoutBuilder와 MediaQuery로 구현할 수 있는가?
 - [ ] 데스크톱 앱에서 메뉴바, 시스템 트레이 등 플랫폼 특화 기능을 구현할 수 있는가?

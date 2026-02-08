@@ -96,7 +96,7 @@ Dart 언어와 Flutter 기본기
 | freezed | ^3.1.0 | Immutable Data Classes |
 | fpdart | ^1.2.0 | Functional Programming |
 | get_it + injectable | ^9.2.0 | Dependency Injection |
-| go_router | ^17.0.1 | Navigation |
+| go_router | ^17.1.0 | Navigation |
 | dio + retrofit | ^5.9.0 | HTTP Client |
 | riverpod | ^3.0.0 | Alternative State Management |
 | web_socket_channel | ^3.0.2 | WebSocket Communication |

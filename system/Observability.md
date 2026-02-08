@@ -56,7 +56,7 @@ dependencies:
   sentry_dio: ^9.12.0
 
   # 네트워크 & 유틸
-  dio: ^5.8.0+1
+  dio: ^5.9.1
   sqflite: ^2.3.0
   path_provider: ^2.1.5
   intl: ^0.19.0

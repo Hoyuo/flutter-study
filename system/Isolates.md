@@ -97,7 +97,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.6.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -108,13 +108,13 @@ dependencies:
 
   # 의존성 주입
   injectable: ^2.7.1
-  get_it: ^8.0.3
+  get_it: ^9.2.0
 
   # 함수형 프로그래밍
   fpdart: ^1.2.0
 
   # 코드 생성
-  freezed_annotation: ^3.2.5
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.10.0
 
   # 백그라운드 작업
@@ -132,10 +132,10 @@ dev_dependencies:
   build_runner: ^2.11.0
   freezed: ^3.2.5
   json_serializable: ^6.12.0
-  injectable_generator: ^2.7.1
+  injectable_generator: ^2.12.0
 
   # 린트
-  flutter_lints: ^5.0.0
+  lints: ^6.1.0
 
   # 테스트
   mocktail: ^1.0.4

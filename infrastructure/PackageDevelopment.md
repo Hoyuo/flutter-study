@@ -65,7 +65,7 @@ issue_tracker: https://github.com/username/my_utils/issues
 documentation: https://pub.dev/documentation/my_utils/latest/
 
 environment:
-  sdk: '>=3.6.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
   # 필요 시 의존성 추가
@@ -74,7 +74,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
+  lints: ^6.1.0
   test: ^1.25.0
 
 # 플랫폼 제약이 없는 순수 Dart 패키지
@@ -429,7 +429,7 @@ name: my_plugin_platform_interface
 version: 1.0.0
 
 environment:
-  sdk: '>=3.6.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -1508,7 +1508,7 @@ issue_tracker: https://github.com/username/my_package/issues
 documentation: https://pub.dev/documentation/my_package/latest/
 
 environment:
-  sdk: '>=3.6.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
   meta: ^1.15.0
@@ -1516,7 +1516,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
+  lints: ^6.1.0
   test: ^1.25.0
   mocktail: ^1.0.4
 

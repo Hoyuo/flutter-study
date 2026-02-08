@@ -52,47 +52,46 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
 
   # Routing
-  go_router: ^14.8.1
+  go_router: ^17.1.0
 
   # State Management
   flutter_bloc: ^9.1.1
 
   # Dependency Injection
   injectable: ^2.7.1
-  get_it: ^8.0.3
+  get_it: ^9.2.0
 
   # Functional Programming
   fpdart: ^1.2.0
 
   # Code Generation
-  freezed_annotation: ^3.2.5
+  freezed_annotation: ^3.1.0
   json_annotation: ^4.10.0
 
   # Deep Linking
-  uni_links: ^0.5.1  # ⚠️ deprecated - app_links: ^6.4.0 사용 권장  # ⚠️ deprecated - app_links: ^6.4.0 사용 권장
-  app_links: ^6.4.0
+  app_links: ^7.0.0  # uni_links는 deprecated됨
 
   # Firebase (Optional)
   firebase_core: ^4.4.0
-  firebase_dynamic_links: ^6.0.11  # ⚠️ 2025년 8월 서비스 종료됨 - Branch.io 또는 app_links 대안 사용
+  firebase_dynamic_links: ^6.0.11  # ⚠️ DEPRECATED: Firebase Dynamic Links는 2025년 8월 서비스 종료됨 - Branch.io 또는 app_links 사용 권장
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0  # ⚠️ 이 버전은 존재하지 않음 - flutter_lints: ^3.0.2 또는 very_good_analysis 사용  # ⚠️ 이 버전은 존재하지 않음 - flutter_lints: ^3.0.2 또는 very_good_analysis 사용
+  lints: ^6.1.0
 
   # Code Generation
   build_runner: ^2.11.0
   freezed: ^3.2.5
   json_serializable: ^6.12.0
-  injectable_generator: ^2.7.1
+  injectable_generator: ^2.12.0
 
   # Testing
   mocktail: ^1.0.4

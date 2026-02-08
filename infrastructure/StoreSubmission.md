@@ -796,6 +796,7 @@ Solution:
   - Check for device-specific crashes
   - Provide detailed notes for reviewer
   - Include demo account if login required
+    <!-- ⚠️ 보안 경고: 데모 계정 정보는 소스 코드에 하드코딩하지 말고, 리뷰어 노트에만 포함하세요 -->
 
 # Guideline 2.3.3 - Accurate Screenshots
 Reason: "Screenshots don't match app functionality"
@@ -1510,7 +1511,7 @@ flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
 1. **Prepare thoroughly** - Complete checklists before submission
 2. **Test on real devices** - Emulators miss device-specific issues
 3. **Write detailed descriptions** - For permissions and review notes
-4. **Provide demo accounts** - Required if login is needed
+4. **Provide demo accounts** - Required if login is needed (⚠️ 리뷰어 노트에만 포함, 소스 코드에 하드코딩 금지)
 5. **Use staged rollout** - Catch issues before full release
 6. **Monitor post-launch** - React quickly to issues
 7. **Respond to reviews** - Shows active development

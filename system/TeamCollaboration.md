@@ -211,7 +211,7 @@ void _fetchUserData() {
 
 ```yaml
 # analysis_options.yaml
-include: package:flutter_lints/flutter.yaml
+include: package:lints/recommended.yaml
 
 analyzer:
   exclude:

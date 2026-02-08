@@ -1738,7 +1738,7 @@ description: My Flutter App
 version: 1.2.3+45  # MAJOR.MINOR.PATCH+BUILD
 
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
 ```
 
 ### 8.3 버전 자동 증가 스크립트

@@ -453,6 +453,8 @@ class ProcessPaymentUseCase {
 ```dart
 // features/payment/lib/presentation/screens/payment_screen.dart
 class PaymentScreen extends StatelessWidget {
+  const PaymentScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     final countryConfig = GetIt.I<CountryConfig>();
@@ -474,6 +476,8 @@ class PaymentScreen extends StatelessWidget {
 ```dart
 // features/home/lib/presentation/screens/home_screen.dart
 class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     final config = GetIt.I<AppConfig>();

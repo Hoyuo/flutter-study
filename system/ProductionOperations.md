@@ -1093,6 +1093,8 @@ LIMIT 20;
 
 ### 6.1 Smartlook 통합
 
+> ⚠️ **패키지 중단 경고**: smartlook 패키지는 DISCONTINUED 상태입니다. Smartlook 공식 SDK 또는 대안(Amplitude, Mixpanel 등)을 사용하세요.
+
 ```yaml
 # pubspec.yaml
 dependencies:
@@ -1165,6 +1167,8 @@ class SmartlookService {
 
 // 사용 예시
 class PaymentScreen extends StatelessWidget {
+  const PaymentScreen({super.key});
+
   final _cardNumberKey = GlobalKey();
 
   @override
@@ -1307,6 +1311,8 @@ class KillSwitch {
 
 // 사용 예시
 class App extends StatelessWidget {
+  const App({super.key});
+
   @override
   Widget build(BuildContext context) {
     final killSwitch = GetIt.I<KillSwitch>();

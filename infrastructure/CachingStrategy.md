@@ -50,6 +50,8 @@
 /// Layer 3: Network (가장 느림)
 ///   - HTTP 요청
 ///   - 서버에서 데이터 가져오기
+///
+/// 📝 참고: MemoryCache와 DiskCache의 구현은 아래에서 확인할 수 있습니다.
 
 class CacheLayer {
   final MemoryCache memoryCache;
@@ -397,7 +399,7 @@ class CacheStats {
 // pubspec.yaml
 /*
 dependencies:
-  dio: ^5.8.0+1
+  dio: ^5.9.1
   dio_cache_interceptor: ^4.0.5
   dio_cache_interceptor_hive_store: ^3.2.2
   hive: ^2.2.3
@@ -1687,8 +1689,8 @@ class CacheDashboard extends StatelessWidget {
 - flutter_bloc: ^9.1.1
 - freezed: ^3.2.5
 - fpdart: ^1.2.0
-- go_router: ^14.8.1
-- dio: ^5.8.0+1
+- go_router: ^17.1.0
+- dio: ^5.9.1
 - dio_cache_interceptor: ^4.0.5
 - hive: ^2.2.3
 - cached_network_image: ^3.4.1

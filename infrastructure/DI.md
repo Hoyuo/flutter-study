@@ -44,11 +44,11 @@ class HomeBloc {
 ```yaml
 # pubspec.yaml (2026년 2월 기준)
 dependencies:
-  get_it: ^8.0.3          # 2026년 2월 기준 최신
+  get_it: ^9.2.0          # 2026년 2월 기준 최신
   injectable: ^2.7.1      # 프로젝트 표준 버전
 
 dev_dependencies:
-  injectable_generator: ^2.7.1
+  injectable_generator: ^2.12.0
   build_runner: ^2.11.0
 ```
 
