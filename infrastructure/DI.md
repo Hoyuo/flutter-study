@@ -506,6 +506,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 @module
 abstract class StorageModule {
   @preResolve
+  // ⚠️ SharedPreferences.getInstance()는 deprecated입니다.
+  // SharedPreferencesAsync 또는 SharedPreferencesWithCache 사용을 권장합니다.
+  // 자세한 내용은 LocalStorage.md 섹션 3 참조
   Future<SharedPreferences> get prefs => SharedPreferences.getInstance();
 }
 ```

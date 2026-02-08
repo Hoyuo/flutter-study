@@ -3123,7 +3123,7 @@ class IntegrityService {
       return token;
     } on PlatformException catch (e) {
       // 에뮬레이터 또는 루팅된 기기에서 실패할 수 있음
-      print('Failed to get integrity token: ${e.message}');
+      debugPrint('Failed to get integrity token: ${e.message}');
       return null;
     }
   }
@@ -3199,7 +3199,7 @@ class DeviceCheckService {
       final String? token = await _channel.invokeMethod('generateToken');
       return token;
     } on PlatformException catch (e) {
-      print('Failed to generate device token: ${e.message}');
+      debugPrint('Failed to generate device token: ${e.message}');
       return null;
     }
   }
@@ -3210,7 +3210,7 @@ class DeviceCheckService {
       final String? keyId = await _channel.invokeMethod('generateAppAttestKey');
       return keyId;
     } on PlatformException catch (e) {
-      print('Failed to generate App Attest key: ${e.message}');
+      debugPrint('Failed to generate App Attest key: ${e.message}');
       return null;
     }
   }
@@ -3224,7 +3224,7 @@ class DeviceCheckService {
       });
       return assertion;
     } on PlatformException catch (e) {
-      print('Failed to generate assertion: ${e.message}');
+      debugPrint('Failed to generate assertion: ${e.message}');
       return null;
     }
   }

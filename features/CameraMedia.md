@@ -1768,7 +1768,7 @@ class ImageProcessing {
     File imageFile,
     String watermarkText, {
     int fontSize = 24,
-    ui.Color color = const ui.Color(0xFFFFFFFF),
+    ui.Color color = const ui.Color.fromARGB32(0xFFFFFFFF),
   }) async {
     final bytes = await imageFile.readAsBytes();
     final image = img.decodeImage(bytes)!;
@@ -2245,7 +2245,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Camera & Media',
-        theme: ThemeData(primarySwatch: Colors.blue),
+        theme: ThemeData(colorSchemeSeed: Colors.blue),
         home: const CameraPage(),
       ),
     );

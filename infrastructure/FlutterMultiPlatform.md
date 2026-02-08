@@ -407,7 +407,7 @@ Dart에서 window_manager 패키지 사용:
 ```dart
 // pubspec.yaml
 dependencies:
-  window_manager: ^0.3.7
+  window_manager: ^0.4.2
 
 // lib/main.dart
 import 'package:flutter/material.dart';
@@ -425,12 +425,14 @@ Future<void> main() async {
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.normal,
-      window_width,
-      window_height,
-      L"My Flutter App"
   );
 
-  return controller.RunEngine(instance);
+  windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.show();
+    await windowManager.focus();
+  });
+
+  runApp(const MyApp());
 }
 ```
 
