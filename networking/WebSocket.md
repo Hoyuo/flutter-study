@@ -84,23 +84,23 @@ dependencies:
 
   # 상태 관리 & 아키텍처
   flutter_bloc: ^9.1.1
-  bloc_concurrency: ^0.2.4
+  bloc_concurrency: ^0.3.0
 
   # 의존성 주입
-  get_it: ^9.2.0
-  injectable: ^2.5.0
+  get_it: ^8.0.3
+  injectable: ^2.7.1
 
   # 함수형 프로그래밍
   fpdart: ^1.2.0
 
   # 코드 생성
-  freezed_annotation: ^3.1.0
-  json_annotation: ^4.9.0
+  freezed_annotation: ^3.2.5
+  json_annotation: ^4.10.0
 
   # 유틸리티
-  logger: ^2.0.2
+  logger: ^2.6.2
   connectivity_plus: ^7.0.0        # 네트워크 상태 확인
-  shared_preferences: ^2.2.2       # 로컬 저장소
+  shared_preferences: ^2.5.4       # 로컬 저장소
   rxdart: ^0.28.0                  # Reactive Extensions (BehaviorSubject 등)
   battery_plus: ^6.1.0             # 배터리 상태 확인
 
@@ -109,10 +109,10 @@ dev_dependencies:
     sdk: flutter
 
   # 코드 생성
-  build_runner: ^2.4.15
-  freezed: ^3.2.4
-  json_serializable: ^6.9.5
-  injectable_generator: ^2.7.0
+  build_runner: ^2.11.0
+  freezed: ^3.2.5
+  json_serializable: ^6.12.0
+  injectable_generator: ^2.7.1
 
   # 테스트
   mocktail: ^1.0.4

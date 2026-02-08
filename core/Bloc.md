@@ -123,7 +123,7 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 dependencies:
   flutter_bloc: ^9.1.1  # 9.x 최신 stable
   equatable: ^2.0.8
-  bloc_concurrency: ^0.2.6  # droppable, restartable, sequential transformer
+  bloc_concurrency: ^0.3.0  # droppable, restartable, sequential transformer
   stream_transform: ^2.1.0  # debounce, throttle
 
 dev_dependencies:

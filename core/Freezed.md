@@ -7,9 +7,9 @@
 Dart에서 불변(immutable) 데이터 클래스를 쉽게 생성하기 위한 Freezed 패키지 사용 가이드입니다.
 
 > **Package Versions (2026년 2월 기준)**
-> - freezed: ^3.2.4 | freezed_annotation: ^3.1.0
-> - json_serializable: ^6.11.4 | json_annotation: ^4.9.0
-> - build_runner: ^2.10.5
+> - freezed: ^3.2.5 | freezed_annotation: ^3.2.5
+> - json_serializable: ^6.12.0 | json_annotation: ^4.10.0
+> - build_runner: ^2.11.0
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - Freezed를 사용하여 불변 데이터 클래스를 자동 생성할 수 있습니다
@@ -139,12 +139,12 @@ class User with _$User {
 # pubspec.yaml - Freezed 2.x (기존 프로젝트)
 dependencies:
   freezed_annotation: ^2.2.0
-  json_annotation: ^4.9.0
+  json_annotation: ^4.10.0
 
 dev_dependencies:
-  build_runner: ^2.10.5
+  build_runner: ^2.11.0
   freezed: ^2.5.7
-  json_serializable: ^6.11.4
+  json_serializable: ^6.12.0
 ```
 
 #### 옵션 2: Freezed 3.x (신규 프로젝트 권장)
@@ -152,13 +152,13 @@ dev_dependencies:
 ```yaml
 # pubspec.yaml - Freezed 3.x (신규 프로젝트)
 dependencies:
-  freezed_annotation: ^3.1.0
-  json_annotation: ^4.9.0
+  freezed_annotation: ^3.2.5
+  json_annotation: ^4.10.0
 
 dev_dependencies:
-  build_runner: ^2.10.5
-  freezed: ^3.2.4
-  json_serializable: ^6.11.4
+  build_runner: ^2.11.0
+  freezed: ^3.2.5
+  json_serializable: ^6.12.0
 ```
 
 > **💡 Freezed 3.x 안내:**

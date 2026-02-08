@@ -15,19 +15,19 @@
 > ```yaml
 > dependencies:
 >   flutter_bloc: ^9.1.1
->   freezed_annotation: ^3.1.0
+>   freezed_annotation: ^3.2.5
 >   fpdart: ^1.2.0
->   get_it: ^9.2.0
->   injectable: ^2.5.0
->   go_router: ^17.0.1
->   dio: ^5.9.0
+>   get_it: ^8.0.3
+>   injectable: ^2.7.1
+>   go_router: ^14.8.1
+>   dio: ^5.8.0+1
 >   app_links: ^6.4.0
 >
 > dev_dependencies:
->   freezed: ^3.2.4
->   json_serializable: ^6.11.4
->   injectable_generator: ^2.7.0
->   build_runner: ^2.10.5
+>   freezed: ^3.2.5
+>   json_serializable: ^6.12.0
+>   injectable_generator: ^2.7.1
+>   build_runner: ^2.11.0
 > ```
 
 ## 1. 프로젝트 개요
@@ -580,13 +580,13 @@ class DeepLinkHandler {
 | 용도 | 라이브러리 | 버전 |
 |------|-----------|------|
 | 상태 관리 | flutter_bloc | ^9.1.1 |
-| DI | get_it + injectable | ^9.2.0 / ^2.5.0 |
-| 불변 객체 | freezed + freezed_annotation | ^3.2.4 / ^3.1.0 |
-| JSON 직렬화 | json_annotation + json_serializable | ^4.9.0 / ^6.11.4 |
+| DI | get_it + injectable | ^8.0.3 / ^2.7.1 |
+| 불변 객체 | freezed + freezed_annotation | ^3.2.5 / ^3.2.5 |
+| JSON 직렬화 | json_annotation + json_serializable | ^4.10.0 / ^6.12.0 |
 | 함수형 | fpdart (Either, Option) | ^1.2.0 |
-| 라우팅 | go_router | ^17.0.1 |
-| 네트워크 | dio | ^5.9.0 |
-| 코드 생성 | build_runner | ^2.10.5 |
+| 라우팅 | go_router | ^14.8.1 |
+| 네트워크 | dio | ^5.8.0+1 |
+| 코드 생성 | build_runner | ^2.11.0 |
 
 ## 13. Freezed 사용 패턴
 

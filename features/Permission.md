@@ -24,8 +24,8 @@ permission_handler는 Flutter에서 iOS와 Android의 런타임 권한을 통합
 ```yaml
 # pubspec.yaml
 dependencies:
-  permission_handler: ^11.4.0
-  device_info_plus: ^10.1.0  # Android SDK 버전 확인용 (저장소 권한 처리 시 필요)
+  permission_handler: ^12.0.1
+  device_info_plus: ^12.3.0  # Android SDK 버전 확인용 (저장소 권한 처리 시 필요)
 ```
 
 ### Migration Notes (v12 → v13)

@@ -27,7 +27,7 @@ dependencies:
 
   # 상태 관리
   flutter_bloc: ^9.1.1
-  freezed_annotation: ^3.1.0  # Dart 3.6 호환
+  freezed_annotation: ^3.2.5  # Dart 3.6 호환
 
   # UUID 생성
   uuid: ^4.0.0
@@ -36,11 +36,11 @@ dependencies:
   fpdart: ^1.2.0
 
   # 백그라운드 작업
-  workmanager: ^0.5.2
+  workmanager: ^0.9.0
 
 dev_dependencies:
-  freezed: ^3.2.4            # Dart 3.6 호환
-  build_runner: ^2.4.15
+  freezed: ^3.2.5            # Dart 3.6 호환
+  build_runner: ^2.11.0
 ```
 
 > 📖 **로컬 데이터베이스 설정**:

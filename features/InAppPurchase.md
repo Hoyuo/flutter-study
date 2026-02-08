@@ -39,7 +39,7 @@ dependencies:
   flutter_bloc: ^9.1.1
 
   # 네트워크
-  dio: ^5.9.0
+  dio: ^5.8.0+1
 ```
 
 ### Android 설정

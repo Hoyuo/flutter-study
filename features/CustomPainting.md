@@ -3250,13 +3250,13 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
-  equatable: ^2.0.7
+  equatable: ^2.0.8
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0  # ⚠️ flutter_lints는 deprecated되었습니다. 최신 프로젝트에서는 lints 패키지를 사용하세요.
-  bloc_test: ^9.1.0  # flutter_bloc ^9.1.1과 호환됩니다
+  bloc_test: ^10.0.0  # flutter_bloc ^9.1.1과 호환됩니다
 
 flutter:
   uses-material-design: true

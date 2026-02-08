@@ -64,24 +64,24 @@ dependencies:
   fpdart: ^1.2.0
 
   # Dependency Injection
-  injectable: ^2.5.0
-  get_it: ^9.2.0
+  injectable: ^2.7.1
+  get_it: ^8.0.3
 
   # Code Generation
-  freezed_annotation: ^3.1.0
-  json_annotation: ^4.9.0
+  freezed_annotation: ^3.2.5
+  json_annotation: ^4.10.0
 
   # Maps & Location
   google_maps_flutter: ^2.12.1
   google_maps_flutter_web: ^0.5.10
   google_maps_flutter_android: ^2.14.6
   google_maps_flutter_ios: ^2.11.0
-  geolocator: ^13.0.2
+  geolocator: ^14.0.0
   geocoding: ^3.0.0
   flutter_polyline_points: ^2.1.0
 
   # Utilities
-  permission_handler: ^11.3.1
+  permission_handler: ^12.0.1
   uuid: ^4.5.1
   http: ^1.2.2
   cached_network_image: ^3.4.1
@@ -91,13 +91,13 @@ dev_dependencies:
     sdk: flutter
 
   # Code Generation
-  build_runner: ^2.4.15
-  freezed: ^3.2.4
-  json_serializable: ^6.9.5
-  injectable_generator: ^2.7.0
+  build_runner: ^2.11.0
+  freezed: ^3.2.5
+  json_serializable: ^6.12.0
+  injectable_generator: ^2.7.1
 
   # Testing
-  bloc_test: ^9.1.7
+  bloc_test: ^10.0.0
   mocktail: ^1.0.4
 
   # Linting

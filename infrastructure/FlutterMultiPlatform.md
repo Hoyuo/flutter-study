@@ -123,18 +123,18 @@ dependencies:
 
   # State Management
   flutter_bloc: ^9.1.1
-  equatable: ^2.0.5
+  equatable: ^2.0.8
 
   # Functional Programming
   fpdart: ^1.2.0
 
   # Code Generation
-  freezed_annotation: ^3.1.0
-  json_annotation: ^4.9.0
+  freezed_annotation: ^3.2.5
+  json_annotation: ^4.10.0
 
   # Dependency Injection
-  injectable: ^2.5.0
-  get_it: ^9.2.0
+  injectable: ^2.7.1
+  get_it: ^8.0.3
 
   # Responsive Design
   responsive_framework: ^1.5.1
@@ -151,7 +151,7 @@ dependencies:
   window_manager: ^0.4.2
   tray_manager: ^0.2.3
   file_picker: ^8.1.2
-  path_provider: ^2.1.4
+  path_provider: ^2.1.5
 
   # Storage
   shared_preferences: ^2.5.4
@@ -163,16 +163,16 @@ dev_dependencies:
     sdk: flutter
 
   # Code Generation
-  build_runner: ^2.4.15
-  freezed: ^3.2.4
-  json_serializable: ^6.9.5
-  injectable_generator: ^2.7.0
+  build_runner: ^2.11.0
+  freezed: ^3.2.5
+  json_serializable: ^6.12.0
+  injectable_generator: ^2.7.1
 
   # Linting
   flutter_lints: ^4.0.0
 
   # Testing
-  bloc_test: ^9.1.7
+  bloc_test: ^10.0.0
   mocktail: ^1.0.4
   integration_test:
     sdk: flutter

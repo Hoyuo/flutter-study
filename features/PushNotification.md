@@ -25,24 +25,22 @@ Firebase Cloud Messaging(FCM)과 flutter_local_notifications를 조합하여 푸
 # pubspec.yaml
 dependencies:
   firebase_core: ^4.4.0
-  firebase_messaging: ^15.2.4
-  flutter_local_notifications: ^19.5.0
+  firebase_messaging: ^16.1.1
+  flutter_local_notifications: ^19.2.1
 ```
 
 ### Migration Notes (firebase_messaging v15 → v16)
 
-**firebase_messaging v16.0.4 (Latest Stable):**
+**firebase_messaging v16.1.1 (Latest Stable):**
 - Deprecated functions 제거
 - iOS SDK 12.0.0으로 업그레이드 (breaking)
 - Android SDK 34.0.0으로 업그레이드 (breaking)
 - iOS 18 알림 처리 및 scene delegate 지원 개선
 
-**flutter_local_notifications v19.5.0 (Stable Recommended):**
+**flutter_local_notifications v19.2.1 (Stable Recommended):**
 - 안정적인 프로덕션 사용 권장
 - Android 14 완전 지원
 - iOS 17 호환성 보장
-
-> **참고**: flutter_local_notifications v20.0.0은 아직 개발 버전(dev)입니다. 프로덕션 환경에서는 v19.5.0 사용을 권장합니다.
 
 ### Firebase 프로젝트 설정
 

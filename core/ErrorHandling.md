@@ -6,8 +6,8 @@
 
 > **Package Versions (2026년 2월 기준)**
 > - fpdart: ^1.2.0
-> - dio: ^5.9.0
-> - freezed: ^3.2.4 | freezed_annotation: ^3.1.0
+> - dio: ^5.8.0+1
+> - freezed: ^3.2.5 | freezed_annotation: ^3.2.5
 > - connectivity_plus: ^7.0.0
 
 ## 학습 목표

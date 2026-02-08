@@ -107,32 +107,32 @@ dependencies:
   flutter_bloc: ^9.1.1
 
   # 의존성 주입
-  injectable: ^2.5.0
-  get_it: ^9.2.0
+  injectable: ^2.7.1
+  get_it: ^8.0.3
 
   # 함수형 프로그래밍
   fpdart: ^1.2.0
 
   # 코드 생성
-  freezed_annotation: ^3.1.0
-  json_annotation: ^4.9.0
+  freezed_annotation: ^3.2.5
+  json_annotation: ^4.10.0
 
   # 백그라운드 작업
   workmanager: ^0.9.0
   flutter_background_service: ^5.0.10
 
   # 유틸리티
-  logger: ^2.5.0
+  logger: ^2.6.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   # 코드 생성 도구
-  build_runner: ^2.4.15
-  freezed: ^3.2.4
-  json_serializable: ^6.9.5
-  injectable_generator: ^2.7.0
+  build_runner: ^2.11.0
+  freezed: ^3.2.5
+  json_serializable: ^6.12.0
+  injectable_generator: ^2.7.1
 
   # 린트
   flutter_lints: ^5.0.0

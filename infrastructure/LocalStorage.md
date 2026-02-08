@@ -98,7 +98,7 @@ dependencies:
   flutter_secure_storage: ^10.0.0
 
   # Drift - 타입 안전한 SQL 데이터베이스 (권장)
-  drift: ^2.22.0
+  drift: ^2.25.0
   drift_flutter: ^0.2.0            # 간편한 DB 연결
   sqlite3_flutter_libs: ^0.5.0     # SQLite 네이티브 라이브러리
   path: ^1.9.0
@@ -107,14 +107,14 @@ dependencies:
   # 새 프로젝트는 Drift 사용 권장 (섹션 4 참조)
   # isar_plus: ^1.2.1  # 개발 중단된 Isar의 포크
 
-  injectable: ^2.5.0
-  path_provider: ^2.1.2
+  injectable: ^2.7.1
+  path_provider: ^2.1.5
 
 dev_dependencies:
-  drift_dev: ^2.22.0               # Drift 코드 생성기
+  drift_dev: ^2.25.0               # Drift 코드 생성기
   isar_plus_generator: ^1.2.1
-  build_runner: ^2.4.15
-  injectable_generator: ^2.7.0
+  build_runner: ^2.11.0
+  injectable_generator: ^2.7.1
 ```
 
 ## 3. SharedPreferences
@@ -557,14 +557,14 @@ Drift는 타입 안전한 SQL 쿼리를 제공하는 Flutter용 데이터베이�
 ```yaml
 # pubspec.yaml
 dependencies:
-  drift: ^2.22.0
+  drift: ^2.25.0
   sqlite3_flutter_libs: ^0.5.0
-  path_provider: ^2.1.2
+  path_provider: ^2.1.5
   path: ^1.9.0
 
 dev_dependencies:
-  drift_dev: ^2.22.0
-  build_runner: ^2.4.15
+  drift_dev: ^2.25.0
+  build_runner: ^2.11.0
 ```
 
 ### 4.3 Database 클래스 생성 / 코드 생성
@@ -2869,7 +2869,7 @@ void main() {
 ```yaml
 # pubspec.yaml
 dependencies:
-  drift: ^2.22.0
+  drift: ^2.25.0
   sqlite3_flutter_libs: ^0.5.0
   sqlcipher_flutter_libs: ^0.6.0  # SQLCipher 지원
 ```
@@ -3138,17 +3138,17 @@ dependencies:
   flutter_secure_storage: ^10.0.0  # v10 새 API
 
   # 데이터베이스 (권장: Drift)
-  drift: ^2.22.0              # SQL, 권장!
+  drift: ^2.25.0              # SQL, 권장!
   drift_flutter: ^0.2.0       # 간편한 DB 연결
   sqlite3_flutter_libs: ^0.5.0
   # objectbox: ^2.4.0         # NoSQL 대안
 
-  injectable: ^2.5.0
-  path_provider: ^2.1.2
+  injectable: ^2.7.1
+  path_provider: ^2.1.5
 
 dev_dependencies:
-  drift_dev: ^2.22.0  # Drift 사용 시
-  build_runner: ^2.4.15
+  drift_dev: ^2.25.0  # Drift 사용 시
+  build_runner: ^2.11.0
 ```
 
 ### 마이그레이션 체크리스트

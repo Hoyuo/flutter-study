@@ -397,11 +397,11 @@ class CacheStats {
 // pubspec.yaml
 /*
 dependencies:
-  dio: ^5.9.0
-  dio_cache_interceptor: ^3.5.0
+  dio: ^5.8.0+1
+  dio_cache_interceptor: ^4.0.5
   dio_cache_interceptor_hive_store: ^3.2.2
   hive: ^2.2.3
-  path_provider: ^2.1.1
+  path_provider: ^2.1.5
 */
 
 import 'package:dio/dio.dart';
@@ -700,7 +700,7 @@ class DiskCache {
 /*
 dev_dependencies:
   hive_generator: ^2.0.1
-  build_runner: ^2.4.15
+  build_runner: ^2.11.0
 */
 
 import 'package:hive/hive.dart';
@@ -1685,11 +1685,11 @@ class CacheDashboard extends StatelessWidget {
 
 **Package Versions**
 - flutter_bloc: ^9.1.1
-- freezed: ^3.2.4
+- freezed: ^3.2.5
 - fpdart: ^1.2.0
-- go_router: ^17.0.1
-- dio: ^5.9.0
-- dio_cache_interceptor: ^3.5.0
+- go_router: ^14.8.1
+- dio: ^5.8.0+1
+- dio_cache_interceptor: ^4.0.5
 - hive: ^2.2.3
-- cached_network_image: ^3.3.0
-- connectivity_plus: ^5.0.2
+- cached_network_image: ^3.4.1
+- connectivity_plus: ^7.0.0

@@ -20,16 +20,16 @@
 dependencies:
   rxdart: ^0.28.0
   flutter_bloc: ^9.1.1
-  freezed_annotation: ^3.1.0
+  freezed_annotation: ^3.2.5
   fpdart: ^1.2.0
-  injectable: ^2.5.0
+  injectable: ^2.7.1
   shimmer: ^3.0.0  # Skeleton Loader 섹션
 
 dev_dependencies:
-  bloc_test: ^9.1.0
+  bloc_test: ^10.0.0
   mocktail: ^1.0.4
-  freezed: ^3.2.4
-  build_runner: ^2.4.15
+  freezed: ^3.2.5
+  build_runner: ^2.11.0
 ```
 
 ## 기본 구조

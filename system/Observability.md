@@ -49,24 +49,24 @@ dependencies:
   firebase_performance: ^0.11.0
 
   # 로깅
-  logger: ^2.5.0
+  logger: ^2.6.2
 
   # Sentry (선택사항)
-  sentry_flutter: ^9.12.0
+  sentry_flutter: ^8.14.2
   sentry_dio: ^9.12.0
 
   # 네트워크 & 유틸
-  dio: ^5.9.0
+  dio: ^5.8.0+1
   sqflite: ^2.3.0
-  path_provider: ^2.1.0
+  path_provider: ^2.1.5
   intl: ^0.19.0
   uuid: ^4.0.0
-  injectable: ^2.3.2
+  injectable: ^2.7.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  mocktail: ^1.0.0
+  mocktail: ^1.0.4
 ```
 
 **Firebase BoM (Bill of Materials) 호환성:**

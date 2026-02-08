@@ -24,7 +24,7 @@ GoRouter는 Flutter의 Navigator 2.0 API를 기반으로 한 선언적 라우팅
 ```yaml
 # pubspec.yaml
 dependencies:
-  go_router: ^17.0.1
+  go_router: ^14.8.1
 ```
 
 
@@ -1207,11 +1207,11 @@ void main() {
 ```yaml
 # pubspec.yaml
 dependencies:
-  go_router: ^17.0.1
+  go_router: ^14.8.1
 
 dev_dependencies:
   go_router_builder: ^2.7.0
-  build_runner: ^2.4.15
+  build_runner: ^2.11.0
 ```
 
 ### 라우트 정의

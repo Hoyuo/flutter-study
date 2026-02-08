@@ -250,7 +250,7 @@ linter:
 ```yaml
 # pubspec.yaml
 dev_dependencies:
-  very_good_analysis: ^9.0.0
+  very_good_analysis: ^10.1.0
 
 # analysis_options.yaml
 include: package:very_good_analysis/analysis_options.yaml

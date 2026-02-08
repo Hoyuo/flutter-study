@@ -589,7 +589,7 @@ char* to_uppercase(const char* input) {
 ```yaml
 # pubspec.yaml
 dev_dependencies:
-  ffigen: ^14.0.0
+  ffigen: ^20.1.1
 ```
 
 ```yaml

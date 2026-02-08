@@ -763,7 +763,7 @@ scripts:
 ```yaml
 # pubspec.yaml
 dependencies:
-  flutter_dotenv: ^6.0.0  # 런타임 로드 (보안 취약)
+  flutter_dotenv: ^5.2.1  # 런타임 로드 (보안 취약)
 
   # 권장 대안 (프로덕션):
   # envied: ^0.5.4+1  # 컴파일 타임 난독화, 타입 안전

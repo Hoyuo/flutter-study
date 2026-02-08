@@ -3,7 +3,7 @@
 > **난이도**: 고급 | **카테고리**: system
 > **선행 학습**: [Architecture](../core/Architecture.md) | **예상 학습 시간**: 2h
 >
-> **최신 업데이트**: 2026년 2월 기준, Flutter 3.27 및 flutter_secure_storage 9.2.4 기준으로 작성되었습니다.
+> **최신 업데이트**: 2026년 2월 기준, Flutter 3.27 및 flutter_secure_storage 10.0.0 기준으로 작성되었습니다.
 
 > **대상**: Mid-level ~ Senior 개발자 | Flutter 3.27+ | OWASP MASVS Level 2 준수
 
@@ -109,7 +109,7 @@ flutter_secure_storage는 플랫폼별 보안 저장소(iOS Keychain, Android Ke
 ```yaml
 # pubspec.yaml
 dependencies:
-  flutter_secure_storage: ^9.2.4
+  flutter_secure_storage: ^10.0.0
   crypto: ^3.0.0
   pointycastle: ^3.7.0
 ```
@@ -714,7 +714,7 @@ object KeystoreManager {
 ```yaml
 # pubspec.yaml
 dependencies:
-  dio: ^5.9.0
+  dio: ^5.8.0+1
   dio_http2_adapter: ^2.0.0
 ```
 

@@ -8,9 +8,9 @@
 
 > **Package Versions (2026년 2월 기준)**
 > - melos: ^7.0.0
-> - go_router: ^17.0.1
-> - get_it: ^9.2.0 | injectable: ^2.5.0
-> - dio: ^5.9.0
+> - go_router: ^14.8.1
+> - get_it: ^8.0.3 | injectable: ^2.7.1
+> - dio: ^5.8.0+1
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - Melos를 활용한 모노레포 기반 모듈화 구조를 설계할 수 있다
@@ -250,7 +250,7 @@ dependencies:
 
 ```yaml
 dependencies:
-  dio: ^5.9.0
+  dio: ^5.8.0+1
   retrofit: ^5.0.0
 ```
 

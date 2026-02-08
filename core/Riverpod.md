@@ -98,26 +98,26 @@ dependencies:
     sdk: flutter
 
   # Riverpod 코어
-  flutter_riverpod: ^3.0.0  # Flutter용 Riverpod
-  riverpod: ^3.0.0          # 순수 Dart용 (선택)
+  flutter_riverpod: ^3.2.1  # Flutter용 Riverpod
+  riverpod: ^3.2.1          # 순수 Dart용 (선택)
 
   # Code Generation (권장)
-  riverpod_annotation: ^3.0.0
+  riverpod_annotation: ^3.2.1
 
   # Functional Programming
   fpdart: ^1.2.0
 
   # 불변 데이터 클래스
-  freezed_annotation: ^3.1.0
+  freezed_annotation: ^3.2.5
 
 dev_dependencies:
   # Build Runner
-  build_runner: ^2.10.5
+  build_runner: ^2.11.0
 
   # Code Generation
-  riverpod_generator: ^3.0.0
-  freezed: ^3.2.4
-  json_serializable: ^6.11.4
+  riverpod_generator: ^3.2.1
+  freezed: ^3.2.5
+  json_serializable: ^6.12.0
 
   # Lint
   riverpod_lint: ^3.0.0  # Riverpod 전용 린트

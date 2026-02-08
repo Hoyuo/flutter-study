@@ -21,24 +21,22 @@
 # pubspec.yaml
 dependencies:
   cached_network_image: ^3.4.1
-  image_picker: ^1.0.0
-  image_cropper: ^8.0.0  # 2026년 2월 기준 최신 버전
-  flutter_image_compress: ^2.1.0
+  image_picker: ^1.2.1
+  image_cropper: ^11.0.0
+  flutter_image_compress: ^2.4.0
   http_parser: ^4.0.0  # multipart 업로드용
   shimmer: ^3.0.0
-  permission_handler: ^13.0.0  # 2026년 2월 기준 최신 버전
+  permission_handler: ^12.0.1
   path: ^1.8.0  # 경로 처리용
-  device_info_plus: ^12.3.0  # 2026년 2월 기준 최신 버전
+  device_info_plus: ^12.3.0
 ```
 
 **주요 변경사항:**
-- `image_cropper` ^8.0.0 (v5 → v8): API 변경 없음, 내부 구현 개선 및 최신 플랫폼 지원
+- `image_cropper` ^11.0.0 (v8 → v11): 최신 플랫폼 지원 및 API 개선
+- `image_picker` ^1.2.1: Android 13+ 미디어 권한 지원
+- `flutter_image_compress` ^2.4.0: 압축 성능 개선
 - `device_info_plus` ^12.3.0: 최신 Android/iOS 기기 정보 지원, API 호환성 유지
-- `permission_handler` ^13.0.0 (v12 → v13): **Breaking Changes**
-  - **Android**: `compileSdkVersion 35` 필요 (android/app/build.gradle.kts 확인)
-  - **iOS**: minimum deployment target `12.0` 필요 (ios/Podfile 확인)
-  - 기존 프로젝트에서 빌드 설정 업데이트 필요
-  - v12.x 사용 시: 위 요구사항 충족 못할 경우 `^12.0.1` 유지 가능
+- `permission_handler` ^12.0.1: 안정적인 권한 관리
 
 ### iOS 설정
 

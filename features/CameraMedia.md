@@ -133,35 +133,35 @@ dependencies:
   flutter_bloc: ^9.1.1
 
   # DI
-  injectable: ^2.5.0
-  get_it: ^9.2.0
+  injectable: ^2.7.1
+  get_it: ^8.0.3
 
   # Functional Programming
   fpdart: ^1.2.0
 
   # Code Generation
-  freezed_annotation: ^3.1.0
-  json_annotation: ^4.9.0
+  freezed_annotation: ^3.2.5
+  json_annotation: ^4.10.0
 
   # Camera & Media
   camera: ^0.11.1
-  image_picker: ^1.1.2
+  image_picker: ^1.2.1
   video_player: ^2.9.1
   mobile_scanner: ^5.2.3
 
   # Image Processing
-  flutter_image_compress: ^2.3.0
+  flutter_image_compress: ^2.4.0
   image: ^4.2.0
-  image_cropper: ^8.0.2
+  image_cropper: ^11.0.0
 
   # Video Processing
   video_compress: ^3.1.3
 
   # Permissions
-  permission_handler: ^11.3.1
+  permission_handler: ^12.0.1
 
   # Path
-  path_provider: ^2.1.4
+  path_provider: ^2.1.5
   path: ^1.9.0
 
 dev_dependencies:
@@ -169,13 +169,13 @@ dev_dependencies:
     sdk: flutter
 
   # Code Generation
-  build_runner: ^2.4.15
-  freezed: ^3.2.4
-  json_serializable: ^6.9.5
-  injectable_generator: ^2.7.0
+  build_runner: ^2.11.0
+  freezed: ^3.2.5
+  json_serializable: ^6.12.0
+  injectable_generator: ^2.7.1
 
   # Testing
-  bloc_test: ^9.1.7
+  bloc_test: ^10.0.0
   mocktail: ^1.0.4
 
   flutter_lints: ^4.0.0

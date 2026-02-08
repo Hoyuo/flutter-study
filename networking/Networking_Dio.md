@@ -50,18 +50,18 @@ core/
 ```yaml
 # core/core_network/pubspec.yaml (2026년 2월 기준)
 dependencies:
-  dio: ^5.9.0
+  dio: ^5.8.0+1
   pretty_dio_logger: ^1.4.0
   connectivity_plus: ^7.0.0  # List<ConnectivityResult> 반환
-  injectable: ^2.5.0
-  freezed_annotation: ^3.1.0
+  injectable: ^2.7.1
+  freezed_annotation: ^3.2.5
   fpdart: ^1.2.0
   crypto: ^3.0.3  # for SSL pinning (sha256)
 
 dev_dependencies:
-  injectable_generator: ^2.7.0
-  build_runner: ^2.4.15
-  freezed: ^3.2.4
+  injectable_generator: ^2.7.1
+  build_runner: ^2.11.0
+  freezed: ^3.2.5
 ```
 
 ## 3. Dio Client 설정

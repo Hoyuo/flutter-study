@@ -144,34 +144,34 @@ dependencies:
   flutter_bloc: ^9.1.1
 
   # 네트워킹
-  dio: ^5.9.0
+  dio: ^5.8.0+1
   retrofit: ^4.5.0
   pretty_dio_logger: ^1.4.0
 
   # JSON 직렬화
-  json_annotation: ^4.9.0
-  freezed_annotation: ^3.1.0
+  json_annotation: ^4.10.0
+  freezed_annotation: ^3.2.5
 
   # 함수형 프로그래밍
   fpdart: ^1.2.0
 
   # 의존성 주입
-  get_it: ^9.2.0
-  injectable: ^2.5.0
+  get_it: ^8.0.3
+  injectable: ^2.7.1
 
   # 라우팅
-  go_router: ^17.0.1
+  go_router: ^14.8.1
 
   # 캐싱
   hive: ^2.2.3  # 유지보수 모드 - Hive 4.x(CE) 또는 Drift 검토 권장
   hive_flutter: ^1.1.0
-  path_provider: ^2.1.4
+  path_provider: ^2.1.5
 
   # 이미지 캐싱
   cached_network_image: ^3.4.1
 
   # 유틸리티
-  equatable: ^2.0.7
+  equatable: ^2.0.8
   intl: ^0.19.0
   logger: ^2.5.0
 
@@ -181,9 +181,9 @@ dev_dependencies:
   flutter_lints: ^4.0.0
 
   # 코드 생성
-  build_runner: ^2.4.15
-  json_serializable: ^6.9.5
-  freezed: ^3.2.4
+  build_runner: ^2.11.0
+  json_serializable: ^6.12.0
+  freezed: ^3.2.5
   retrofit_generator: ^9.1.4
   injectable_generator: ^2.7.0
   hive_generator: ^2.0.1
