@@ -207,7 +207,7 @@ void _fetchUserData() {
 
 ## 2. Lint 규칙 설정
 
-### 2.1 flutter_lints 기본 설정
+### 2.1 lints 기본 설정
 
 ```yaml
 # analysis_options.yaml

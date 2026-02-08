@@ -240,7 +240,7 @@ URL Scheme은 앱만의 고유한 프로토콜을 사용하여 딥링크를 처�
 // lib/features/deep_linking/data/datasources/deep_link_local_datasource.dart
 import 'dart:async';
 import 'package:injectable/injectable.dart';
-import 'package:uni_links/uni_links.dart';
+import 'package:app_links/app_links.dart';
 
 abstract class DeepLinkLocalDataSource {
   Stream<Uri?> getUriLinkStream();
@@ -249,17 +249,18 @@ abstract class DeepLinkLocalDataSource {
 
 @LazySingleton(as: DeepLinkLocalDataSource)
 class DeepLinkLocalDataSourceImpl implements DeepLinkLocalDataSource {
+  final _appLinks = AppLinks();
   StreamSubscription? _sub;
 
   @override
   Stream<Uri?> getUriLinkStream() {
-    return uriLinkStream;
+    return _appLinks.uriLinkStream;
   }
 
   @override
   Future<Uri?> getInitialUri() async {
     try {
-      final uri = await appLinks.getInitialLink();
+      final uri = await _appLinks.getInitialLink();
       return uri;
     } catch (e) {
       return null;
