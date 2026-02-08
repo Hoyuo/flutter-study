@@ -737,7 +737,7 @@ import 'dart:developer' as developer;
 
 void loggingExample() {
   // 1. print (간단한 로그)
-  print('Simple log message');
+  debugPrint('Simple log message');
   
   // 2. debugPrint (긴 메시지 자동 분할)
   debugPrint('Long message: ' + 'A' * 1000);
@@ -1566,7 +1566,7 @@ class _PageWithLeaksState extends State<PageWithLeaks> {
     
     // 릭 1: Timer
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      print('Tick ${timer.tick}');
+      debugPrint('Tick ${timer.tick}');
     });
     
     // 릭 2: StreamController

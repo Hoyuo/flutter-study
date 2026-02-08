@@ -793,7 +793,7 @@ final user = await into(users).insertReturning(
   ),
 );
 
-print('Created user with ID: ${user.id}');
+debugPrint('Created user with ID: ${user.id}');
 ```
 
 #### 4.5.2 Read (조회)
@@ -818,7 +818,7 @@ try {
         ..where((tbl) => tbl.userId.equals('user123')))
       .getSingle();
 } on StateError {
-  print('User not found');
+  debugPrint('User not found');
 }
 
 // Limit, Offset
@@ -885,7 +885,7 @@ await delete(users).go();
 
 // 삭제 후 확인
 if (deletedCount > 0) {
-  print('$deletedCount users deleted');
+  debugPrint('$deletedCount users deleted');
 }
 ```
 
@@ -979,7 +979,7 @@ final postCountByAuthor = await (selectOnly(posts)
 for (final row in postCountByAuthor) {
   final authorId = row.read(posts.authorId);
   final count = row.read(posts.id.count());
-  print('Author $authorId has $count posts');
+  debugPrint('Author $authorId has $count posts');
 }
 
 // HAVING (게시글 10개 이상인 작성자만)
@@ -1028,7 +1028,7 @@ for (final row in results) {
   final user = row.readTable(users);
   final post = row.readTable(posts);
 
-  print('${user.name} wrote: ${post.title}');
+  debugPrint('${user.name} wrote: ${post.title}');
 }
 ```
 
@@ -1047,9 +1047,9 @@ for (final row in results) {
   final post = row.readTableOrNull(posts);  // null 가능
 
   if (post != null) {
-    print('${user.name}: ${post.title}');
+    debugPrint('${user.name}: ${post.title}');
   } else {
-    print('${user.name}: No posts');
+    debugPrint('${user.name}: No posts');
   }
 }
 ```
@@ -1160,9 +1160,9 @@ try {
     }
   });
 
-  print('Transaction committed');
+  debugPrint('Transaction committed');
 } catch (e) {
-  print('Transaction rolled back: $e');
+  debugPrint('Transaction rolled back: $e');
 }
 ```
 
@@ -1181,7 +1181,7 @@ await db.transaction(() async {
     });
   } catch (e) {
     // 내부 트랜잭션만 롤백, 외부는 계속
-    print('Inner transaction failed: $e');
+    debugPrint('Inner transaction failed: $e');
   }
 
   // user1은 여전히 커밋됨
@@ -1430,7 +1430,7 @@ Future<void> analyzeQuery() async {
   ).get();
 
   for (final row in explanation) {
-    print(row.data);
+    debugPrint(row.data);
   }
 }
 
@@ -1683,7 +1683,7 @@ Future<void> processLargeDataInBackground(List<Map<String, dynamic>> data) async
     return 'Success';
   });
 
-  print(result);
+  debugPrint(result);
 }
 ```
 
@@ -2313,7 +2313,7 @@ class CartLocalDataSourceImpl implements CartLocalDataSource {
 
 ## 6. Secure Storage
 
-> **✅ 업데이트 (2026년 1월)**: flutter_secure_storage v10.0.0 새로운 API 적용
+> **✅ 업데이트 (2026년 2월)**: flutter_secure_storage v10.0.0 새로운 API 적용
 
 ### 6.0 v10.0.0 Breaking Changes
 
@@ -3096,7 +3096,7 @@ class StorageMigration {
 
 > **참고**: Drift의 마이그레이션 전략에 대해서는 섹션 4.10을 참조하세요.
 
-## 14. 2026년 1월 업데이트 요약
+## 14. 2026년 2월 업데이트 요약
 
 이 문서는 2026년 2월 기준 최신 Flutter 로컬 저장소 베스트 프랙티스를 반영합니다.
 

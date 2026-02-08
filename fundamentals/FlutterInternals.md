@@ -947,7 +947,7 @@ class ExpensiveStaticWidget extends StatelessWidget {
 class ExpensivePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    print('ExpensivePainter.paint() called'); // 디버깅용 (프로덕션에서는 제거할 것)
+    debugPrint('ExpensivePainter.paint() called'); // 디버깅용 (프로덕션에서는 제거할 것)
     
     // 복잡한 그리기
     for (int i = 0; i < 1000; i++) {
@@ -1202,13 +1202,13 @@ void main() {
   // 프레임 콜백에서 시간 측정
   SchedulerBinding.instance.addTimingsCallback((List<FrameTiming> timings) {
     for (final timing in timings) {
-      print('Build: ${timing.buildDuration}');
-      print('Raster: ${timing.rasterDuration}');
-      print('Total: ${timing.totalSpan}');
+      debugPrint('Build: ${timing.buildDuration}');
+      debugPrint('Raster: ${timing.rasterDuration}');
+      debugPrint('Total: ${timing.totalSpan}');
       
       // Jank 감지: 16.67ms 초과
       if (timing.totalSpan.inMilliseconds > 16) {
-        print('⚠️ Frame drop detected!');
+        debugPrint('⚠️ Frame drop detected!');
       }
     }
   });
@@ -1358,7 +1358,7 @@ class _GlobalKeyExampleState extends State<GlobalKeyExample> {
             onPressed: () {
               // GlobalKey로 FormState에 접근
               if (_formKey.currentState!.validate()) {
-                print('Form is valid');
+                debugPrint('Form is valid');
               }
             },
             child: Text('Submit'),
@@ -1581,16 +1581,16 @@ class TapGestureRecognizer extends PrimaryPointerGestureRecognizer {
 // GestureDetector 사용 예시
 GestureDetector(
   onTap: () {
-    print('Tapped!');
+    debugPrint('Tapped!');
   },
   onDoubleTap: () {
-    print('Double tapped!');
+    debugPrint('Double tapped!');
   },
   onLongPress: () {
-    print('Long pressed!');
+    debugPrint('Long pressed!');
   },
   onPanUpdate: (details) {
-    print('Pan: ${details.delta}');
+    debugPrint('Pan: ${details.delta}');
   },
   child: Container(
     width: 200,
@@ -1609,10 +1609,10 @@ GestureDetector(
 // 예시: Tap vs Pan
 GestureDetector(
   onTap: () {
-    print('Tap');
+    debugPrint('Tap');
   },
   onPanUpdate: (details) {
-    print('Pan: ${details.delta}');
+    debugPrint('Pan: ${details.delta}');
   },
   child: Container(
     width: 200,
@@ -1669,7 +1669,7 @@ class BatteryLevel {
       final int result = await platform.invokeMethod('getBatteryLevel');
       return result;
     } on PlatformException catch (e) {
-      print('Error: ${e.message}');
+      debugPrint('Error: ${e.message}');
       return -1;
     }
   }
@@ -1915,7 +1915,7 @@ class ExpensiveWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('ExpensiveWidget rebuilt'); // 리빌드 감지
+    debugPrint('ExpensiveWidget rebuilt'); // 리빌드 감지
     return Container(
       height: 200,
       child: CustomPaint(

@@ -1351,8 +1351,8 @@ final result = await functionsRepository.callFunction(
 );
 
 result.fold(
-  (failure) => print('Error: $failure'),
-  (data) => print('Success: ${data['message']}'),
+  (failure) => debugPrint('Error: $failure'),
+  (data) => debugPrint('Success: ${data['message']}'),
 );
 ```
 
@@ -1398,7 +1398,7 @@ import 'package:injectable/injectable.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  print('Background message: ${message.messageId}');
+  debugPrint('Background message: ${message.messageId}');
 }
 
 @lazySingleton
@@ -1420,7 +1420,7 @@ class FCMService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted permission');
+      debugPrint('User granted permission');
     }
 
     // Initialize local notifications
@@ -1499,12 +1499,12 @@ class FCMService {
   }
 
   void _handleMessageOpenedApp(RemoteMessage message) {
-    print('Message opened app: ${message.messageId}');
+    debugPrint('Message opened app: ${message.messageId}');
     // Navigate to specific screen based on message data
   }
 
   void _onNotificationTapped(NotificationResponse response) {
-    print('Notification tapped: ${response.payload}');
+    debugPrint('Notification tapped: ${response.payload}');
     // Handle notification tap
   }
 }

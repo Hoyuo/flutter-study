@@ -185,22 +185,22 @@ class BasicWebSocketExample {
         Uri.parse(url),
       );
 
-      print('WebSocket 연결 성공: $url');
+      debugPrint('WebSocket 연결 성공: $url');
 
       // 메시지 수신 리스닝
       _channel!.stream.listen(
         (message) {
-          print('수신: $message');
+          debugPrint('수신: $message');
         },
         onError: (error) {
-          print('에러: $error');
+          debugPrint('에러: $error');
         },
         onDone: () {
-          print('연결 종료됨');
+          debugPrint('연결 종료됨');
         },
       );
     } catch (e) {
-      print('연결 실패: $e');
+      debugPrint('연결 실패: $e');
     }
   }
 
@@ -208,9 +208,9 @@ class BasicWebSocketExample {
   void sendMessage(String message) {
     if (_channel != null) {
       _channel!.sink.add(message);
-      print('전송: $message');
+      debugPrint('전송: $message');
     } else {
-      print('연결되지 않음');
+      debugPrint('연결되지 않음');
     }
   }
 
@@ -218,7 +218,7 @@ class BasicWebSocketExample {
   void disconnect() {
     _channel?.sink.close(status.goingAway);
     _channel = null;
-    print('연결 종료');
+    debugPrint('연결 종료');
   }
 }
 
@@ -706,7 +706,7 @@ class ChatSocketIODataSource {
     );
 
     _socket!.onConnect((_) {
-      print('채팅 서버 연결됨');
+      debugPrint('채팅 서버 연결됨');
     });
 
     // 메시지 수신
@@ -737,7 +737,7 @@ class ChatSocketIODataSource {
       'timestamp': DateTime.now().toIso8601String(),
     }, (response) {
       // 서버 응답 처리 (메시지 전송 확인)
-      print('메시지 전송 확인: $response');
+      debugPrint('메시지 전송 확인: $response');
     });
   }
 
@@ -1374,7 +1374,7 @@ class ChatRepositoryImpl implements ChatRepository {
       result.fold(
         (failure) {
           // 실패 시 큐에 유지
-          print('재전송 실패: ${message.id}');
+          debugPrint('재전송 실패: ${message.id}');
         },
         (_) async {
           // 성공 시 큐에서 제거

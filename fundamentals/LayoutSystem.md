@@ -158,7 +158,7 @@ class ConstraintVisualizer extends StatelessWidget {
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
-          print('Screen constraints: $constraints');
+          debugPrint('Screen constraints: $constraints');
           // 출력: BoxConstraints(0.0<=w<=392.0, 0.0<=h<=856.0)
 
           return Container(
@@ -167,13 +167,13 @@ class ConstraintVisualizer extends StatelessWidget {
             color: Colors.blue.shade100,
             child: LayoutBuilder(
               builder: (context, constraints) {
-                print('Container constraints: $constraints');
+                debugPrint('Container constraints: $constraints');
                 // 출력: BoxConstraints(w=300.0, h=300.0) - Tight!
 
                 return Center(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      print('Center constraints: $constraints');
+                      debugPrint('Center constraints: $constraints');
                       // 출력: BoxConstraints(0.0<=w<=300.0, 0.0<=h<=300.0) - Loose!
 
                       return Container(
@@ -368,32 +368,32 @@ class ConstraintCombination extends StatelessWidget {
 ```dart
 void analyzeConstraints(BoxConstraints constraints) {
   // Tight 판별 (min == max)
-  print('isTight: ${constraints.isTight}');
+  debugPrint('isTight: ${constraints.isTight}');
   // true이면 BoxConstraints(w=100.0, h=100.0) 형태
 
   // Normalized 판별 (유효한 제약인지)
-  print('isNormalized: ${constraints.isNormalized}');
+  debugPrint('isNormalized: ${constraints.isNormalized}');
   // false면 min > max 같은 비정상 상태
 
   // 최대 크기
-  print('biggest: ${constraints.biggest}');
+  debugPrint('biggest: ${constraints.biggest}');
   // Size(maxWidth, maxHeight)
 
   // 최소 크기
-  print('smallest: ${constraints.smallest}');
+  debugPrint('smallest: ${constraints.smallest}');
   // Size(minWidth, minHeight)
 
   // Width/Height만 tight 판별
-  print('hasTightWidth: ${constraints.hasTightWidth}');
-  print('hasTightHeight: ${constraints.hasTightHeight}');
+  debugPrint('hasTightWidth: ${constraints.hasTightWidth}');
+  debugPrint('hasTightHeight: ${constraints.hasTightHeight}');
 
   // Bounded 판별 (max가 유한한지)
-  print('hasBoundedWidth: ${constraints.hasBoundedWidth}');
-  print('hasBoundedHeight: ${constraints.hasBoundedHeight}');
+  debugPrint('hasBoundedWidth: ${constraints.hasBoundedWidth}');
+  debugPrint('hasBoundedHeight: ${constraints.hasBoundedHeight}');
 
   // Infinite 판별
-  print('hasInfiniteWidth: ${constraints.hasInfiniteWidth}');
-  print('hasInfiniteHeight: ${constraints.hasInfiniteHeight}');
+  debugPrint('hasInfiniteWidth: ${constraints.hasInfiniteWidth}');
+  debugPrint('hasInfiniteHeight: ${constraints.hasInfiniteHeight}');
 }
 ```
 
@@ -2305,7 +2305,7 @@ class SliverChildDelegateComparison extends StatelessWidget {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 // 화면에 보이는 항목만 생성됨
-                print('Building item $index');
+                debugPrint('Building item $index');
                 return ListTile(
                   leading: CircleAvatar(child: Text('$index')),
                   title: Text('Item $index'),
@@ -2515,8 +2515,8 @@ class LayoutBuilderExample extends StatelessWidget {
       appBar: AppBar(title: Text('LayoutBuilder')),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          print('Available width: ${constraints.maxWidth}');
-          print('Available height: ${constraints.maxHeight}');
+          debugPrint('Available width: ${constraints.maxWidth}');
+          debugPrint('Available height: ${constraints.maxHeight}');
 
           // 부모가 제공한 제약을 기반으로 다른 UI 반환
           if (constraints.maxWidth < 600) {

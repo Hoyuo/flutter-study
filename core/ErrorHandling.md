@@ -845,9 +845,6 @@ import 'package:fpdart/fpdart.dart';
 import '../error/failure.dart';
 
 mixin RetryMixin {
-  // ⚠️ 주의: 이 retryOperation의 while 루프는 첫 번째 반복에서 무조건 return합니다.
-  // result.fold()가 즉시 반환되어 재시도 로직이 작동하지 않습니다.
-  // 올바른 구현: while 내에서 isRight() 체크 후 조건부 return 사용
   /// 재시도 로직
   Future<Either<Failure, T>> withRetry<T>(
     Future<Either<Failure, T>> Function() operation, {

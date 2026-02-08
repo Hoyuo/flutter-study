@@ -364,11 +364,13 @@ class MyApp extends StatelessWidget {
 
 ```cpp
 // windows/runner/main.cpp - 윈도우 설정
-// ⚠️ 주의: FlutterWindowController는 Flutter Windows embedding API에 존재하지 않는 클래스입니다.
-// 실제로는 flutter::FlutterEngine + flutter::FlutterViewController를 사용하거나,
-// window_manager 패키지를 사용하세요.
-#include <flutter/flutter_window_controller.h>
+// window_manager 패키지를 사용한 실제 Windows 데스크톱 설정
+#include <flutter/dart_project.h>
+#include <flutter/flutter_view_controller.h>
 #include <windows.h>
+
+#include "flutter_window.h"
+#include "utils.h"
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
@@ -376,7 +378,53 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   const int window_width = 1280;
   const int window_height = 720;
 
-  flutter::FlutterWindowController controller(
+  // Flutter 프로젝트 초기화
+  flutter::DartProject project(L"data");
+
+  // Flutter Window 생성
+  FlutterWindow window(project);
+  Win32Window::Point origin(10, 10);
+  Win32Window::Size size(window_width, window_height);
+
+  if (!window.Create(L"Flutter App", origin, size)) {
+    return EXIT_FAILURE;
+  }
+  window.SetQuitOnClose(true);
+
+  // 메시지 루프 실행
+  ::MSG msg;
+  while (::GetMessage(&msg, nullptr, 0, 0)) {
+    ::TranslateMessage(&msg);
+    ::DispatchMessage(&msg);
+  }
+
+  return EXIT_SUCCESS;
+}
+```
+
+Dart에서 window_manager 패키지 사용:
+
+```dart
+// pubspec.yaml
+dependencies:
+  window_manager: ^0.3.7
+
+// lib/main.dart
+import 'package:flutter/material.dart';
+import 'package:window_manager/window_manager.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 윈도우 초기화
+  await windowManager.ensureInitialized();
+
+  const windowOptions = WindowOptions(
+    size: Size(1280, 720),
+    center: true,
+    backgroundColor: Colors.transparent,
+    skipTaskbar: false,
+    titleBarStyle: TitleBarStyle.normal,
       window_width,
       window_height,
       L"My Flutter App"
@@ -524,11 +572,11 @@ class PlatformService {
 
 ```dart
 // lib/core/platform/conditional_imports/platform_web.dart
-// ⚠️ 주의: dart:html은 Dart 3.4/Flutter 3.22부터 deprecated입니다.
-// 실제 프로젝트에서는 package:web을 사용하세요.
-// import 'package:web/web.dart' as web;
-import 'dart:html' as html;
+// Dart 3.4+ / Flutter 3.22+: package:web 사용
+import 'package:web/web.dart' as web;
 import 'dart:convert';
+import 'dart:js_interop';
+import 'dart:typed_data';
 
 class PlatformService {
   String getStoragePath() {
@@ -536,12 +584,20 @@ class PlatformService {
   }
 
   Future<void> saveFile(String filename, List<int> bytes) async {
-    final blob = html.Blob([bytes]);
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)
-      ..setAttribute('download', filename)
-      ..click();
-    html.Url.revokeObjectUrl(url);
+    // Blob 생성
+    final blob = web.Blob([bytes.toJS].toJS);
+
+    // Object URL 생성
+    final url = web.URL.createObjectURL(blob);
+
+    // 다운로드 트리거
+    final anchor = web.document.createElement('a') as web.HTMLAnchorElement
+      ..href = url
+      ..download = filename;
+    anchor.click();
+
+    // URL 정리
+    web.URL.revokeObjectURL(url);
   }
 }
 ```
@@ -848,43 +904,41 @@ class _FluentHomePageState extends State<FluentHomePage> {
 
 ```dart
 // lib/features/storage/data/datasources/web_storage_datasource.dart
-// ⚠️ 주의: dart:html은 Dart 3.4/Flutter 3.22부터 deprecated입니다.
-// 실제 프로젝트에서는 package:web을 사용하세요.
-// import 'package:web/web.dart' as web;
-import 'dart:html' as html;
+// Dart 3.4+ / Flutter 3.22+: package:web 사용
+import 'package:web/web.dart' as web;
 import 'dart:convert';
 import 'package:injectable/injectable.dart';
 
 @web
 @Injectable(as: StorageDataSource)
 class WebStorageDataSource implements StorageDataSource {
-  final html.Storage _localStorage = html.window.localStorage;
+  web.Storage get _localStorage => web.window.localStorage;
 
   @override
   Future<String?> getString(String key) async {
-    return _localStorage[key];
+    return _localStorage.getItem(key);
   }
 
   @override
   Future<void> setString(String key, String value) async {
-    _localStorage[key] = value;
+    _localStorage.setItem(key, value);
   }
 
   @override
   Future<Map<String, dynamic>?> getJson(String key) async {
-    final jsonString = _localStorage[key];
+    final jsonString = _localStorage.getItem(key);
     if (jsonString == null) return null;
     return json.decode(jsonString) as Map<String, dynamic>;
   }
 
   @override
   Future<void> setJson(String key, Map<String, dynamic> value) async {
-    _localStorage[key] = json.encode(value);
+    _localStorage.setItem(key, json.encode(value));
   }
 
   @override
   Future<void> remove(String key) async {
-    _localStorage.remove(key);
+    _localStorage.removeItem(key);
   }
 
   @override
@@ -1187,42 +1241,61 @@ self.addEventListener('activate', (event) => {
 
 ```dart
 // lib/core/platform/web_interop.dart
-// ⚠️ 주의: dart:js는 Dart 3.4부터 deprecated입니다.
-// 실제 프로젝트에서는 dart:js_interop를 사용하세요.
-import 'dart:js' as js;
+// Dart 3.4+: dart:js_interop 사용
+import 'dart:js_interop';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
+@JS()
+external JSObject get window;
+
+extension type JSGlobalThis(JSObject _) implements JSObject {
+  external JSFunction? operator [](String property);
+  external void operator []=(String property, JSAny? value);
+}
+
+@JS('globalThis')
+external JSGlobalThis get globalThis;
+
 class WebInterop {
-  static void callJavaScriptFunction(String functionName, List<dynamic> args) {
+  static void callJavaScriptFunction(String functionName, List<JSAny?> args) {
     if (!kIsWeb) return;
 
-    js.context.callMethod(functionName, args);
+    final func = globalThis[functionName];
+    if (func != null) {
+      func.callAsFunction(globalThis, args.toJS);
+    }
   }
 
-  static dynamic getJavaScriptProperty(String propertyName) {
+  static JSAny? getJavaScriptProperty(String propertyName) {
     if (!kIsWeb) return null;
 
-    return js.context[propertyName];
+    return globalThis[propertyName];
   }
 
-  static void setJavaScriptProperty(String propertyName, dynamic value) {
+  static void setJavaScriptProperty(String propertyName, JSAny? value) {
     if (!kIsWeb) return;
 
-    js.context[propertyName] = value;
+    globalThis[propertyName] = value;
   }
 
   // 사용 예: Google Analytics
   static void trackPageView(String pageName) {
     if (!kIsWeb) return;
 
-    js.context.callMethod('gtag', [
-      'event',
-      'page_view',
-      js.JsObject.jsify({
-        'page_title': pageName,
-        'page_path': '/$pageName',
-      }),
-    ]);
+    final gtag = globalThis['gtag'];
+    if (gtag != null) {
+      gtag.callAsFunction(
+        globalThis,
+        [
+          'event'.toJS,
+          'page_view'.toJS,
+          {
+            'page_title': pageName,
+            'page_path': '/$pageName',
+          }.jsify(),
+        ].toJS,
+      );
+    }
   }
 }
 ```
@@ -1248,54 +1321,92 @@ class WebInterop {
 ### 10.1 다중 윈도우 관리
 
 ```dart
-// lib/features/multi_window/window_controller.dart
-// ⚠️ 주의: WindowController 클래스는 Flutter에 존재하지 않습니다.
-// 실제로는 window_manager 패키지의 windowManager 싱글톤을 사용하세요.
-// 예: await windowManager.setTitle('...');
+// lib/features/window/desktop_window_controller.dart
+// window_manager 패키지를 사용한 단일 윈도우 관리
+// 참고: Flutter 데스크톱은 기본적으로 단일 윈도우만 지원합니다.
+// 다중 윈도우가 필요하면 desktop_multi_window 패키지를 사용하세요.
 import 'package:window_manager/window_manager.dart';
+import 'package:flutter/material.dart';
 
-class MultiWindowController {
-  final Map<String, WindowController> _windows = {};
+class DesktopWindowController with WindowListener {
+  static final DesktopWindowController _instance = DesktopWindowController._internal();
+  factory DesktopWindowController() => _instance;
+  DesktopWindowController._internal();
 
-  Future<void> createWindow({
-    required String id,
-    required String title,
-    double width = 800,
-    double height = 600,
+  Future<void> initialize({
+    Size size = const Size(1280, 720),
+    String title = 'Flutter App',
+    bool center = true,
   }) async {
-    if (_windows.containsKey(id)) {
-      // 이미 존재하면 포커스
-      await _windows[id]!.focus();
-      return;
-    }
+    await windowManager.ensureInitialized();
 
-    final controller = WindowController();
-    await controller.ensureInitialized();
-
-    await controller.setWindowOptions(
-      WindowOptions(
-        size: Size(width, height),
-        center: true,
-        title: title,
-      ),
+    const windowOptions = WindowOptions(
+      size: Size(1280, 720),
+      center: true,
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.normal,
     );
 
-    await controller.show();
-    _windows[id] = controller;
+    await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.setTitle(title);
+      await windowManager.setSize(size);
+      if (center) {
+        await windowManager.center();
+      }
+      await windowManager.show();
+      await windowManager.focus();
+    });
+
+    windowManager.addListener(this);
   }
 
-  Future<void> closeWindow(String id) async {
-    if (!_windows.containsKey(id)) return;
-
-    await _windows[id]!.close();
-    _windows.remove(id);
+  Future<void> setTitle(String title) async {
+    await windowManager.setTitle(title);
   }
 
-  Future<void> closeAllWindows() async {
-    for (final controller in _windows.values) {
-      await controller.close();
-    }
-    _windows.clear();
+  Future<void> setSize(Size size) async {
+    await windowManager.setSize(size);
+  }
+
+  Future<void> minimize() async {
+    await windowManager.minimize();
+  }
+
+  Future<void> maximize() async {
+    await windowManager.maximize();
+  }
+
+  Future<void> restore() async {
+    await windowManager.restore();
+  }
+
+  Future<void> hide() async {
+    await windowManager.hide();
+  }
+
+  Future<void> show() async {
+    await windowManager.show();
+  }
+
+  Future<void> close() async {
+    await windowManager.close();
+  }
+
+  @override
+  void onWindowClose() {
+    // 윈도우 닫기 전 정리 작업
+    windowManager.removeListener(this);
+  }
+
+  @override
+  void onWindowMinimize() {
+    // 최소화 이벤트 처리
+  }
+
+  @override
+  void onWindowMaximize() {
+    // 최대화 이벤트 처리
   }
 }
 ```

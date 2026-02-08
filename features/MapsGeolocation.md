@@ -1798,10 +1798,10 @@ class GeofenceManager {
     switch (action) {
       case GeofenceAction.notification:
         // 알림 표시 로직
-        print('🔔 ${isEnter ? "진입" : "이탈"}: ${geofence.name}');
+        debugPrint('🔔 ${isEnter ? "진입" : "이탈"}: ${geofence.name}');
         break;
       case GeofenceAction.log:
-        print('📍 ${isEnter ? "Entered" : "Exited"} ${geofence.name}');
+        debugPrint('📍 ${isEnter ? "Entered" : "Exited"} ${geofence.name}');
         break;
       case GeofenceAction.callback:
         // 콜백 실행
@@ -1878,6 +1878,7 @@ class GeofenceOverlay {
 # pubspec.yaml에 추가
 dependencies:
   google_maps_cluster_manager: ^3.0.0+1
+  dart_geohash: ^2.0.1  # Geohash 계산을 위해 추가
 ```
 
 ### 9.2 Cluster Item Model
@@ -1886,6 +1887,7 @@ dependencies:
 // lib/features/maps/data/models/cluster_place.dart
 import 'package:google_maps_cluster_manager/google_maps_cluster_manager.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:dart_geohash/dart_geohash.dart';
 import '../../domain/entities/place.dart';
 
 class ClusterPlace with ClusterItem {
@@ -1897,9 +1899,11 @@ class ClusterPlace with ClusterItem {
   LatLng get location => place.location;
 
   @override
-  // ⚠️ 주의: google_maps_cluster_manager에는 Geohash 클래스가 없습니다.
-  // geohash가 필요하면 geohash_plus 또는 dart_geohash 패키지를 별도로 임포트하세요.
-  String get geohash => Geohash.encode(location);
+  String get geohash {
+    // dart_geohash 패키지를 사용한 geohash 계산
+    final geoHasher = GeoHasher();
+    return geoHasher.encode(location.longitude, location.latitude);
+  }
 }
 ```
 
@@ -2391,7 +2395,7 @@ class MapTileCache {
         return bytes;
       }
     } catch (e) {
-      print('Tile download failed: $e');
+      debugPrint('Tile download failed: $e');
     }
 
     return null;

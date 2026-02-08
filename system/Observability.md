@@ -76,7 +76,7 @@ Android에서 Firebase 라이브러리 버전 충돌을 방지하려면:
 ```gradle
 // android/app/build.gradle
 dependencies {
-  // Firebase BoM (2026년 1월 기준)
+  // Firebase BoM (2026년 2월 기준)
   implementation platform('com.google.firebase:firebase-bom:33.7.0')
   implementation 'com.google.firebase:firebase-analytics-ktx'
   implementation 'com.google.firebase:firebase-crashlytics-ktx'

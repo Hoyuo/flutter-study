@@ -23,7 +23,7 @@
 # pubspec.yaml
 dependencies:
   # 네트워크 상태 감지
-  connectivity_plus: ^7.0.0  # 2026년 1월 기준 최신 버전
+  connectivity_plus: ^7.0.0  # 2026년 2월 기준 최신 버전
 
   # 상태 관리
   flutter_bloc: ^9.1.1

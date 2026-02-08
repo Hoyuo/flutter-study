@@ -895,11 +895,11 @@ import 'package:my_package/my_package.dart';
 void main() {
   // String utilities
   final camelCase = StringUtils.toCamelCase('hello_world');
-  print(camelCase); // 'helloWorld'
+  debugPrint('$camelCase'); // 'helloWorld'
 
   // Validators
   if (Validators.isValidEmail('test@example.com')) {
-    print('Valid email!');
+    debugPrint('Valid email!');
   }
 }
 ```
@@ -916,7 +916,7 @@ final customValidator = Validators.combine([
 ]);
 
 if (customValidator('MyPassword123')) {
-  print('Password meets all requirements');
+  debugPrint('Password meets all requirements');
 }
 ```
 

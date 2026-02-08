@@ -3106,38 +3106,38 @@ android {
 ### 14.1 Android - Play Integrity API
 
 ```dart
-// pubspec.yaml
-dependencies:
-  play_integrity: ^1.0.0
-
 // lib/services/integrity_service.dart
-// ⚠️ 주의: play_integrity 패키지는 pub.dev에 존재하지 않는 fabricated API입니다.
-// Play Integrity API는 네이티브 Android API로, MethodChannel을 통한 플랫폼 채널 구현이 필요합니다.
-// 이 코드는 개념적 의사코드(pseudo-code)로만 참고하세요.
-import 'package:play_integrity/play_integrity.dart';
+// Play Integrity API는 MethodChannel을 통한 플랫폼 채널 구현이 필요합니다.
+import 'package:flutter/services.dart';
+import 'package:dio/dio.dart';
 
 class IntegrityService {
-  final PlayIntegrity _playIntegrity = PlayIntegrity();
+  static const MethodChannel _channel = MethodChannel('com.example.app/integrity');
 
   /// 앱 무결성 토큰 요청
   Future<String?> requestIntegrityToken(String nonce) async {
     try {
-      final token = await _playIntegrity.requestIntegrityToken(
-        IntegrityTokenRequest(nonce: nonce),
-      );
-      return token?.token;
-    } catch (e) {
+      final String? token = await _channel.invokeMethod('requestIntegrityToken', {
+        'nonce': nonce,
+      });
+      return token;
+    } on PlatformException catch (e) {
       // 에뮬레이터 또는 루팅된 기기에서 실패할 수 있음
+      print('Failed to get integrity token: ${e.message}');
       return null;
     }
   }
 
   /// 서버에서 토큰 검증 (백엔드 필요)
-  Future<IntegrityVerdict> verifyOnServer(String token) async {
-    final response = await dio.post('/api/verify-integrity', data: {
-      'token': token,
-    });
-    return IntegrityVerdict.fromJson(response.data);
+  Future<IntegrityVerdict?> verifyOnServer(String token, Dio dio) async {
+    try {
+      final response = await dio.post('/api/verify-integrity', data: {
+        'token': token,
+      });
+      return IntegrityVerdict.fromJson(response.data);
+    } catch (e) {
+      return null;
+    }
   }
 }
 
@@ -3147,6 +3147,22 @@ class IntegrityVerdict {
   final bool strongIntegrity;
   final bool appRecognized;
 
+  IntegrityVerdict({
+    required this.deviceRecognized,
+    required this.basicIntegrity,
+    required this.strongIntegrity,
+    required this.appRecognized,
+  });
+
+  factory IntegrityVerdict.fromJson(Map<String, dynamic> json) {
+    return IntegrityVerdict(
+      deviceRecognized: json['deviceRecognized'] ?? false,
+      basicIntegrity: json['basicIntegrity'] ?? false,
+      strongIntegrity: json['strongIntegrity'] ?? false,
+      appRecognized: json['appRecognized'] ?? false,
+    );
+  }
+
   bool get isSecure =>
     deviceRecognized && basicIntegrity && appRecognized;
 }
@@ -3155,22 +3171,24 @@ class IntegrityVerdict {
 ### 14.2 iOS - DeviceCheck / App Attest
 
 ```dart
-// pubspec.yaml
-dependencies:
-  device_check: ^1.0.0
-
 // lib/services/device_check_service.dart
-// ⚠️ 주의: device_check 패키지는 pub.dev에 존재하지 않는 fabricated API입니다.
-// iOS DeviceCheck/App Attest는 네이티브 Swift/ObjC 코드가 필요하며 MethodChannel로 접근해야 합니다.
-// 이 코드는 개념적 의사코드(pseudo-code)로만 참고하세요.
-import 'package:device_check/device_check.dart';
+// iOS DeviceCheck/App Attest는 MethodChannel을 통한 플랫폼 채널 구현이 필요합니다.
+import 'package:flutter/services.dart';
+import 'dart:io' show Platform;
 
 class DeviceCheckService {
-  final DeviceCheck _deviceCheck = DeviceCheck();
+  static const MethodChannel _channel = MethodChannel('com.example.app/device_check');
 
   /// DeviceCheck 지원 여부 확인
   Future<bool> isSupported() async {
-    return await _deviceCheck.isSupported();
+    if (!Platform.isIOS) return false;
+
+    try {
+      final bool? supported = await _channel.invokeMethod('isSupported');
+      return supported ?? false;
+    } on PlatformException {
+      return false;
+    }
   }
 
   /// 디바이스 토큰 생성 (서버 검증용)
@@ -3178,8 +3196,10 @@ class DeviceCheckService {
     if (!await isSupported()) return null;
 
     try {
-      return await _deviceCheck.generateToken();
-    } catch (e) {
+      final String? token = await _channel.invokeMethod('generateToken');
+      return token;
+    } on PlatformException catch (e) {
+      print('Failed to generate device token: ${e.message}');
       return null;
     }
   }
@@ -3187,8 +3207,10 @@ class DeviceCheckService {
   /// App Attest 키 생성 (iOS 14+)
   Future<String?> generateAppAttestKey() async {
     try {
-      return await _deviceCheck.generateKey();
-    } catch (e) {
+      final String? keyId = await _channel.invokeMethod('generateAppAttestKey');
+      return keyId;
+    } on PlatformException catch (e) {
+      print('Failed to generate App Attest key: ${e.message}');
       return null;
     }
   }
@@ -3196,11 +3218,13 @@ class DeviceCheckService {
   /// App Attest assertion 생성
   Future<String?> generateAssertion(String keyId, String challenge) async {
     try {
-      return await _deviceCheck.generateAssertion(
-        keyId: keyId,
-        clientDataHash: challenge,
-      );
-    } catch (e) {
+      final String? assertion = await _channel.invokeMethod('generateAssertion', {
+        'keyId': keyId,
+        'clientDataHash': challenge,
+      });
+      return assertion;
+    } on PlatformException catch (e) {
+      print('Failed to generate assertion: ${e.message}');
       return null;
     }
   }
