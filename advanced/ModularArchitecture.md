@@ -1864,6 +1864,177 @@ class CustomerApp extends StatelessWidget {
 
 ---
 
+## 11. 모듈 간 통신 패턴 심화
+
+### 11.1 통신 패턴 비교
+
+모듈 간 통신 방식을 상황에 따라 선택하는 기준입니다.
+
+| 패턴 | 결합도 | 방향 | 적합한 상황 | 예시 |
+|------|--------|------|------------|------|
+| **Contract Interface** | 낮음 | 단방향 | 모듈 A가 모듈 B의 기능을 호출 | Auth → Profile 조회 |
+| **Event Bus** | 매우 낮음 | 다방향 | 여러 모듈에 이벤트 브로드캐스트 | 로그인 → Analytics, Cart, Profile 알림 |
+| **Shared Stream** | 낮음 | 구독형 | 실시간 상태 공유 | 사용자 인증 상태를 전 모듈에서 구독 |
+| **Module Facade** | 중간 | 단방향 | 모듈의 공개 API를 단일 진입점으로 | `AuthModule.login()`, `AuthModule.currentUser` |
+| **DI Container** | 낮음 | 간접 | 구현체 교체가 필요한 경우 | 테스트 시 MockAuthRepository 주입 |
+
+> **참고**: Event Bus 기본 구현은 [Event Bus를 통한 느슨한 결합](#event-bus를-통한-느슨한-결합) 섹션을 참조하세요.
+> DI 전략은 [의존성 주입 전략](#의존성-주입-전략) 섹션을 참조하세요.
+
+### 11.2 Module Facade 패턴
+
+각 Feature Module이 외부에 공개하는 단일 진입점(Facade)을 정의합니다. 모듈 내부 구현을 캡슐화하여 다른 모듈이 내부 구조에 의존하지 않도록 합니다.
+
+```dart
+// features/auth/lib/auth_module.dart — 모듈 공개 API
+import 'package:auth/src/domain/entities/user.dart';
+import 'package:auth/src/presentation/bloc/auth_bloc.dart';
+
+/// Auth 모듈의 공개 Facade
+/// 다른 모듈은 이 클래스만 의존합니다
+class AuthModule {
+  final AuthBloc _authBloc;
+
+  AuthModule(this._authBloc);
+
+  /// 현재 로그인한 사용자 (null이면 미인증)
+  User? get currentUser => _authBloc.state.whenOrNull(
+    authenticated: (user) => user,
+  );
+
+  /// 인증 상태 스트림 — 다른 모듈에서 구독
+  Stream<bool> get isAuthenticatedStream => _authBloc.stream.map(
+    (state) => state.maybeWhen(
+      authenticated: (_) => true,
+      orElse: () => false,
+    ),
+  );
+
+  /// 로그아웃 요청 (다른 모듈에서 호출 가능)
+  void requestLogout() {
+    _authBloc.add(const AuthEvent.logoutRequested());
+  }
+
+  /// 인증 필요 여부 확인
+  bool get isAuthenticated => currentUser != null;
+}
+
+// features/order/lib/src/presentation/bloc/order_bloc.dart
+// — 다른 모듈에서 Facade를 통해 Auth 정보 접근
+class OrderBloc extends Bloc<OrderEvent, OrderState> {
+  final AuthModule _authModule;  // Auth 내부 구현이 아닌 Facade에만 의존
+  final CreateOrderUseCase _createOrder;
+
+  OrderBloc(this._authModule, this._createOrder)
+      : super(const OrderState.initial()) {
+    on<OrderSubmitted>(_onSubmitted);
+  }
+
+  Future<void> _onSubmitted(
+    OrderSubmitted event,
+    Emitter<OrderState> emit,
+  ) async {
+    final user = _authModule.currentUser;
+    if (user == null) {
+      emit(const OrderState.error('로그인이 필요합니다'));
+      return;
+    }
+
+    emit(const OrderState.loading());
+    final result = await _createOrder(
+      CreateOrderParams(userId: user.id, items: event.items),
+    );
+    result.fold(
+      (failure) => emit(OrderState.error(failure.message)),
+      (order) => emit(OrderState.success(order)),
+    );
+  }
+}
+```
+
+### 11.3 Shared State Stream 패턴
+
+여러 모듈이 동일한 상태를 실시간으로 구독해야 할 때 사용합니다.
+
+```dart
+// common/common_state/lib/src/shared_user_state.dart
+import 'dart:async';
+import 'package:rxdart/rxdart.dart';
+
+/// 모듈 간 공유되는 사용자 상태
+/// Core 레이어에 위치하여 모든 Feature Module이 접근 가능
+@LazySingleton()
+class SharedUserState {
+  final _userSubject = BehaviorSubject<User?>.seeded(null);
+  final _connectivitySubject = BehaviorSubject<bool>.seeded(true);
+
+  /// 현재 사용자 (동기 접근)
+  User? get currentUser => _userSubject.value;
+
+  /// 사용자 상태 스트림 (구독)
+  Stream<User?> get userStream => _userSubject.stream.distinct();
+
+  /// 네트워크 연결 상태 스트림
+  Stream<bool> get connectivityStream => _connectivitySubject.stream.distinct();
+
+  /// Auth 모듈에서만 호출
+  void updateUser(User? user) => _userSubject.add(user);
+
+  /// Connectivity 모듈에서만 호출
+  void updateConnectivity(bool isConnected) =>
+      _connectivitySubject.add(isConnected);
+
+  void dispose() {
+    _userSubject.close();
+    _connectivitySubject.close();
+  }
+}
+
+// features/cart/lib/src/presentation/bloc/cart_bloc.dart
+// — Cart 모듈이 사용자 상태를 구독
+class CartBloc extends Bloc<CartEvent, CartState> {
+  final SharedUserState _sharedState;
+  late final StreamSubscription _userSubscription;
+
+  CartBloc(this._sharedState) : super(const CartState.initial()) {
+    // 사용자 변경 시 장바구니 초기화
+    _userSubscription = _sharedState.userStream.listen((user) {
+      if (user == null) {
+        add(const CartEvent.cleared());
+      } else {
+        add(CartEvent.userChanged(user.id));
+      }
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _userSubscription.cancel();
+    return super.close();
+  }
+}
+```
+
+### 11.4 통신 패턴 선택 가이드
+
+```mermaid
+flowchart TD
+    Start["모듈 A → 모듈 B\n통신 필요"] --> Q1{"통신 방향은?"}
+    Q1 -->|"A가 B를 호출"| Q2{"B의 내부를\n알아야 하나?"}
+    Q1 -->|"A가 여러 모듈에 알림"| EB["Event Bus"]
+    Q1 -->|"여러 모듈이 같은 상태 구독"| SS["Shared Stream"]
+
+    Q2 -->|"아니오 (캡슐화)"| MF["Module Facade"]
+    Q2 -->|"인터페이스만 필요"| CI["Contract Interface"]
+
+    EB --> Note1["느슨한 결합\n구독자 수 무관"]
+    SS --> Note2["BehaviorSubject\nCore 레이어에 배치"]
+    MF --> Note3["단일 진입점\n내부 변경에 안전"]
+    CI --> Note4["DI로 구현체 주입\n테스트 용이"]
+```
+
+---
+
 ## 결론
 
 대규모 Flutter 애플리케이션에서 모듈러 아키텍처는 필수입니다:
@@ -1900,6 +2071,9 @@ Feature Module 간 직접 의존성을 제거하고, 추상화된 인터페이�
 - [ ] Feature Module과 Core Module의 역할과 경계를 정의할 수 있다
 - [ ] 모듈 간 의존성 방향을 올바르게 설계할 수 있다 (단방향)
 - [ ] 모듈별 독립 빌드 및 테스트 실행이 가능하다
+- [ ] Module Facade 패턴으로 모듈 내부 구현을 캡슐화하고 공개 API를 정의할 수 있다
+- [ ] Shared State Stream (BehaviorSubject)으로 여러 모듈이 동일 상태를 구독하는 패턴을 구현할 수 있다
+- [ ] Event Bus, Contract Interface, Module Facade, Shared Stream 중 상황에 맞는 통신 패턴을 선택할 수 있다
 
 ---
 

@@ -26,8 +26,10 @@
 7. [InheritedWidget 심화](#7-inheritedwidget-심화)
 8. [StatefulWidget vs StatelessWidget](#8-statefulwidget-vs-statelesswidget)
 9. [실전 안티패턴](#9-실전-안티패턴)
-10. [실습 과제](#실습-과제)
-11. [Self-Check](#self-check)
+10. [선언적 UI 패러다임 전환 가이드](#10-선언적-ui-패러다임-전환-가이드)
+11. [텍스트 입력 심화 (CJK, 리치텍스트)](#11-텍스트-입력-심화-cjk-리치텍스트)
+12. [실습 과제](#실습-과제)
+13. [Self-Check](#self-check)
 
 ---
 
@@ -1186,6 +1188,479 @@ class _GoodMountedState extends State<GoodMounted> {
 
 ---
 
+## 10. 선언적 UI 패러다임 전환 가이드
+
+### 10.1 명령형 vs 선언적 UI
+
+기존 네이티브 개발(Android View, iOS UIKit)에서 Flutter로 전환할 때 가장 큰 패러다임 변화는 **명령형(Imperative) → 선언적(Declarative) UI** 전환입니다.
+
+```mermaid
+flowchart LR
+    subgraph Imperative["명령형 UI (Android/iOS)"]
+        A["UI 객체 생성"] --> B["속성 직접 변경\ntextView.text = '...'"]
+        B --> C["UI 상태 추적\nisVisible, isEnabled"]
+        C --> D["수동 동기화"]
+    end
+
+    subgraph Declarative["선언적 UI (Flutter)"]
+        E["State 변경\nsetState/Bloc"] --> F["build() 재호출"]
+        F --> G["새 Widget Tree 반환"]
+        G --> H["프레임워크가\n차이점만 업데이트"]
+    end
+
+    style Imperative fill:#fff3e0
+    style Declarative fill:#e8f5e9
+```
+
+| 관점 | 명령형 (Android/iOS) | 선언적 (Flutter) |
+|------|---------------------|-----------------|
+| **UI 업데이트** | `view.setText("hello")` | `Text(state.text)` — State 변경 시 자동 |
+| **상태 관리** | View가 상태를 가짐 | State와 UI 분리 |
+| **UI 구성** | XML + Activity/ViewController | Dart 코드 (Widget) |
+| **조건부 UI** | `view.visibility = GONE` | `if (condition) Widget()` |
+| **리스트** | RecyclerView + Adapter + ViewHolder | `ListView.builder()` |
+| **애니메이션** | ObjectAnimator, CAAnimation | `AnimatedContainer`, `TweenAnimationBuilder` |
+| **레이아웃** | ConstraintLayout, AutoLayout | `Row`, `Column`, `Flex` |
+| **테마** | `styles.xml`, `Assets.xcassets` | `ThemeData`, `ColorScheme` |
+
+### 10.2 핵심 사고 전환
+
+**1. "UI를 변경한다" → "새로운 UI를 선언한다"**
+
+```dart
+// ❌ 명령형 사고: "버튼 텍스트를 변경한다"
+// Android: button.setText("Loading...")
+// iOS: button.setTitle("Loading...", for: .normal)
+
+// ✅ 선언적 사고: "현재 상태에 맞는 UI를 선언한다"
+Widget build(BuildContext context) {
+  return ElevatedButton(
+    onPressed: state.isLoading ? null : _onTap,
+    child: Text(state.isLoading ? '로딩 중...' : '제출'),
+  );
+}
+```
+
+**2. "뷰를 숨긴다" → "위젯을 조건부로 포함한다"**
+
+```dart
+// ❌ 명령형: view.visibility = View.GONE / view.isHidden = true
+
+// ✅ 선언적: 조건부 위젯 포함
+Column(
+  children: [
+    const Text('항상 보이는 텍스트'),
+    if (state.showDetails) const DetailWidget(),
+    // 또는 공간 유지가 필요하면:
+    Visibility(
+      visible: state.showDetails,
+      maintainSize: true,
+      child: const DetailWidget(),
+    ),
+  ],
+)
+```
+
+**3. "리스트에 아이템을 추가한다" → "새 리스트로 상태를 교체한다"**
+
+```dart
+// ❌ 명령형: adapter.add(newItem); adapter.notifyItemInserted(position)
+
+// ✅ 선언적: 상태 변경 → UI 자동 반영
+// Bloc에서:
+emit(state.copyWith(items: [...state.items, newItem]));
+
+// Widget에서:
+ListView.builder(
+  itemCount: state.items.length,
+  itemBuilder: (context, index) => ItemTile(item: state.items[index]),
+)
+```
+
+**4. "콜백을 등록한다" → "이벤트를 Bloc에 전달한다"**
+
+```dart
+// ❌ 명령형: button.setOnClickListener { doSomething() }
+
+// ✅ 선언적 + Bloc:
+ElevatedButton(
+  onPressed: () => context.read<CartBloc>().add(const CartEvent.checkout()),
+  child: const Text('결제하기'),
+)
+```
+
+### 10.3 프레임워크별 전환 가이드
+
+**Android (Kotlin/Java) 개발자:**
+
+| Android | Flutter | 비고 |
+|---------|---------|------|
+| `Activity` / `Fragment` | `Widget` (페이지) | GoRouter로 관리 |
+| `RecyclerView` + `Adapter` | `ListView.builder` | ViewHolder 불필요 |
+| `ViewModel` + `LiveData` | `Bloc` + `BlocBuilder` | 반응형 패턴 유사 |
+| `ConstraintLayout` | `Row` + `Column` + `Expanded` | Flex 기반 |
+| `SharedPreferences` | `shared_preferences` | API 유사 |
+| `Room` | `Drift` | SQL 기반 유사 |
+| `Retrofit` | `Retrofit` (dio 기반) | 거의 동일 |
+| `Hilt` / `Dagger` | `injectable` + `get_it` | 어노테이션 기반 유사 |
+
+**iOS (Swift/UIKit) 개발자:**
+
+| iOS (UIKit) | Flutter | 비고 |
+|-------------|---------|------|
+| `UIViewController` | `Widget` (페이지) | Lifecycle 단순화 |
+| `UITableView` + `DataSource` | `ListView.builder` | Delegate 불필요 |
+| `Combine` / `RxSwift` | `Bloc` + `Stream` | 반응형 패턴 |
+| `UIStackView` | `Row` + `Column` | 더 유연한 Flex |
+| `UserDefaults` | `shared_preferences` | API 유사 |
+| `CoreData` | `Drift` | 둘 다 SQL 기반 |
+| `URLSession` / `Alamofire` | `Dio` | Interceptor 패턴 유사 |
+| `Swinject` | `injectable` + `get_it` | DI 컨테이너 |
+
+**React/React Native 개발자:**
+
+| React | Flutter | 비고 |
+|-------|---------|------|
+| JSX | Widget tree | 구조 매우 유사 |
+| `useState` | `setState` / `Bloc` | Hook → Bloc |
+| `useEffect` | `initState` + `dispose` | Lifecycle 명시적 |
+| `Context` | `InheritedWidget` / `Provider` | 상위 데이터 전달 |
+| `key` prop | `Key` | 동일 개념 |
+| Virtual DOM diff | Element tree diff | 알고리즘 유사 |
+
+### 10.4 흔한 실수와 올바른 패턴
+
+```dart
+// ❌ 실수: build() 안에서 비동기 작업
+@override
+Widget build(BuildContext context) {
+  fetchData(); // 매 빌드마다 API 호출!
+  return Container();
+}
+
+// ✅ 올바른 패턴: initState 또는 Bloc 이벤트
+@override
+void initState() {
+  super.initState();
+  context.read<DataBloc>().add(const DataEvent.load());
+}
+```
+
+```dart
+// ❌ 실수: 위젯을 변수에 저장하고 재사용
+final myWidget = Text('hello');  // 같은 인스턴스 공유
+
+// ✅ 올바른 패턴: const 생성자 또는 함수로 생성
+const Text('hello');  // 컴파일 타임 상수, 안전한 재사용
+```
+
+> **참고**: Widget 리빌드 최적화는 [Widget 리빌드 최적화](#6-widget-리빌드-최적화) 섹션을 참조하세요.
+> 상태 관리 패턴은 [Bloc](../core/Bloc.md)을 참조하세요.
+
+---
+
+## 11. 텍스트 입력 심화 (CJK, 리치텍스트)
+
+### 11.1 TextEditingController 심화
+
+```dart
+// 기본 사용을 넘어서는 고급 패턴
+class AdvancedTextFieldPage extends StatefulWidget {
+  const AdvancedTextFieldPage({super.key});
+
+  @override
+  State<AdvancedTextFieldPage> createState() => _AdvancedTextFieldPageState();
+}
+
+class _AdvancedTextFieldPageState extends State<AdvancedTextFieldPage> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController()
+      ..addListener(_onTextChanged);
+  }
+
+  void _onTextChanged() {
+    // 커서 위치, 선택 영역 등 모든 정보 접근 가능
+    final text = _controller.text;
+    final selection = _controller.selection;
+    final composing = _controller.value.composing;
+
+    debugPrint('텍스트: $text');
+    debugPrint('커서 위치: ${selection.baseOffset}');
+    debugPrint('조합 중: ${composing.isValid}');  // CJK 입력 조합 중 여부
+  }
+
+  /// 프로그래밍 방식으로 텍스트 조작
+  void _insertAtCursor(String insertText) {
+    final text = _controller.text;
+    final selection = _controller.selection;
+    final newText = text.replaceRange(
+      selection.start,
+      selection.end,
+      insertText,
+    );
+    _controller.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(
+        offset: selection.start + insertText.length,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  // ...
+}
+```
+
+### 11.2 CJK (한중일) 입력 처리
+
+한국어, 중국어, 일본어는 **조합형 입력(composing)**을 사용합니다. "한"을 입력할 때 "ㅎ" → "하" → "한" 순으로 조합이 진행되며, 이 과정에서 주의할 점이 있습니다.
+
+```dart
+// ⚠️ CJK 입력 시 주의: composing 상태 확인
+class SearchField extends StatefulWidget {
+  final ValueChanged<String> onSearch;
+  const SearchField({super.key, required this.onSearch});
+
+  @override
+  State<SearchField> createState() => _SearchFieldState();
+}
+
+class _SearchFieldState extends State<SearchField> {
+  final _controller = TextEditingController();
+  Timer? _debounceTimer;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      decoration: const InputDecoration(
+        hintText: '검색어를 입력하세요',
+        prefixIcon: Icon(Icons.search),
+      ),
+      // ✅ onChanged는 조합 중에도 호출됨
+      onChanged: (value) {
+        _debounceTimer?.cancel();
+        _debounceTimer = Timer(
+          const Duration(milliseconds: 500),  // 한글 조합 완료 대기
+          () => widget.onSearch(value),
+        );
+      },
+      // ✅ onSubmitted는 엔터 키를 눌러야 호출됨 (조합 완료 보장)
+      onSubmitted: (value) {
+        _debounceTimer?.cancel();
+        widget.onSearch(value);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+}
+```
+
+**CJK 입력 핵심 주의사항:**
+
+| 상황 | 문제 | 해결 |
+|------|------|------|
+| 실시간 검색 | 조합 중 불완전한 문자로 검색 | debounce 300~500ms 적용 |
+| 글자수 제한 | 조합 중 바이트 수 오차 | `composing.isValid` 체크 후 카운트 |
+| 정규식 검증 | 조합 중 패턴 불일치 | `onEditingComplete` 또는 `onSubmitted`에서 검증 |
+| 포커스 이동 | 조합 중 포커스 이동 시 글자 손실 | `FocusNode.unfocus()` 전 조합 완료 대기 |
+
+### 11.3 InputFormatter 활용
+
+```dart
+// 전화번호 포맷터 (한국식: 010-1234-5678)
+class KoreanPhoneFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // 숫자만 추출
+    final digits = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
+
+    if (digits.length > 11) {
+      return oldValue;  // 11자리 초과 차단
+    }
+
+    final buffer = StringBuffer();
+    for (int i = 0; i < digits.length; i++) {
+      if (i == 3 || i == 7) buffer.write('-');
+      buffer.write(digits[i]);
+    }
+
+    final formatted = buffer.toString();
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
+// 금액 포맷터 (1,000,000원)
+class CurrencyFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
+
+    if (digits.isEmpty) {
+      return const TextEditingValue(
+        text: '',
+        selection: TextSelection.collapsed(offset: 0),
+      );
+    }
+
+    final number = int.parse(digits);
+    // 한국식 천 단위 콤마
+    final formatted = number.toString().replaceAllMapped(
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (match) => '${match[1]},',
+    );
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
+// 사용 예시
+TextField(
+  keyboardType: TextInputType.phone,
+  inputFormatters: [
+    FilteringTextInputFormatter.digitsOnly,
+    KoreanPhoneFormatter(),
+  ],
+  decoration: const InputDecoration(labelText: '전화번호'),
+)
+```
+
+### 11.4 리치텍스트 편집 (super_editor)
+
+복잡한 리치텍스트 편집이 필요한 경우 `super_editor` 패키지를 사용합니다.
+
+```yaml
+# pubspec.yaml
+dependencies:
+  super_editor: ^0.3.0
+```
+
+```dart
+// 기본 리치텍스트 에디터 설정
+class RichTextEditorPage extends StatefulWidget {
+  const RichTextEditorPage({super.key});
+
+  @override
+  State<RichTextEditorPage> createState() => _RichTextEditorPageState();
+}
+
+class _RichTextEditorPageState extends State<RichTextEditorPage> {
+  late final MutableDocument _document;
+  late final MutableDocumentComposer _composer;
+  late final Editor _editor;
+
+  @override
+  void initState() {
+    super.initState();
+    _document = MutableDocument(
+      nodes: [
+        ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText('리치텍스트 편집기'),
+          metadata: {'blockType': header1Attribution},
+        ),
+        ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText('여기에 내용을 입력하세요.'),
+        ),
+      ],
+    );
+    _composer = MutableDocumentComposer();
+    _editor = createDefaultDocumentEditor(
+      document: _document,
+      composer: _composer,
+    );
+  }
+
+  @override
+  void dispose() {
+    _composer.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SuperEditor(
+      editor: _editor,
+      document: _document,
+      composer: _composer,
+      stylesheet: defaultStylesheet.copyWith(
+        addRulesAfter: [
+          // 한국어 폰트 설정
+          StyleRule(
+            BlockSelector.all,
+            (doc, docNode) => {
+              Styles.textStyle: const TextStyle(
+                fontFamily: 'Pretendard',
+                fontSize: 16,
+                height: 1.6,  // 한글은 행간을 넉넉하게
+              ),
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+### 11.5 텍스트 입력 접근성
+
+```dart
+// 접근성을 고려한 텍스트 입력
+TextField(
+  controller: _controller,
+  decoration: InputDecoration(
+    labelText: '이메일',  // ✅ 스크린 리더용 라벨
+    hintText: 'example@email.com',
+    helperText: '회사 이메일을 입력하세요',
+    errorText: _hasError ? '유효한 이메일 주소를 입력하세요' : null,
+    // ✅ 에러 시 스크린 리더가 에러 메시지를 읽어줌
+    suffixIcon: _hasError
+        ? const Icon(Icons.error, semanticLabel: '입력 오류')
+        : null,
+  ),
+  // ✅ 키보드 타입으로 입력 힌트 제공
+  keyboardType: TextInputType.emailAddress,
+  // ✅ 자동완성 힌트
+  autofillHints: const [AutofillHints.email],
+  // ✅ 텍스트 입력 액션
+  textInputAction: TextInputAction.next,
+)
+```
+
+> **참고**: 접근성 전반은 [Accessibility](../system/Accessibility.md)를 참조하세요.
+> 폼 검증 패턴은 [FormValidation](../features/FormValidation.md)을 참조하세요.
+
+---
+
 ## 실습 과제
 
 ### 과제 1: Custom InheritedWidget 구현
@@ -1249,6 +1724,11 @@ Theme 시스템을 InheritedWidget으로 구현하세요.
 - [ ] State Hoisting과 Local State의 차이를 이해하고, 상황에 맞게 선택할 수 있다
 - [ ] 흔한 안티패턴(build()에서 객체 생성, 잘못된 context 사용 등)을 식별하고 피할 수 있다
 - [ ] mounted 체크, dispose 구현 등 메모리 누수를 방지하는 습관을 갖추었다
+- [ ] 명령형 UI와 선언적 UI의 근본적 차이를 설명하고, Flutter가 선언적인 이유를 이해하고 있다
+- [ ] Android/iOS/React 개발 경험을 Flutter 개념으로 매핑할 수 있다 (RecyclerView→ListView.builder, ViewModel→Bloc 등)
+- [ ] CJK 입력 시 composing 상태를 고려한 실시간 검색 debounce 패턴을 구현할 수 있다
+- [ ] TextInputFormatter를 커스텀하여 전화번호, 금액 등 포맷팅을 적용할 수 있다
+- [ ] 리치텍스트 편집이 필요한 경우 super_editor 등 패키지 선택 기준을 설명할 수 있다
 
 ---
 

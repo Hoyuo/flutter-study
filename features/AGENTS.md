@@ -25,6 +25,8 @@
 | `InAppPurchase.md` | 인앱 결제, 구독 관리, 영수증 검증, 복원 처리 |
 | `Pagination.md` | 무한 스크롤, 커서 기반 페이지네이션, PaginationState, LazyLoad |
 | `ResponsiveDesign.md` | 반응형/적응형 디자인, LayoutBuilder, MediaQuery, Breakpoints |
+| `Authentication.md` | 인증/로그인 통합 가이드: JWT/Refresh Token, OAuth2/PKCE, 소셜 로그인(Google/Apple/Kakao), AuthBloc, 생체인증, RBAC |
+| `WebView.md` | WebView 통합: PG 결제(iamport/portone), JavaScript Bridge, OAuth WebView, 하이브리드 앱, 보안 |
 
 ## For AI Agents
 

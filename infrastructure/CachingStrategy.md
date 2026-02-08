@@ -1292,8 +1292,6 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         final cachedResult = await repository.getCacheFirst(event.productId);
 
         cachedResult.fold(
-          // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다:
-          // String get message => when(server: (msg, _) => msg, network: (msg) => msg, ...);
           (failure) => emit(ProductError(failure.message)),
           (result) {
             if (result.isFromCache && result.isStale(const Duration(hours: 1))) {

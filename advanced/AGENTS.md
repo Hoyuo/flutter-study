@@ -16,6 +16,7 @@
 | `AdvancedPatterns.md` | DDD(Domain-Driven Design), Hexagonal Architecture, Saga Pattern, Specification Pattern |
 | `ServerDrivenUI.md` | Server-Driven UI 패턴, JSON 기반 동적 렌더링, 원격 구성, A/B 테스팅 |
 | `OfflineSupport.md` | Offline-first 아키텍처, Drift ORM, Sync Queue, Conflict Resolution, 동기화 전략 |
+| `WhiteLabelArchitecture.md` | White-Label / Multi-Tenant 아키텍처: Flavor 브랜드 분리, 동적 테마, Feature Toggle, 빌드 자동화 |
 
 ## For AI Agents
 

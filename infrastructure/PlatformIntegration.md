@@ -2946,6 +2946,277 @@ class SecureChannelService {
 
 ---
 
+## 11. 홈 화면 위젯 및 워치 앱 연동
+
+### 11.1 개요
+
+Flutter 앱에서 iOS 홈 화면 위젯(WidgetKit)과 Android 앱 위젯(App Widget), 그리고 워치 앱(watchOS/Wear OS)과의 데이터 연동은 네이티브 코드가 필수적인 영역입니다. `home_widget` 패키지를 사용하면 Flutter에서 홈 화면 위젯 데이터를 제어할 수 있습니다.
+
+```mermaid
+flowchart LR
+    subgraph Flutter["Flutter 앱"]
+        A["HomeWidgetService"]
+        B["SharedPreferences\n(App Group)"]
+    end
+
+    subgraph iOS["iOS"]
+        C["WidgetKit\n(SwiftUI)"]
+        D["App Group\nUserDefaults"]
+    end
+
+    subgraph Android["Android"]
+        E["AppWidgetProvider\n(Compose/XML)"]
+        F["SharedPreferences"]
+    end
+
+    A -->|"home_widget\nsetData()"| B
+    B -->|"App Group"| D
+    D --> C
+    B -->|"SharedPrefs"| F
+    F --> E
+    A -->|"updateWidget()"| C
+    A -->|"updateWidget()"| E
+```
+
+### 11.2 패키지 설정
+
+```yaml
+# pubspec.yaml
+dependencies:
+  home_widget: ^0.7.0
+```
+
+**iOS 설정 (WidgetKit):**
+
+1. Xcode에서 Widget Extension 타겟 추가: File → New → Target → Widget Extension
+2. App Group 설정:
+   - 메인 앱 타겟: Signing & Capabilities → + App Groups → `group.com.example.app`
+   - Widget Extension 타겟: 동일한 App Group 추가
+
+```swift
+// ios/WidgetExtension/MyWidget.swift
+import WidgetKit
+import SwiftUI
+
+struct MyWidgetProvider: TimelineProvider {
+    // App Group을 통해 Flutter 데이터 읽기
+    let userDefaults = UserDefaults(suiteName: "group.com.example.app")
+
+    func placeholder(in context: Context) -> MyWidgetEntry {
+        MyWidgetEntry(date: Date(), title: "로딩 중...", value: "--")
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (MyWidgetEntry) -> Void) {
+        let entry = getEntry()
+        completion(entry)
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<MyWidgetEntry>) -> Void) {
+        let entry = getEntry()
+        // 30분마다 갱신
+        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 30, to: Date())!
+        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
+        completion(timeline)
+    }
+
+    private func getEntry() -> MyWidgetEntry {
+        let title = userDefaults?.string(forKey: "widget_title") ?? "기본값"
+        let value = userDefaults?.string(forKey: "widget_value") ?? "0"
+        return MyWidgetEntry(date: Date(), title: title, value: value)
+    }
+}
+
+struct MyWidgetEntry: TimelineEntry {
+    let date: Date
+    let title: String
+    let value: String
+}
+
+struct MyWidgetView: View {
+    let entry: MyWidgetEntry
+
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text(entry.title)
+                .font(.headline)
+            Text(entry.value)
+                .font(.largeTitle)
+                .fontWeight(.bold)
+            Text(entry.date, style: .time)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .padding()
+    }
+}
+```
+
+**Android 설정 (AppWidget):**
+
+```kotlin
+// android/app/src/main/kotlin/.../MyAppWidget.kt
+import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProvider
+import android.content.Context
+import android.widget.RemoteViews
+import es.antonborri.home_widget.HomeWidgetPlugin
+
+class MyAppWidget : AppWidgetProvider() {
+    override fun onUpdate(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray
+    ) {
+        for (appWidgetId in appWidgetIds) {
+            // Flutter에서 저장한 데이터 읽기
+            val widgetData = HomeWidgetPlugin.getData(context)
+            val title = widgetData.getString("widget_title", "기본값")
+            val value = widgetData.getString("widget_value", "0")
+
+            val views = RemoteViews(context.packageName, R.layout.my_app_widget).apply {
+                setTextViewText(R.id.widget_title, title)
+                setTextViewText(R.id.widget_value, value)
+            }
+
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+    }
+}
+```
+
+### 11.3 Flutter에서 위젯 데이터 제어
+
+```dart
+// presentation/services/home_widget_service.dart
+import 'package:home_widget/home_widget.dart';
+import 'package:injectable/injectable.dart';
+
+@LazySingleton()
+class HomeWidgetService {
+  /// iOS App Group 이름
+  static const _appGroupId = 'group.com.example.app';
+
+  /// Android Widget Provider 클래스명
+  static const _androidWidgetName = 'MyAppWidget';
+
+  /// iOS Widget 이름
+  static const _iOSWidgetName = 'MyWidget';
+
+  /// 초기화
+  Future<void> initialize() async {
+    await HomeWidget.setAppGroupId(_appGroupId);
+  }
+
+  /// 위젯 데이터 업데이트
+  Future<void> updateWidgetData({
+    required String title,
+    required String value,
+  }) async {
+    // 데이터 저장 (App Group SharedPreferences)
+    await Future.wait([
+      HomeWidget.saveWidgetData<String>('widget_title', title),
+      HomeWidget.saveWidgetData<String>('widget_value', value),
+    ]);
+
+    // 위젯 갱신 트리거
+    await HomeWidget.updateWidget(
+      androidName: _androidWidgetName,
+      iOSName: _iOSWidgetName,
+    );
+  }
+
+  /// 위젯 클릭 이벤트 수신
+  Future<Uri?> getInitialUri() async {
+    return HomeWidget.initiallyLaunchedFromHomeWidget();
+  }
+
+  /// 위젯 클릭 스트림 수신
+  Stream<Uri?> get widgetClicked => HomeWidget.widgetClicked;
+}
+```
+
+```dart
+// Bloc에서 위젯 데이터 동기화
+class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
+  final HomeWidgetService _homeWidgetService;
+  final GetDashboardUseCase _getDashboard;
+
+  DashboardBloc(this._homeWidgetService, this._getDashboard)
+      : super(const DashboardState.initial()) {
+    on<DashboardLoaded>(_onLoaded);
+  }
+
+  Future<void> _onLoaded(
+    DashboardLoaded event,
+    Emitter<DashboardState> emit,
+  ) async {
+    final result = await _getDashboard();
+    result.fold(
+      (failure) => emit(DashboardState.error(failure.message)),
+      (dashboard) async {
+        emit(DashboardState.loaded(dashboard));
+
+        // 홈 화면 위젯에도 데이터 동기화
+        await _homeWidgetService.updateWidgetData(
+          title: dashboard.summaryTitle,
+          value: dashboard.mainValue,
+        );
+      },
+    );
+  }
+}
+```
+
+### 11.4 워치 앱 연동
+
+워치 앱은 Flutter에서 직접 빌드할 수 없으며, 네이티브(SwiftUI/Kotlin)로 별도 작성 후 데이터만 동기화합니다.
+
+| 플랫폼 | 통신 방식 | Flutter 패키지 |
+|--------|----------|---------------|
+| **watchOS** | WatchConnectivity (WCSession) | `flutter_watch_connectivity` |
+| **Wear OS** | MessageClient / DataClient | `wear_plus` |
+
+```dart
+// watchOS 데이터 동기화 예시
+import 'package:flutter_watch_connectivity/flutter_watch_connectivity.dart';
+
+class WatchSyncService {
+  final _watch = FlutterWatchConnectivity();
+
+  /// 워치 연결 상태 확인
+  Future<bool> get isReachable => _watch.isReachable;
+
+  /// 워치에 메시지 전송
+  Future<void> sendToWatch(Map<String, dynamic> message) async {
+    if (await isReachable) {
+      await _watch.sendMessage(message);
+    }
+  }
+
+  /// 워치에서 받은 메시지 수신
+  Stream<Map<String, dynamic>> get messages => _watch.messageStream;
+
+  /// Application Context 업데이트 (백그라운드 동기화)
+  Future<void> updateContext(Map<String, dynamic> context) async {
+    await _watch.updateApplicationContext(context);
+  }
+}
+```
+
+### 11.5 위젯/워치 개발 시 주의사항
+
+1. **데이터 크기 제한**: 홈 화면 위젯은 경량 데이터만 표시 (이미지, 긴 텍스트 지양)
+2. **갱신 빈도**: iOS WidgetKit은 시스템이 갱신 타이밍 제어 (최소 15분), Android는 `updatePeriodMillis` 최소 30분
+3. **네이티브 UI 필수**: 위젯 UI는 SwiftUI(iOS) / XML 또는 Compose Glance(Android)로 작성
+4. **App Group 필수 (iOS)**: Flutter 앱과 Widget Extension이 데이터를 공유하려면 동일 App Group 필요
+5. **백그라운드 업데이트**: 앱이 백그라운드일 때도 위젯 데이터 갱신이 필요하면 Background Fetch 활용
+6. **워치 앱은 별도 프로젝트**: Flutter로 워치 앱을 직접 빌드할 수 없으므로, 네이티브 워치 앱 + 데이터 동기화 패턴 사용
+
+> **참고**: 백그라운드 작업은 [Background Tasks](#10-background-tasks) 섹션을 참조하세요.
+> Pigeon을 사용한 타입 안전 통신은 [Pigeon](#4-pigeon을-사용한-타입-안전-channel) 섹션을 참조하세요.
+
+---
+
 ## 결론
 
 Flutter와 네이티브 플랫폼의 심층 통합은 다음과 같은 전략으로 접근합니다:
@@ -2968,6 +3239,8 @@ Flutter와 네이티브 플랫폼의 심층 통합은 다음과 같은 전략으
 7. **KMP**: Kotlin Multiplatform으로 비즈니스 로직 공유
 
 8. **직렬화**: MessagePack/Protobuf로 성능 최적화
+
+9. **홈 화면 위젯/워치 앱**: home_widget + 네이티브 UI로 데이터 동기화
 
 대규모 프로덕션 앱에서는 초기부터 플랫폼 통합 전략을 수립하고, 성능과 유지보수성을 고려한 아키텍처를 설계해야 합니다.
 
@@ -2995,6 +3268,9 @@ Dart FFI를 활용하여 C 라이브러리(예: 이미지 처리, 암호화)를 
 - [ ] Dart FFI로 C/C++ 함수를 호출하는 바인딩을 작성할 수 있다
 - [ ] Platform View를 사용한 네이티브 UI 임베딩을 구현할 수 있다
 - [ ] 플랫폼별 분기 처리와 에러 핸들링을 적용할 수 있다
+- [ ] home_widget 패키지로 iOS WidgetKit / Android AppWidget에 Flutter 데이터를 동기화할 수 있다
+- [ ] iOS App Group 설정과 Widget Extension 구조를 이해하고 설정할 수 있다
+- [ ] 워치 앱(watchOS/Wear OS)과 Flutter 앱 간 데이터 동기화 방식을 설명할 수 있다
 
 ---
 **다음 문서:** [Riverpod](../core/Riverpod.md) - Alternative State Management

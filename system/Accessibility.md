@@ -593,7 +593,7 @@ class AccessibleText extends StatelessWidget {
 
 ### 폰트 크기 조절 (TextScaler API)
 
-사용자가 기기에서 설정한 텍스트 크기를 존중해야 합니다. Flutter 3.16부터 `textScaleFactor`가 deprecated되고 `TextScaler` API를 사용합니다.
+사용자가 기기에서 설정한 텍스트 크기를 존중해야 합니다. Flutter 3.16에서 `textScaleFactor`가 deprecated되었고, **Flutter 3.38에서 완전 제거**되었습니다. `TextScaler` API를 사용합니다.
 
 ```dart
 /// 사용자의 텍스트 크기 설정을 존중하는 텍스트 (Flutter 3.16+)
@@ -772,23 +772,23 @@ class AccessibleIcon extends StatelessWidget {
 
 ### Flutter 3.16+ TextScaler 마이그레이션 가이드
 
-Flutter 3.16부터 `textScaleFactor`가 deprecated되었습니다. 다음과 같이 마이그레이션하세요.
+Flutter 3.16에서 `textScaleFactor`가 deprecated되었고, **Flutter 3.38에서 완전 제거**되었습니다. 다음과 같이 마이그레이션하세요.
 
-#### 변경 전 (Deprecated)
+#### 변경 전 (Removed in Flutter 3.38)
 
 ```dart
-// ❌ Deprecated: textScaleFactorOf
+// ❌ Removed (Flutter 3.38): textScaleFactorOf
 final textScaleFactor = MediaQuery.textScaleFactorOf(context);
 final fontSize = 14.0 * textScaleFactor;
 
-// ❌ Deprecated: MediaQueryData.textScaleFactor
+// ❌ Removed (Flutter 3.38): MediaQueryData.textScaleFactor
 final data = MediaQuery.of(context);
 final scaleFactor = data.textScaleFactor;
 
-// ❌ Deprecated: copyWith에서 textScaleFactor 사용
+// ❌ Removed (Flutter 3.38): copyWith에서 textScaleFactor 사용
 MediaQuery(
   data: MediaQuery.of(context).copyWith(
-    textScaleFactor: 1.5,  // deprecated
+    textScaleFactor: 1.5,  // removed in Flutter 3.38
   ),
   child: child,
 );

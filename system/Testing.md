@@ -2665,7 +2665,756 @@ testWidgets('애니메이션 완료 후 상태 확인', (tester) async {
 
 ---
 
-## 26. 결론
+## 26. Device Farm — 실제 디바이스 테스트
+
+### 26.1 개요
+
+에뮬레이터/시뮬레이터에서 통과한 테스트가 실제 디바이스에서 실패하는 경우가 빈번합니다. Device Farm 서비스를 활용하면 수백 종의 실제 디바이스에서 자동으로 테스트를 실행할 수 있습니다.
+
+| 서비스 | 제공사 | 특징 | 가격 |
+|--------|--------|------|------|
+| **Firebase Test Lab** | Google | Android 실제 디바이스 + iOS 시뮬레이터, Firebase 통합 | 무료 할당 + 유료 |
+| **AWS Device Farm** | Amazon | Android + iOS 실제 디바이스, CI 통합 우수 | 분당 과금 |
+| **BrowserStack App Automate** | BrowserStack | 광범위한 디바이스, Appium 지원 | 구독 |
+| **Samsung Remote Test Lab** | Samsung | 삼성 기기 특화, 무료 | 무료 (시간 제한) |
+
+### 26.2 Firebase Test Lab 연동
+
+Flutter integration test를 Firebase Test Lab에서 실행하는 방법:
+
+**Android 설정:**
+
+```bash
+# 1. integration test APK 빌드
+# 테스트 APK와 앱 APK를 각각 빌드
+pushd android
+
+# 테스트용 Instrumentation APK
+./gradlew app:assembleAndroidTest
+
+# 테스트 대상 앱 APK
+./gradlew app:assembleDebug -Ptarget=integration_test/app_test.dart
+
+popd
+```
+
+```yaml
+# .github/workflows/device-farm.yml
+name: Device Farm Test
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # 매일 새벽 3시 실행 (비용 절약을 위해 야간 실행)
+    - cron: '0 18 * * *'  # UTC 18:00 = KST 03:00
+
+jobs:
+  firebase-test-lab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.0'
+
+      - run: flutter pub get
+
+      # Android integration test APK 빌드
+      - name: Build APKs
+        run: |
+          pushd android
+          ./gradlew app:assembleAndroidTest
+          ./gradlew app:assembleDebug -Ptarget=integration_test/app_test.dart
+          popd
+
+      # Google Cloud 인증
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      # Firebase Test Lab 실행
+      - name: Run on Firebase Test Lab
+        run: |
+          gcloud firebase test android run \
+            --type instrumentation \
+            --app build/app/outputs/apk/debug/app-debug.apk \
+            --test build/app/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
+            --device model=panther,version=33,locale=ko_KR,orientation=portrait \
+            --device model=oriole,version=31,locale=ko_KR,orientation=portrait \
+            --timeout 10m \
+            --results-bucket=${{ secrets.GCS_BUCKET }} \
+            --results-dir=test-results/${{ github.run_id }}
+```
+
+**iOS 설정 (Patrol 사용 시):**
+
+```bash
+# Patrol로 iOS 테스트 빌드
+patrol build ios --target integration_test/app_test.dart
+
+# Firebase Test Lab에서 iOS 실행
+gcloud firebase test ios run \
+  --test build/ios_integ/Build/Products/Release-iphoneos/RunnerTests.xctest \
+  --device model=iphone14pro,version=16.6,locale=ko_KR \
+  --timeout 10m
+```
+
+### 26.3 AWS Device Farm 연동
+
+```yaml
+# .github/workflows/aws-device-farm.yml
+  aws-device-farm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.0'
+
+      - run: flutter pub get
+
+      # APK 빌드
+      - name: Build APK
+        run: flutter build apk --debug
+
+      # AWS Device Farm 업로드 및 실행
+      - name: Run on AWS Device Farm
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Upload and run tests
+        run: |
+          # 프로젝트 ARN 조회
+          PROJECT_ARN=$(aws devicefarm list-projects \
+            --query "projects[?name=='MyFlutterApp'].arn" \
+            --output text)
+
+          # APK 업로드
+          UPLOAD_ARN=$(aws devicefarm create-upload \
+            --project-arn $PROJECT_ARN \
+            --name app-debug.apk \
+            --type ANDROID_APP \
+            --query "upload.arn" \
+            --output text)
+
+          aws devicefarm get-upload --arn $UPLOAD_ARN
+
+          # 디바이스 풀에서 테스트 실행
+          aws devicefarm schedule-run \
+            --project-arn $PROJECT_ARN \
+            --app-arn $UPLOAD_ARN \
+            --device-pool-arn $DEVICE_POOL_ARN \
+            --test type=BUILTIN_FUZZ
+```
+
+### 26.4 디바이스 선정 전략
+
+테스트할 디바이스를 효율적으로 선정하는 기준:
+
+```mermaid
+flowchart TD
+    Start["디바이스 선정"] --> OS["OS 버전 분포"]
+    Start --> Vendor["제조사 점유율"]
+    Start --> Screen["화면 크기 분포"]
+
+    OS --> A["Android 12 (31)\n최소 지원 버전"]
+    OS --> B["Android 13 (33)\n중간 점유율"]
+    OS --> C["Android 14 (34)\n최신"]
+    OS --> D["iOS 16\n최소 지원"]
+    OS --> E["iOS 17~18\n최신"]
+
+    Vendor --> F["Samsung Galaxy\n한국 시장 60%+"]
+    Vendor --> G["iPhone\n한국 시장 30%+"]
+    Vendor --> H["기타 (Xiaomi, LG)\n엣지 케이스"]
+
+    Screen --> I["소형 (SE)\n375pt"]
+    Screen --> J["일반 (6.1\")\n393pt"]
+    Screen --> K["대형 (Pro Max)\n430pt"]
+```
+
+**한국 시장 권장 디바이스 목록:**
+
+| 우선순위 | 디바이스 | OS 버전 | 해상도 | 이유 |
+|---------|---------|---------|--------|------|
+| 필수 | Galaxy S24 | Android 14 | 1080x2340 | 삼성 최신 플래그십 |
+| 필수 | Galaxy S23 | Android 14 | 1080x2340 | 삼성 전년도 플래그십 |
+| 필수 | iPhone 15 | iOS 17 | 1179x2556 | iOS 최신 |
+| 필수 | iPhone 13 | iOS 16 | 1170x2532 | iOS 중간 점유율 |
+| 권장 | Galaxy A34 | Android 13 | 1080x2340 | 중저가 성능 테스트 |
+| 권장 | iPhone SE 3 | iOS 16 | 750x1334 | 소형 화면 테스트 |
+| 선택 | Galaxy Z Fold5 | Android 14 | 1812x2176 | 폴더블 테스트 |
+| 선택 | iPad Air | iPadOS 17 | 1640x2360 | 태블릿 테스트 |
+
+### 26.5 Device Farm 테스트 모범 사례
+
+1. **비용 관리**: 야간/주말 스케줄 실행으로 비용 절감. PR 단위가 아닌 main 브랜치 push 시에만 실행
+2. **테스트 선별**: 전체 테스트가 아닌 critical path 위주 E2E 테스트만 Device Farm에서 실행
+3. **타임아웃 설정**: 디바이스 테스트는 에뮬레이터보다 느리므로 타임아웃을 2~3배 여유 있게 설정
+4. **결과 아카이빙**: 스크린샷, 로그, 비디오를 S3/GCS에 저장하여 실패 원인 분석에 활용
+5. **Flaky 관리**: 실제 디바이스 테스트는 flaky율이 높으므로 재시도 정책 적용 (최대 2회)
+
+> **참고**: CI/CD 파이프라인 구성은 [CICD](../infrastructure/CICD.md)를 참조하세요.
+> Patrol E2E 테스트 작성은 [E2E Test with Patrol](#14-e2e-test-with-patrol) 섹션을 참조하세요.
+
+---
+
+## 27. 다국어 스크린샷 테스트 자동화
+
+다국어(i18n) 앱에서 각 언어별 UI가 올바르게 렌더링되는지 자동으로 검증하는 전략입니다. Golden Test를 확장하여 N개 로케일 × M개 화면의 스크린샷을 자동 생성하고 비교합니다.
+
+### 27.1 다국어 스크린샷이 필요한 이유
+
+| 문제 | 예시 | 영향 |
+|------|------|------|
+| **텍스트 오버플로우** | 독일어 번역이 영어보다 30~50% 길어 버튼 밖으로 넘침 | UI 깨짐 |
+| **RTL 레이아웃** | 아랍어/히브리어에서 좌우 반전 미적용 | UX 오류 |
+| **CJK 줄바꿈** | 한국어/일본어 단어가 어절 중간에서 잘림 | 가독성 저하 |
+| **날짜/통화 포맷** | KR: 2026.02.08, JP: 2026/02/08, US: 02/08/2026 | 로케일 불일치 |
+| **누락 번역** | 새 기능 추가 후 일부 언어 번역 누락 | 영어 폴백 노출 |
+
+### 27.2 프로젝트 설정
+
+```yaml
+# pubspec.yaml
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  alchemist: ^0.10.0          # 고급 Golden Test 프레임워크
+  golden_toolkit: ^0.15.0     # Golden Test 유틸리티
+  meta: ^1.16.0
+```
+
+```dart
+// test/helpers/locale_test_helper.dart
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+/// 테스트용 로케일 설정
+class LocaleTestConfig {
+  /// 지원 로케일 목록
+  static const supportedLocales = [
+    Locale('ko', 'KR'),
+    Locale('ja', 'JP'),
+    Locale('en', 'US'),
+    Locale('zh', 'TW'),
+  ];
+
+  /// 로케일별 표시 이름 (스크린샷 파일명에 사용)
+  static String localeTag(Locale locale) =>
+      '${locale.languageCode}_${locale.countryCode}';
+}
+
+/// 특정 로케일로 위젯을 래핑하는 헬퍼
+Widget buildLocalizedWidget({
+  required Widget child,
+  required Locale locale,
+  ThemeData? theme,
+}) {
+  return MaterialApp(
+    locale: locale,
+    supportedLocales: LocaleTestConfig.supportedLocales,
+    localizationsDelegates: [
+      // easy_localization 또는 intl delegate
+      ...EasyLocalization.of(navigatorKey.currentContext!)?.delegates ?? [],
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    theme: theme ?? ThemeData.light(),
+    home: child,
+  );
+}
+```
+
+### 27.3 로케일별 Golden Test 매트릭스
+
+핵심 패턴: **N개 로케일 × M개 화면 × K개 테마**를 자동 생성합니다.
+
+```dart
+// test/screenshots/locale_screenshot_test.dart
+import 'package:alchemist/alchemist.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+/// 다국어 스크린샷 매트릭스 테스트
+void main() {
+  /// 테스트할 화면 목록
+  final screens = <String, Widget Function()>{
+    'login': () => const LoginScreen(),
+    'home': () => const HomeScreen(),
+    'profile': () => const ProfileScreen(),
+    'settings': () => const SettingsScreen(),
+  };
+
+  /// 테스트할 로케일
+  final locales = LocaleTestConfig.supportedLocales;
+
+  /// 테스트할 테마
+  final themes = {
+    'light': ThemeData.light(useMaterial3: true),
+    'dark': ThemeData.dark(useMaterial3: true),
+  };
+
+  for (final locale in locales) {
+    final tag = LocaleTestConfig.localeTag(locale);
+
+    group('Screenshots - $tag', () {
+      for (final entry in screens.entries) {
+        final screenName = entry.key;
+        final screenBuilder = entry.value;
+
+        for (final themeEntry in themes.entries) {
+          final themeName = themeEntry.key;
+          final theme = themeEntry.value;
+
+          goldenTest(
+            '${screenName}_${tag}_$themeName',
+            fileName: 'screenshots/${tag}/${screenName}_$themeName',
+            constraints: const BoxConstraints(
+              maxWidth: 393, // iPhone 15 Pro 기준
+              maxHeight: 852,
+            ),
+            builder: () => GoldenTestGroup(
+              children: [
+                GoldenTestScenario(
+                  name: '$screenName ($tag, $themeName)',
+                  child: buildLocalizedWidget(
+                    locale: locale,
+                    theme: theme,
+                    child: screenBuilder(),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+    });
+  }
+}
+```
+
+**생성되는 Golden 파일 구조:**
+
+```
+test/goldens/screenshots/
+├── ko_KR/
+│   ├── login_light.png
+│   ├── login_dark.png
+│   ├── home_light.png
+│   ├── home_dark.png
+│   ├── profile_light.png
+│   └── settings_light.png
+├── ja_JP/
+│   ├── login_light.png
+│   └── ...
+├── en_US/
+│   └── ...
+└── zh_TW/
+    └── ...
+```
+
+### 27.4 텍스트 오버플로우 자동 감지
+
+번역이 길어져 UI가 깨지는 케이스를 자동으로 잡아내는 전략입니다.
+
+```dart
+// test/helpers/overflow_detector.dart
+
+/// 오버플로우 감지 테스트 헬퍼
+///
+/// Flutter의 overflow 경고를 캡처하여 테스트 실패로 전환합니다.
+void expectNoOverflow(WidgetTester tester) {
+  // Flutter는 오버플로우 시 콘솔에 경고를 출력합니다.
+  // 이를 캡처하여 테스트 실패로 변환합니다.
+  final errors = tester.takeException();
+  expect(errors, isNull, reason: 'Widget overflow detected');
+}
+
+/// 모든 로케일에서 오버플로우 없음을 검증하는 매트릭스 테스트
+void testNoOverflowForAllLocales({
+  required String screenName,
+  required Widget Function() builder,
+}) {
+  for (final locale in LocaleTestConfig.supportedLocales) {
+    final tag = LocaleTestConfig.localeTag(locale);
+
+    testWidgets('$screenName - no overflow ($tag)', (tester) async {
+      // 오버플로우 에러를 캡처하는 핸들러 설정
+      final overflowErrors = <FlutterErrorDetails>[];
+      final oldHandler = FlutterError.onError;
+      FlutterError.onError = (details) {
+        if (details.toString().contains('overflowed')) {
+          overflowErrors.add(details);
+        }
+        oldHandler?.call(details);
+      };
+
+      await tester.pumpWidget(
+        buildLocalizedWidget(
+          locale: locale,
+          child: builder(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 오버플로우 에러가 없어야 함
+      expect(
+        overflowErrors,
+        isEmpty,
+        reason: '$screenName has overflow in $tag locale:\n'
+            '${overflowErrors.map((e) => e.summary).join('\n')}',
+      );
+
+      FlutterError.onError = oldHandler;
+    });
+  }
+}
+```
+
+**사용 예시:**
+
+```dart
+void main() {
+  // 모든 로케일에서 로그인 화면 오버플로우 검증
+  testNoOverflowForAllLocales(
+    screenName: 'LoginScreen',
+    builder: () => const LoginScreen(),
+  );
+
+  // 결제 화면 (통화 포맷이 길어질 수 있음)
+  testNoOverflowForAllLocales(
+    screenName: 'PaymentScreen',
+    builder: () => const PaymentScreen(),
+  );
+}
+```
+
+### 27.5 번역 누락 감지 테스트
+
+새 기능 추가 시 번역 키가 누락되지 않았는지 자동 검증합니다.
+
+```dart
+// test/i18n/translation_completeness_test.dart
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter_test/flutter_test.dart';
+
+/// 번역 파일 완전성 테스트
+///
+/// 모든 로케일에서 동일한 번역 키를 가지는지 검증합니다.
+void main() {
+  group('Translation completeness', () {
+    late Map<String, Map<String, dynamic>> translations;
+
+    setUp(() {
+      translations = {};
+      final translationDir = Directory('assets/translations');
+
+      for (final file in translationDir.listSync()) {
+        if (file is File && file.path.endsWith('.json')) {
+          final locale = file.path.split('/').last.replaceAll('.json', '');
+          translations[locale] =
+              jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+        }
+      }
+    });
+
+    test('모든 로케일에 동일한 키가 존재해야 함', () {
+      final baseLocale = 'ko_KR'; // 기준 로케일
+      final baseKeys = _extractAllKeys(translations[baseLocale]!);
+
+      for (final entry in translations.entries) {
+        if (entry.key == baseLocale) continue;
+
+        final targetKeys = _extractAllKeys(entry.value);
+        final missingKeys = baseKeys.difference(targetKeys);
+        final extraKeys = targetKeys.difference(baseKeys);
+
+        expect(
+          missingKeys,
+          isEmpty,
+          reason: '${entry.key}에 누락된 번역 키:\n'
+              '${missingKeys.join('\n')}',
+        );
+
+        if (extraKeys.isNotEmpty) {
+          // 경고만 출력 (실패는 아님)
+          // ignore: avoid_print
+          print('WARNING: ${entry.key}에 기준 로케일에 없는 추가 키: $extraKeys');
+        }
+      }
+    });
+
+    test('빈 번역 값이 없어야 함', () {
+      for (final entry in translations.entries) {
+        final emptyKeys = _findEmptyValues(entry.value);
+
+        expect(
+          emptyKeys,
+          isEmpty,
+          reason: '${entry.key}에 빈 번역 값:\n${emptyKeys.join('\n')}',
+        );
+      }
+    });
+
+    test('플레이스홀더 일관성 검증 ({name} 등)', () {
+      final baseLocale = 'ko_KR';
+      final baseTranslations = translations[baseLocale]!;
+
+      for (final entry in translations.entries) {
+        if (entry.key == baseLocale) continue;
+
+        _validatePlaceholders(
+          baseTranslations,
+          entry.value,
+          entry.key,
+        );
+      }
+    });
+  });
+}
+
+/// 중첩 JSON에서 모든 키를 플랫하게 추출
+Set<String> _extractAllKeys(Map<String, dynamic> map, [String prefix = '']) {
+  final keys = <String>{};
+  for (final entry in map.entries) {
+    final fullKey = prefix.isEmpty ? entry.key : '$prefix.${entry.key}';
+    if (entry.value is Map<String, dynamic>) {
+      keys.addAll(_extractAllKeys(entry.value as Map<String, dynamic>, fullKey));
+    } else {
+      keys.add(fullKey);
+    }
+  }
+  return keys;
+}
+
+/// 빈 값을 가진 키 목록 반환
+List<String> _findEmptyValues(Map<String, dynamic> map, [String prefix = '']) {
+  final emptyKeys = <String>[];
+  for (final entry in map.entries) {
+    final fullKey = prefix.isEmpty ? entry.key : '$prefix.${entry.key}';
+    if (entry.value is Map<String, dynamic>) {
+      emptyKeys.addAll(
+        _findEmptyValues(entry.value as Map<String, dynamic>, fullKey),
+      );
+    } else if (entry.value is String && (entry.value as String).trim().isEmpty) {
+      emptyKeys.add(fullKey);
+    }
+  }
+  return emptyKeys;
+}
+
+/// 플레이스홀더({name} 등) 일관성 검증
+void _validatePlaceholders(
+  Map<String, dynamic> base,
+  Map<String, dynamic> target,
+  String targetLocale, [
+  String prefix = '',
+]) {
+  final placeholderPattern = RegExp(r'\{(\w+)\}');
+
+  for (final entry in base.entries) {
+    final fullKey = prefix.isEmpty ? entry.key : '$prefix.${entry.key}';
+
+    if (entry.value is Map<String, dynamic> && target[entry.key] is Map) {
+      _validatePlaceholders(
+        entry.value as Map<String, dynamic>,
+        target[entry.key] as Map<String, dynamic>,
+        targetLocale,
+        fullKey,
+      );
+    } else if (entry.value is String && target[entry.key] is String) {
+      final basePlaceholders =
+          placeholderPattern.allMatches(entry.value as String)
+              .map((m) => m.group(1)!)
+              .toSet();
+      final targetPlaceholders =
+          placeholderPattern.allMatches(target[entry.key] as String)
+              .map((m) => m.group(1)!)
+              .toSet();
+
+      expect(
+        targetPlaceholders,
+        equals(basePlaceholders),
+        reason: '$targetLocale.$fullKey: '
+            '플레이스홀더 불일치 (기준: $basePlaceholders, '
+            '대상: $targetPlaceholders)',
+      );
+    }
+  }
+}
+```
+
+### 27.6 디바이스 크기별 다국어 스크린샷
+
+다양한 디바이스 크기에서 다국어 UI를 검증하는 매트릭스입니다.
+
+```dart
+// test/screenshots/device_locale_matrix_test.dart
+
+/// 디바이스 × 로케일 매트릭스 테스트
+///
+/// 주요 디바이스 크기별로 각 로케일의 UI를 검증합니다.
+void main() {
+  /// 테스트 디바이스 정의
+  final devices = {
+    'iphone_se': const Size(375, 667),    // 소형
+    'iphone_15': const Size(393, 852),    // 표준
+    'iphone_15_max': const Size(430, 932), // 대형
+    'galaxy_fold': const Size(344, 882),   // 폴더블 (접힌 상태)
+    'ipad_air': const Size(820, 1180),     // 태블릿
+  };
+
+  for (final device in devices.entries) {
+    for (final locale in LocaleTestConfig.supportedLocales) {
+      final tag = LocaleTestConfig.localeTag(locale);
+
+      goldenTest(
+        'home_${device.key}_$tag',
+        fileName: 'device_matrix/${device.key}/${tag}_home',
+        constraints: BoxConstraints(
+          maxWidth: device.value.width,
+          maxHeight: device.value.height,
+        ),
+        builder: () => GoldenTestGroup(
+          children: [
+            GoldenTestScenario(
+              name: 'Home (${device.key}, $tag)',
+              child: buildLocalizedWidget(
+                locale: locale,
+                child: const HomeScreen(),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+}
+```
+
+### 27.7 CI 파이프라인 통합
+
+```yaml
+# .github/workflows/i18n-screenshot-test.yml
+name: i18n Screenshot Tests
+
+on:
+  pull_request:
+    paths:
+      - 'assets/translations/**'
+      - 'lib/**/l10n/**'
+      - 'lib/**/presentation/**'
+
+jobs:
+  screenshot-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.0'
+
+      # 번역 완전성 테스트
+      - name: Check translation completeness
+        run: flutter test test/i18n/
+
+      # 다국어 Golden Test 실행
+      - name: Run locale screenshot tests
+        run: flutter test test/screenshots/ --tags=golden
+
+      # 실패 시 diff 이미지를 아티팩트로 업로드
+      - name: Upload golden failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: test/goldens/failures/
+
+      # 성공한 스크린샷을 PR 코멘트에 첨부
+      - name: Comment screenshots on PR
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const screenshots = fs.readdirSync('test/goldens/screenshots')
+              .filter(d => fs.statSync(`test/goldens/screenshots/${d}`).isDirectory());
+
+            let body = '## 📸 다국어 스크린샷 테스트 통과\n\n';
+            body += `| 로케일 | 화면 수 |\n|--------|--------|\n`;
+            for (const locale of screenshots) {
+              const count = fs.readdirSync(`test/goldens/screenshots/${locale}`).length;
+              body += `| ${locale} | ${count}개 |\n`;
+            }
+
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+```
+
+### 27.8 다국어 테스트 모범 사례
+
+**언어별 주의 사항:**
+
+| 언어권 | 주요 이슈 | 테스트 포인트 |
+|--------|----------|-------------|
+| **한국어 (KR)** | 조사 변화 (은/는, 이/가), 존댓말 | 조사 처리 로직, 문장 어미 |
+| **일본어 (JP)** | 한자/히라가나 혼용, 세로쓰기 | 폰트 렌더링, 줄바꿈 위치 |
+| **중국어 (TW/CN)** | 번체/간체 분리, 숫자 단위 | 만/억 단위 표시, 날짜 포맷 |
+| **영어 (US)** | 복수형 (1 item / 2 items) | plural 규칙, 대소문자 |
+| **독일어 (DE)** | 단어 길이 (영어 대비 30-50% 증가) | 버튼/탭 오버플로우 |
+| **아랍어 (AR)** | RTL 레이아웃, 숫자 방향 | Directionality, 아이콘 미러링 |
+
+**테스트 전략 요약:**
+
+```mermaid
+flowchart TD
+    A["번역 파일 변경"] --> B{"CI 자동 실행"}
+    B --> C["1. 번역 완전성 검사\n(키 누락, 빈 값, 플레이스홀더)"]
+    C --> D["2. 오버플로우 감지\n(전 로케일 × 주요 화면)"]
+    D --> E["3. Golden Test\n(로케일 × 디바이스 × 테마)"]
+    E --> F{"결과 비교"}
+    F -->|Pass| G["PR 코멘트에 결과 첨부"]
+    F -->|Fail| H["diff 이미지 아티팩트 업로드"]
+    H --> I["개발자가 확인 후\n--update-goldens 실행"]
+```
+
+**테스트 실행 명령어:**
+
+```bash
+# 전체 다국어 스크린샷 테스트
+flutter test test/screenshots/ --tags=golden
+
+# 특정 로케일만 테스트
+flutter test test/screenshots/ --name="ko_KR"
+
+# Golden 파일 업데이트 (UI 변경 승인 시)
+flutter test test/screenshots/ --update-goldens
+
+# 번역 완전성만 테스트
+flutter test test/i18n/translation_completeness_test.dart
+```
+
+> **참고**: Golden Test 기초는 [Golden Test Advanced](#11-golden-test-advanced-alchemist) 섹션을 참조하세요.
+> 다국어(i18n) 설정은 [Localization](../features/Localization.md)을 참조하세요.
+> CJK 텍스트 입력 처리는 [WidgetFundamentals 텍스트 입력 심화](../fundamentals/WidgetFundamentals.md)를 참조하세요.
+
+---
+
+## 28. 결론
 
 고급 테스트 전략은 단순히 코드 커버리지를 높이는 것이 아니라, **테스트 자체의 품질**을 보장하는 것입니다.
 
@@ -2734,3 +3483,9 @@ Level 5: E2E + Visual Regression → 릴리스 전 필수
 - [ ] Mutation Testing으로 테스트 품질을 측정할 수 있는가?
 - [ ] Contract Testing으로 API 스키마 위반을 사전에 감지할 수 있는가?
 - [ ] CI에서 E2E 테스트를 안정적으로 실행할 수 있는가?
+- [ ] Firebase Test Lab에서 Flutter integration test APK를 빌드하고 실행할 수 있는가?
+- [ ] 한국 시장 기준 테스트 디바이스 선정 전략(OS 버전, 제조사, 화면 크기)을 설명할 수 있는가?
+- [ ] Device Farm 비용을 관리하기 위한 스케줄링 및 테스트 선별 전략을 수립할 수 있는가?
+- [ ] 다국어 Golden Test 매트릭스(N 로케일 × M 화면 × K 테마)를 구성하고 CI에서 자동 실행할 수 있는가?
+- [ ] 번역 완전성 테스트로 키 누락, 빈 값, 플레이스홀더 불일치를 자동 감지할 수 있는가?
+- [ ] 텍스트 오버플로우 감지 헬퍼로 모든 로케일에서 UI 깨짐을 사전에 방지할 수 있는가?

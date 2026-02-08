@@ -21,6 +21,7 @@
 | `Isolates.md` | Isolate 개념, compute() 함수, 백그라운드 처리, Worker Pool, 병렬 처리 패턴 |
 | `Observability.md` | 통합 관찰성 - 구조화된 로깅, 에러 추적, 성능 모니터링, Crashlytics/Sentry 연동 |
 | `DevToolsProfiling.md` | Flutter DevTools 활용, 성능 프로파일링, 메모리 분석, Widget Inspector, Timeline |
+| `AICodingAssistant.md` | AI 코딩 어시스턴트 활용: GitHub Copilot, Claude Code, 프롬프트 엔지니어링, Clean Architecture 자동화, 코드 품질 관리 |
 
 ## For AI Agents
 

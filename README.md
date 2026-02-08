@@ -1,7 +1,7 @@
 # Flutter Clean Architecture Reference Guide
 
 > **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
-Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 56개의 문서와 실제 구현 예제를 제공합니다.
+Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 63개의 문서와 실제 구현 예제를 제공합니다.
 
 ## Overview
 
@@ -18,15 +18,15 @@ Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architect
 flutter-study/
 ├── fundamentals/   # 기초 (5개)
 ├── core/           # 핵심 아키텍처 (7개)
-├── advanced/       # 시니어급 고급 주제 (5개)
-├── infrastructure/ # 인프라 (10개)
+├── advanced/       # 시니어급 고급 주제 (6개)
+├── infrastructure/ # 인프라 (13개)
 ├── networking/     # 네트워킹 (4개)
-├── features/       # 기능별 가이드 (14개)
-├── system/         # 시스템 (10개)
+├── features/       # 기능별 가이드 (16개)
+├── system/         # 시스템 (11개)
 └── projects/       # 실전 프로젝트 (1개)
 ```
 
-**총 56개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
+**총 63개 문서** - 자세한 내용은 [AGENTS.md](./AGENTS.md) 참조
 
 ## Quick Start
 
@@ -52,25 +52,25 @@ Dart 언어와 Flutter 기본기
 핵심 아키텍처 패턴
 - Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, Riverpod, ErrorHandling
 
-### Advanced (5개)
+### Advanced (6개)
 시니어급 아키텍처 패턴과 고급 상태 관리
-- ModularArchitecture, AdvancedStateManagement, AdvancedPatterns, ServerDrivenUI, OfflineSupport
+- ModularArchitecture, AdvancedStateManagement, AdvancedPatterns, ServerDrivenUI, OfflineSupport, WhiteLabelArchitecture
 
-### Infrastructure (10개)
+### Infrastructure (13개)
 인프라 설정
-- DI, Environment, LocalStorage, CICD, StoreSubmission, Firebase, FlutterMultiPlatform, PackageDevelopment, CachingStrategy, PlatformIntegration
+- DI, Environment, LocalStorage, CICD, StoreSubmission, Firebase, FlutterMultiPlatform, PackageDevelopment, CachingStrategy, PlatformIntegration, VersionMigration, DependencyManagement, Troubleshooting
 
 ### Networking (4개)
 네트워크 통신
 - Networking_Dio, Networking_Retrofit, WebSocket, GraphQL
 
-### Features (14개)
+### Features (16개)
 기능별 구현
-- Navigation, Localization, Permission, PushNotification, DeepLinking, MapsGeolocation, CameraMedia, Animation, CustomPainting, FormValidation, ImageHandling, InAppPurchase, Pagination, ResponsiveDesign
+- Navigation, Localization, Permission, PushNotification, DeepLinking, MapsGeolocation, CameraMedia, Animation, CustomPainting, FormValidation, ImageHandling, InAppPurchase, Pagination, ResponsiveDesign, Authentication, WebView
 
-### System (10개)
+### System (11개)
 시스템 품질
-- AppLifecycle, Testing, Performance, Security, Accessibility, ProductionOperations, TeamCollaboration, Isolates, Observability, DevToolsProfiling
+- AppLifecycle, Testing, Performance, Security, Accessibility, ProductionOperations, TeamCollaboration, Isolates, Observability, DevToolsProfiling, AICodingAssistant
 
 ### Projects (1개)
 실전 프로젝트 튜토리얼

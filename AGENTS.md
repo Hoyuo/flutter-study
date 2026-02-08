@@ -1,4 +1,4 @@
-<!-- Generated: 2026-01-27 | Updated: 2026-02-07 -->
+<!-- Generated: 2026-01-27 | Updated: 2026-02-08 -->
 
 # Flutter Study
 
@@ -18,14 +18,14 @@ Flutter 개발팀을 위한 포괄적인 개발 가이드 문서 저장소입니
 |-----------|---------|-----------|
 | `fundamentals/` | 기초 - DartAdvanced, WidgetFundamentals, LayoutSystem, FlutterInternals, DesignSystem | 5개 (see `fundamentals/AGENTS.md`) |
 | `core/` | 핵심 아키텍처 - Architecture, Bloc, BlocUiEffect, Freezed, Fpdart, Riverpod, ErrorHandling | 7개 (see `core/AGENTS.md`) |
-| `advanced/` | 시니어급 고급 - ModularArchitecture, AdvancedStateManagement, AdvancedPatterns, ServerDrivenUI, OfflineSupport | 5개 (see `advanced/AGENTS.md`) |
-| `infrastructure/` | 인프라 - DI, Environment, LocalStorage, CICD, StoreSubmission, Firebase, FlutterMultiPlatform, PackageDevelopment, CachingStrategy, PlatformIntegration | 10개 (see `infrastructure/AGENTS.md`) |
+| `advanced/` | 시니어급 고급 - ModularArchitecture, AdvancedStateManagement, AdvancedPatterns, ServerDrivenUI, OfflineSupport, WhiteLabelArchitecture | 6개 (see `advanced/AGENTS.md`) |
+| `infrastructure/` | 인프라 - DI, Environment, LocalStorage, CICD, StoreSubmission, Firebase, FlutterMultiPlatform, PackageDevelopment, CachingStrategy, PlatformIntegration, VersionMigration, DependencyManagement, Troubleshooting | 13개 (see `infrastructure/AGENTS.md`) |
 | `networking/` | 네트워킹 - Dio, Retrofit, WebSocket, GraphQL | 4개 (see `networking/AGENTS.md`) |
-| `features/` | 기능별 - Navigation, Localization, Permission, PushNotification, DeepLinking, MapsGeolocation, CameraMedia, Animation, CustomPainting, FormValidation, ImageHandling, InAppPurchase, Pagination, ResponsiveDesign | 14개 (see `features/AGENTS.md`) |
-| `system/` | 시스템 - AppLifecycle, Testing, Performance, Security, Accessibility, ProductionOperations, TeamCollaboration, Isolates, Observability, DevToolsProfiling | 10개 (see `system/AGENTS.md`) |
+| `features/` | 기능별 - Navigation, Localization, Permission, PushNotification, DeepLinking, MapsGeolocation, CameraMedia, Animation, CustomPainting, FormValidation, ImageHandling, InAppPurchase, Pagination, ResponsiveDesign, Authentication, WebView | 16개 (see `features/AGENTS.md`) |
+| `system/` | 시스템 - AppLifecycle, Testing, Performance, Security, Accessibility, ProductionOperations, TeamCollaboration, Isolates, Observability, DevToolsProfiling, AICodingAssistant | 11개 (see `system/AGENTS.md`) |
 | `projects/` | 실전 프로젝트 - FullStackProject (Clean Architecture + Bloc Todo 앱 튜토리얼) | 1개 |
 
-**총 56개 문서**
+**총 63개 문서**
 
 ## Directory Structure
 
@@ -54,7 +54,8 @@ flutter-study/
 │   ├── AdvancedStateManagement.md
 │   ├── AdvancedPatterns.md
 │   ├── ServerDrivenUI.md
-│   └── OfflineSupport.md
+│   ├── OfflineSupport.md
+│   └── WhiteLabelArchitecture.md
 ├── infrastructure/           ← 인프라
 │   ├── AGENTS.md
 │   ├── DI.md
@@ -66,7 +67,10 @@ flutter-study/
 │   ├── FlutterMultiPlatform.md
 │   ├── PackageDevelopment.md
 │   ├── CachingStrategy.md
-│   └── PlatformIntegration.md
+│   ├── PlatformIntegration.md
+│   ├── VersionMigration.md
+│   ├── DependencyManagement.md
+│   └── Troubleshooting.md
 ├── networking/               ← 네트워킹
 │   ├── AGENTS.md
 │   ├── Networking_Dio.md
@@ -88,7 +92,9 @@ flutter-study/
 │   ├── ImageHandling.md
 │   ├── InAppPurchase.md
 │   ├── Pagination.md
-│   └── ResponsiveDesign.md
+│   ├── ResponsiveDesign.md
+│   ├── Authentication.md
+│   └── WebView.md
 ├── system/                   ← 시스템
 │   ├── AGENTS.md
 │   ├── AppLifecycle.md
@@ -100,7 +106,8 @@ flutter-study/
 │   ├── TeamCollaboration.md
 │   ├── Isolates.md
 │   ├── Observability.md
-│   └── DevToolsProfiling.md
+│   ├── DevToolsProfiling.md
+│   └── AICodingAssistant.md
 └── projects/                 ← 실전 프로젝트
     └── FullStackProject.md
 ```
@@ -261,5 +268,15 @@ class UserBloc extends Bloc<UserEvent, UserState> { ... }
 61. `features/ImageHandling.md` - 이미지 처리
 62. `features/InAppPurchase.md` - 인앱 결제
 63. `features/Pagination.md` - 페이지네이션
+
+### 신규 추가 (Phase 3 — 종합 검토)
+
+64. `features/Authentication.md` - 인증/로그인 (JWT, OAuth2, 소셜 로그인, AuthBloc)
+65. `infrastructure/VersionMigration.md` - Flutter/Dart 버전 마이그레이션 전략
+66. `infrastructure/DependencyManagement.md` - 의존성 관리 (pub outdated, OSV Scanner, Renovate)
+67. `features/WebView.md` - WebView 통합 (PG 결제, JavaScript Bridge, 하이브리드)
+68. `infrastructure/Troubleshooting.md` - 트러블슈팅 (빌드 에러, 런타임 에러, 디버깅)
+69. `advanced/WhiteLabelArchitecture.md` - White-Label / Multi-Tenant 아키텍처
+70. `system/AICodingAssistant.md` - AI 코딩 어시스턴트 활용 가이드
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->

@@ -21,6 +21,9 @@
 | `PackageDevelopment.md` | Dart/Flutter 패키지 개발, Pub.dev 배포, 버전 관리, API 문서화 |
 | `CachingStrategy.md` | 캐싱 전략, 메모리/디스크/네트워크 계층, HTTP 캐시, 이미지 캐싱 |
 | `PlatformIntegration.md` | Platform Channel, Method Channel, FFI, Pigeon 코드 생성, 네이티브 통합 |
+| `VersionMigration.md` | Flutter/Dart 버전 마이그레이션: FVM, dart fix, deprecated API 추적, 플랫폼별 체크리스트 |
+| `DependencyManagement.md` | 의존성 관리: 버전 전략, pub outdated/upgrade, OSV Scanner, Renovate/Dependabot |
+| `Troubleshooting.md` | 트러블슈팅: flutter doctor, Android/iOS 빌드 에러, 런타임 에러, 상태 관리 디버깅 |
 
 ## For AI Agents
 

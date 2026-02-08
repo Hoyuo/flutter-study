@@ -1,29 +1,29 @@
 # Flutter 팀 교육 커리큘럼
 
 > **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
-> 56개 학습 문서 기반 레벨별 교육 과정
+> 63개 학습 문서 기반 레벨별 교육 과정
 
 ---
 
 ## 개요
 
-이 커리큘럼은 flutter-study 저장소의 56개 문서를 기반으로, 개발자 경력 수준에 맞춘 체계적 학습 경로를 제공합니다.
+이 커리큘럼은 flutter-study 저장소의 63개 문서를 기반으로, 개발자 경력 수준에 맞춘 체계적 학습 경로를 제공합니다.
 
 | 레벨 | 대상 | 기간 | 문서 수 | 핵심 목표 |
 |------|------|------|---------|-----------|
 | Beginner | 입문 | 4주 | 5개 | Dart 언어와 Flutter Widget 기본기 이해 |
-| Junior | 0-6개월 | 12주 | 10개 | Clean Architecture 기반 앱 구조를 이해하고 기본 CRUD 앱 구현 |
-| Mid-level | 6-12개월 | 12주 | 16개 | 실무 수준의 기능 구현과 품질 관리 역량 확보 |
-| Senior | 1년+ | 자율 | 10개 | 아키텍처 설계, 성능 최적화, 프로덕션 운영 주도 |
+| Junior | 0-6개월 | 12주 | 12개 | Clean Architecture 기반 앱 구조를 이해하고 기본 CRUD 앱 구현 |
+| Mid-level | 6-12개월 | 12주 | 18개 | 실무 수준의 기능 구현과 품질 관리 역량 확보 |
+| Senior | 1년+ | 자율 | 12개 | 아키텍처 설계, 성능 최적화, 프로덕션 운영 주도 |
 
-**전체 문서 분류 (56개)**
+**전체 문서 분류 (63개)**
 
 ```mermaid
 flowchart LR
-    A["Beginner 기초 (5)"] --> B["Junior 필수 (10)"]
-    B --> C["Mid-level 실무 (16)"]
-    C --> D["Senior 심화 (10)"]
-    D --> E["프로젝트별 선택 (8)"]
+    A["Beginner 기초 (5)"] --> B["Junior 필수 (12)"]
+    B --> C["Mid-level 실무 (18)"]
+    C --> D["Senior 심화 (12)"]
+    D --> E["프로젝트별 선택 (9)"]
 ```
 
 ---
@@ -403,7 +403,7 @@ flowchart TD
 
 ---
 
-## 5. 전체 문서 매핑 (56개)
+## 5. 전체 문서 매핑 (63개)
 
 모든 문서가 어느 레벨에 배정되었는지 한눈에 확인할 수 있는 표입니다.
 
@@ -412,10 +412,10 @@ flowchart TD
 | 레벨 | 문서 (카테고리) |
 |------|----------------|
 | **Beginner 기초** (5) | DartAdvanced (fund), WidgetFundamentals (fund), LayoutSystem (fund), DevToolsProfiling (fund), FlutterInternals (fund) |
-| **Junior 필수** (10) | Architecture (core), DI (infra), Bloc (core), Freezed (core), Networking_Dio (net), Networking_Retrofit (net), ErrorHandling (core), Navigation (feat), DesignSystem (fund), FormValidation (feat) |
-| **Mid-level 필수** (16) | Fpdart (core), BlocUiEffect (core), Environment (infra), LocalStorage (infra), Localization (feat), Permission (feat), PushNotification (feat), Pagination (feat), ImageHandling (feat), Observability (sys), Animation (feat), Testing (sys), Performance (sys), Security (sys), **ResponsiveDesign (feat)**, **CachingStrategy (infra)** |
-| **Senior 심화** (10) | AdvancedStateManagement (core), ModularArchitecture (core), AdvancedPatterns (adv), PlatformIntegration (infra), Isolates (sys), Testing 심화 (sys), Performance 심화 (sys), CICD 심화 (infra), ProductionOperations (sys), OfflineSupport (adv) |
-| **프로젝트별 선택** (8) | Riverpod (core), WebSocket (net), Firebase (infra), InAppPurchase (feat), AppLifecycle (sys), Accessibility (sys), StoreSubmission (infra), **ServerDrivenUI (adv)** |
+| **Junior 필수** (12) | Architecture (core), DI (infra), Bloc (core), Freezed (core), Networking_Dio (net), Networking_Retrofit (net), ErrorHandling (core), Navigation (feat), DesignSystem (fund), FormValidation (feat), **Authentication (feat)**, **Troubleshooting (infra)** |
+| **Mid-level 필수** (18) | Fpdart (core), BlocUiEffect (core), Environment (infra), LocalStorage (infra), Localization (feat), Permission (feat), PushNotification (feat), Pagination (feat), ImageHandling (feat), Observability (sys), Animation (feat), Testing (sys), Performance (sys), Security (sys), ResponsiveDesign (feat), CachingStrategy (infra), **WebView (feat)**, **VersionMigration (infra)** |
+| **Senior 심화** (12) | AdvancedStateManagement (core), ModularArchitecture (core), AdvancedPatterns (adv), PlatformIntegration (infra), Isolates (sys), Testing 심화 (sys), Performance 심화 (sys), CICD 심화 (infra), ProductionOperations (sys), OfflineSupport (adv), **WhiteLabelArchitecture (adv)**, **DependencyManagement (infra)** |
+| **프로젝트별 선택** (9) | Riverpod (core), WebSocket (net), Firebase (infra), InAppPurchase (feat), AppLifecycle (sys), Accessibility (sys), StoreSubmission (infra), ServerDrivenUI (adv), **AICodingAssistant (sys)** |
 
 ### 의존성 다이어그램
 
@@ -502,5 +502,5 @@ flowchart TD
 
 ---
 
-**마지막 업데이트:** 2026-02-07
-**기반 문서 수:** 56개 (Analytics + Monitoring + Logging → Observability 통합, 경로 재구성, 중복 제거)
+**마지막 업데이트:** 2026-02-08
+**기반 문서 수:** 63개 (신규 7개 문서 추가: Authentication, VersionMigration, DependencyManagement, WebView, Troubleshooting, WhiteLabelArchitecture, AICodingAssistant)

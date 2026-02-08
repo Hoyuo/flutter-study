@@ -2120,46 +2120,74 @@ CustomFlexLayout(
 
 ## 심화: Impeller 렌더링 엔진 최적화
 
-Impeller는 Flutter 3.10+에서 도입된 차세대 렌더링 엔진으로, Skia를 대체합니다.
+Impeller는 Flutter의 차세대 렌더링 엔진으로, Skia를 대체합니다. **Flutter 3.38에서 iOS와 Android 모두 기본 활성화**되어 있습니다.
 
 ### Impeller vs Skia 비교
 
-| 특성 | Skia (Legacy) | Impeller (New) |
+| 특성 | Skia (Legacy) | Impeller (기본) |
 |------|--------------|----------------|
 | **셰이더 컴파일** | 런타임 (Jank 유발) | 빌드 타임 (사전 컴파일) |
 | **렌더링 백엔드** | OpenGL ES, Vulkan, Metal | Vulkan, Metal, OpenGL (Fallback) |
 | **첫 프레임 Jank** | 높음 (셰이더 컴파일) | 거의 없음 |
 | **평균 성능** | 양호 | 우수 (10-20% 개선) |
 | **메모리 사용** | 높음 | 낮음 (최적화된 텍스처 관리) |
-| **지원 플랫폼** | iOS, Android, Desktop | iOS (기본), Android (실험적) |
+| **지원 플랫폼** | iOS, Android, Desktop | iOS (기본), Android (기본, 3.38+) |
 
-### Impeller 활성화
+### Impeller 활성화 상태 (Flutter 3.38)
 
-**iOS (기본 활성화):**
-```yaml
-# ios/Runner/Info.plist
-<key>FLTEnableImpeller</key>
-<true/>
-```
+> **Flutter 3.38부터 iOS와 Android 모두 Impeller가 기본 렌더러입니다.**
+> 별도 설정 없이 Impeller가 사용되며, 명시적 비활성화만 필요합니다.
 
-**Android (실험적, Flutter 3.27+):**
-```gradle
-# android/app/build.gradle
-android {
-    defaultConfig {
-        manifestPlaceholders += [
-            'flutterImpellerEnabled': 'true'
-        ]
-    }
-}
-```
-
+**Impeller 비활성화 (Skia 폴백이 필요한 경우):**
 ```xml
 <!-- android/app/src/main/AndroidManifest.xml -->
 <meta-data
     android:name="io.flutter.embedding.android.EnableImpeller"
-    android:value="true" />
+    android:value="false" />
 ```
+
+```yaml
+# ios/Runner/Info.plist
+<key>FLTEnableImpeller</key>
+<false/>
+```
+
+**명령줄에서 Skia로 실행 (디버깅용):**
+```bash
+flutter run --no-enable-impeller
+```
+
+### Impeller 디버깅 및 프로파일링
+
+```bash
+# Impeller 활성 여부 확인 (로그 출력)
+flutter run --verbose 2>&1 | grep -i impeller
+
+# Impeller 프로파일링 (릴리즈 모드에서)
+flutter run --profile --trace-skia
+```
+
+```dart
+// 코드에서 렌더러 확인
+import 'dart:ui' as ui;
+
+void checkRenderer() {
+  // DevTools > Performance > Rendering 탭에서도 확인 가능
+  debugPrint('Impeller 활성: Flutter 3.38 기본 활성화');
+}
+```
+
+### Skia → Impeller 마이그레이션 체크리스트
+
+Impeller로 전환 시 확인해야 할 항목:
+
+| 체크 항목 | 설명 | 해결 방법 |
+|-----------|------|----------|
+| `BackdropFilter` 성능 | Impeller에서 블러 구현 방식이 다름 | 블러 반경을 최소화, `ImageFilter.blur` 직접 사용 |
+| `saveLayer()` 호출 | Impeller에서 오프스크린 버퍼 비용 다름 | `Opacity` 위젯 대신 `withValues(alpha:)` 직접 페인팅 |
+| 커스텀 GLSL 셰이더 | Impeller는 SPIR-V 형식 필요 | `pubspec.yaml`의 `shaders:` 섹션에 등록 (자동 변환) |
+| `Picture.toImage()` | Impeller에서 동작이 다를 수 있음 | `RenderRepaintBoundary.toImage()` 사용 권장 |
+| 앱 크기 | Impeller 바이너리가 Skia보다 약간 작음 | 긍정적 변화, 별도 조치 불필요 |
 
 ### Impeller 최적화 기법
 

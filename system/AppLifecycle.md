@@ -724,7 +724,7 @@ class SystemSettingsObserver extends WidgetsBindingObserver {
   void didChangeMetrics() {
     // 텍스트 크기, 화면 크기 등 메트릭 변경
     // Flutter 3.16+: didChangeTextScaleFactor는 deprecated
-    // platformDispatcher.textScaleFactor도 deprecated (Flutter 3.16+)
+    // platformDispatcher.textScaleFactor는 Flutter 3.16에서 deprecated, Flutter 3.38에서 removed
     // TextScaler 사용 권장
     debugPrint('Metrics changed');
 
@@ -1120,6 +1120,405 @@ Future<void> requestBatteryOptimizationExemption() async {
 
 ---
 
+## 11. 상태 복원 (State Restoration) — RestorationMixin
+
+### 11.1 개요
+
+Android/iOS에서 앱이 백그라운드에서 시스템에 의해 종료(process death)되면, 사용자가 앱으로 돌아올 때 이전 상태를 복원해야 합니다. Flutter는 **RestorationMixin**과 **RestorableProperty**를 통해 프레임워크 레벨의 상태 복원을 지원합니다.
+
+> **위 섹션 "상태 저장/복원"과의 차이**: 위 섹션은 SharedPreferences로 직접 저장하는 수동 방식이고,
+> 이 섹션은 Flutter의 Restoration API를 활용하여 **프레임워크가 자동으로 저장/복원을 관리**하는 방식입니다.
+
+```mermaid
+sequenceDiagram
+    participant User as 사용자
+    participant App as Flutter 앱
+    participant OS as Android/iOS
+
+    User->>App: 양식 입력 중
+    User->>OS: 다른 앱으로 전환
+    OS-->>App: paused 상태
+    Note over OS: 메모리 부족 발생
+    OS->>App: process death (앱 종료)
+    Note over OS: 복원 데이터 보존
+    User->>OS: 앱으로 복귀
+    OS->>App: 앱 재시작 + 복원 데이터 전달
+    App-->>User: 이전 상태 복원 완료
+```
+
+### 11.2 RestorableProperty 기본 사용
+
+Flutter가 제공하는 Restorable 타입:
+
+| 타입 | 설명 | 용도 |
+|------|------|------|
+| `RestorableInt` | int 값 복원 | 페이지 번호, 카운터 |
+| `RestorableDouble` | double 값 복원 | 스크롤 위치, 슬라이더 값 |
+| `RestorableBool` | bool 값 복원 | 토글 상태, 체크박스 |
+| `RestorableString` | String 값 복원 | 텍스트 입력, 검색어 |
+| `RestorableDateTime` | DateTime 값 복원 | 날짜 선택 |
+| `RestorableTextEditingController` | 텍스트 컨트롤러 복원 | 폼 입력 |
+| `RestorableEnum` | enum 값 복원 | 탭 선택, 정렬 옵션 |
+| `RestorableEnumN` | nullable enum 복원 | 선택적 필터 |
+
+```dart
+// 기본 사용 예시: 카운터 앱
+class CounterPage extends StatefulWidget {
+  const CounterPage({super.key});
+
+  @override
+  State<CounterPage> createState() => _CounterPageState();
+}
+
+class _CounterPageState extends State<CounterPage> with RestorationMixin {
+  // Restorable 프로퍼티 선언
+  final RestorableInt _counter = RestorableInt(0);
+
+  @override
+  // 복원 ID — 위젯 트리에서 이 위젯을 고유하게 식별
+  String? get restorationId => 'counter_page';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    // 프레임워크에 복원할 프로퍼티 등록
+    registerForRestoration(_counter, 'counter');
+  }
+
+  @override
+  void dispose() {
+    _counter.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(child: Text('Count: ${_counter.value}')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => setState(() => _counter.value++),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+```
+
+### 11.3 폼 상태 복원 (실무 패턴)
+
+```dart
+// 회원가입 폼에서 상태 복원
+class SignUpFormPage extends StatefulWidget {
+  const SignUpFormPage({super.key});
+
+  @override
+  State<SignUpFormPage> createState() => _SignUpFormPageState();
+}
+
+class _SignUpFormPageState extends State<SignUpFormPage> with RestorationMixin {
+  // 텍스트 입력 복원
+  final RestorableTextEditingController _nameController =
+      RestorableTextEditingController();
+  final RestorableTextEditingController _emailController =
+      RestorableTextEditingController();
+
+  // 체크박스 상태 복원
+  final RestorableBool _agreeToTerms = RestorableBool(false);
+
+  // 현재 스텝 복원
+  final RestorableInt _currentStep = RestorableInt(0);
+
+  @override
+  String? get restorationId => 'sign_up_form';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_nameController, 'name');
+    registerForRestoration(_emailController, 'email');
+    registerForRestoration(_agreeToTerms, 'agree_terms');
+    registerForRestoration(_currentStep, 'current_step');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _agreeToTerms.dispose();
+    _currentStep.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('회원가입')),
+      body: Stepper(
+        currentStep: _currentStep.value,
+        onStepContinue: () {
+          if (_currentStep.value < 2) {
+            setState(() => _currentStep.value++);
+          }
+        },
+        onStepCancel: () {
+          if (_currentStep.value > 0) {
+            setState(() => _currentStep.value--);
+          }
+        },
+        steps: [
+          Step(
+            title: const Text('기본 정보'),
+            content: Column(
+              children: [
+                TextField(
+                  controller: _nameController.value,
+                  decoration: const InputDecoration(labelText: '이름'),
+                ),
+                TextField(
+                  controller: _emailController.value,
+                  decoration: const InputDecoration(labelText: '이메일'),
+                ),
+              ],
+            ),
+          ),
+          Step(
+            title: const Text('약관 동의'),
+            content: CheckboxListTile(
+              title: const Text('이용약관에 동의합니다'),
+              value: _agreeToTerms.value,
+              onChanged: (v) => setState(() => _agreeToTerms.value = v ?? false),
+            ),
+          ),
+          Step(
+            title: const Text('확인'),
+            content: Text('${_nameController.value.text}님, 가입을 완료하세요'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+### 11.4 커스텀 RestorableProperty
+
+Freezed sealed class나 복잡한 객체를 복원해야 할 때 커스텀 RestorableProperty를 정의합니다.
+
+```dart
+/// 커스텀 Restorable — JSON 직렬화 가능한 객체용
+class RestorableFilter extends RestorableValue<FilterOption> {
+  @override
+  FilterOption createDefaultValue() => FilterOption.all;
+
+  @override
+  void didUpdateValue(FilterOption? oldValue) {
+    // 값 변경 시 호출 — notifyListeners()가 자동으로 호출됨
+  }
+
+  @override
+  FilterOption fromPrimitives(Object? data) {
+    // 복원 시 호출 — 저장된 데이터를 객체로 변환
+    if (data is int) {
+      return FilterOption.values[data];
+    }
+    return FilterOption.all;
+  }
+
+  @override
+  Object? toPrimitives() {
+    // 저장 시 호출 — 객체를 직렬화 가능한 형태로 변환
+    return value.index;
+  }
+}
+
+enum FilterOption { all, active, completed }
+
+/// 사용 예시
+class _TodoListState extends State<TodoListPage> with RestorationMixin {
+  final RestorableFilter _filter = RestorableFilter();
+
+  @override
+  String? get restorationId => 'todo_list';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_filter, 'filter');
+  }
+
+  @override
+  void dispose() {
+    _filter.dispose();
+    super.dispose();
+  }
+  // ...
+}
+```
+
+### 11.5 GoRouter와 상태 복원 통합
+
+GoRouter의 네비게이션 상태를 복원하려면 `restorationScopeId`를 설정합니다.
+
+```dart
+// MaterialApp에서 복원 스코프 활성화
+MaterialApp.router(
+  // ✅ 복원 스코프 ID 설정 — 이것이 없으면 상태 복원이 동작하지 않음
+  restorationScopeId: 'app',
+  routerConfig: _router,
+);
+
+// GoRouter 설정
+final _router = GoRouter(
+  // ✅ GoRouter 복원 스코프
+  restorationScopeId: 'router',
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const HomePage(),
+    ),
+    GoRoute(
+      path: '/detail/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return DetailPage(id: id);
+      },
+    ),
+  ],
+);
+```
+
+> **참고**: GoRouter의 redirect와 인증 상태 통합은 [GoRouter redirect](../core/BlocUiEffect.md)와
+> [인증 라우팅](../features/Authentication.md)을 참조하세요.
+
+### 11.6 Bloc과 상태 복원 통합
+
+Bloc의 `HydratedBloc`(`hydrated_bloc` 패키지)을 사용하면 Bloc 상태를 자동으로 디스크에 저장/복원할 수 있습니다. 이는 process death 복원에도 효과적입니다.
+
+```yaml
+# pubspec.yaml
+dependencies:
+  hydrated_bloc: ^10.0.0
+  path_provider: ^2.1.5
+```
+
+```dart
+// HydratedBloc 초기화 (main.dart)
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // HydratedBloc 스토리지 초기화
+  HydratedBloc.storage = await HydratedStorage.build(
+    storageDirectory: await getApplicationDocumentsDirectory(),
+  );
+
+  runApp(const MyApp());
+}
+```
+
+```dart
+// HydratedBloc 사용 예시 — 설정 상태 자동 저장/복원
+class SettingsBloc extends HydratedBloc<SettingsEvent, SettingsState> {
+  SettingsBloc() : super(const SettingsState()) {
+    on<ThemeChanged>(_onThemeChanged);
+    on<LocaleChanged>(_onLocaleChanged);
+  }
+
+  void _onThemeChanged(ThemeChanged event, Emitter<SettingsState> emit) {
+    emit(state.copyWith(themeMode: event.themeMode));
+  }
+
+  void _onLocaleChanged(LocaleChanged event, Emitter<SettingsState> emit) {
+    emit(state.copyWith(locale: event.locale));
+  }
+
+  @override
+  SettingsState? fromJson(Map<String, dynamic> json) {
+    // 디스크에서 복원 시 호출
+    return SettingsState.fromJson(json);
+  }
+
+  @override
+  Map<String, dynamic>? toJson(SettingsState state) {
+    // 상태 변경 시 디스크에 저장
+    return state.toJson();
+  }
+}
+```
+
+### 11.7 Process Death 테스트
+
+상태 복원이 올바르게 동작하는지 검증하는 방법:
+
+**Android에서 테스트:**
+
+```bash
+# 1. 앱을 백그라운드로 보냄 (홈 버튼)
+# 2. ADB로 프로세스 강제 종료
+adb shell am kill com.example.myapp
+
+# 3. 최근 앱 목록에서 앱 탭하여 복귀
+# 4. 상태가 복원되는지 확인
+```
+
+**iOS에서 테스트:**
+
+```bash
+# Xcode에서 디버그 중:
+# 1. 앱을 백그라운드로 보냄
+# 2. Xcode 하단 디버그 바에서 "Stop" 버튼 클릭
+# 3. 기기에서 앱 아이콘 탭하여 복귀 (Xcode에서 재실행 아님)
+```
+
+**위젯 테스트:**
+
+```dart
+testWidgets('상태 복원이 올바르게 동작해야 한다', (tester) async {
+  // RootRestorationScope로 복원 테스트 환경 설정
+  await tester.pumpWidget(
+    const RootRestorationScope(
+      restorationId: 'root',
+      child: MaterialApp(
+        restorationScopeId: 'app',
+        home: CounterPage(),
+      ),
+    ),
+  );
+
+  // 카운터 증가
+  await tester.tap(find.byIcon(Icons.add));
+  await tester.pump();
+  expect(find.text('Count: 1'), findsOneWidget);
+
+  // 상태 복원 시뮬레이션
+  final data = await tester.getRestorationData();
+
+  // 앱 재시작 시뮬레이션
+  await tester.restartAndRestore();
+
+  // 복원된 상태 확인
+  expect(find.text('Count: 1'), findsOneWidget);
+
+  // 또는 수동으로 복원 데이터 적용
+  await tester.restoreFrom(data);
+  expect(find.text('Count: 1'), findsOneWidget);
+});
+```
+
+### 11.8 상태 복원 결정 기준
+
+모든 상태를 복원할 필요는 없습니다. 아래 기준으로 판단하세요:
+
+| 복원 대상 | 복원 방식 | 예시 |
+|-----------|----------|------|
+| **폼 입력 (진행 중)** | RestorationMixin | 회원가입, 주문서, 검색어 |
+| **네비게이션 스택** | GoRouter restorationScopeId | 현재 화면 위치 |
+| **스크롤 위치** | PageStorageKey (자동) | 리스트 스크롤 |
+| **탭 선택** | RestorableInt | BottomNavigationBar index |
+| **설정/테마** | HydratedBloc | 다크모드, 언어 설정 |
+| **서버 데이터** | 복원 불필요 — API 재호출 | 목록 데이터, 프로필 |
+| **일회성 UI** | 복원 불필요 | 스낵바, 다이얼로그 |
+
+> **원칙**: 사용자가 직접 입력한 데이터는 반드시 복원하고, 서버에서 가져올 수 있는 데이터는 재요청합니다.
+
+---
+
 ## 실습 과제
 
 ### 과제 1: AppLifecycleService 구현 및 테스트
@@ -1152,3 +1551,9 @@ Future<void> requestBatteryOptimizationExemption() async {
 - [ ] `WidgetsBinding.instance.removeObserver(this)`를 `dispose()`에서 호출하지 않으면 어떤 문제가 발생하는지 설명할 수 있는가?
 - [ ] WorkManager의 최소 실행 주기가 Android에서 15분인 이유를 설명할 수 있는가?
 - [ ] Foreground Service와 Background Task의 사용 시나리오 차이를 설명할 수 있는가?
+- [ ] `RestorationMixin`과 `RestorableProperty`를 사용하여 process death 후 상태를 복원하는 전체 흐름을 구현할 수 있는가?
+- [ ] `restorationId`의 역할과 위젯 트리에서 고유해야 하는 이유를 설명할 수 있는가?
+- [ ] GoRouter의 `restorationScopeId`로 네비게이션 상태를 복원하는 방법을 구현할 수 있는가?
+- [ ] `HydratedBloc`을 사용하여 Bloc 상태를 자동으로 디스크에 저장/복원하는 방법을 구현할 수 있는가?
+- [ ] ADB를 사용한 Android process death 테스트 방법을 실행할 수 있는가?
+- [ ] 복원이 필요한 상태(폼 입력, 네비게이션)와 불필요한 상태(서버 데이터, 일회성 UI)를 구분할 수 있는가?

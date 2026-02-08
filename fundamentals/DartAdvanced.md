@@ -25,8 +25,9 @@
 8. [메타프로그래밍](#8-메타프로그래밍)
 9. [메모리 관리](#9-메모리-관리)
 10. [Isolate 기초](#10-isolate-기초)
-11. [실습 과제](#실습-과제)
-12. [Self-Check](#self-check)
+11. [Dart Macros (향후 대비)](#11-dart-macros-향후-대비)
+12. [실습 과제](#실습-과제)
+13. [Self-Check](#self-check)
 
 ---
 
@@ -946,6 +947,177 @@ Isolate에 대한 더 자세한 내용은 [system/Isolates.md](../system/Isolate
 
 ---
 
+## 11. Dart Macros (향후 대비)
+
+### 11.1 Macros란?
+
+Dart Macros는 **컴파일 타임 코드 생성** 기능으로, 기존 `build_runner` + 코드 생성 패키지(freezed, json_serializable, injectable 등)를 **언어 레벨에서 대체**하는 것을 목표로 합니다.
+
+> **현재 상태 (2026년 2월 기준)**: Macros는 Dart 팀에서 활발히 개발 중이며, `@JsonCodable` 등 일부 매크로가
+> 실험적으로 제공되고 있습니다. 프로덕션 사용은 아직 권장되지 않으나, 향후 Flutter 개발 방식에
+> 큰 변화를 가져올 핵심 기능이므로 개념을 미리 이해하는 것이 중요합니다.
+
+### 11.2 build_runner vs Macros 비교
+
+```mermaid
+flowchart LR
+    subgraph Current["현재: build_runner 방식"]
+        A["소스 코드\n(.dart)"] -->|"build_runner\n실행"| B["코드 생성기\n(freezed, json_serializable)"]
+        B -->|"생성"| C[".g.dart / .freezed.dart\n생성된 파일"]
+        A --> D["컴파일"]
+        C --> D
+        D --> E["실행 파일"]
+    end
+
+    subgraph Future["향후: Macros 방식"]
+        F["소스 코드\n(@JsonCodable 등)"] -->|"컴파일러가\n직접 처리"| G["컴파일"]
+        G --> H["실행 파일"]
+    end
+
+    style Current fill:#fff3e0
+    style Future fill:#e8f5e9
+```
+
+| 항목 | build_runner (현재) | Macros (향후) |
+|------|-------------------|--------------|
+| **실행 시점** | 빌드 전 별도 단계 | 컴파일 중 자동 실행 |
+| **생성 파일** | `.g.dart`, `.freezed.dart` 등 | 없음 (컴파일러 내부 처리) |
+| **빌드 속도** | 느림 (전체 프로젝트 스캔) | 빠름 (증분 컴파일) |
+| **IDE 지원** | 생성 파일 직접 확인 가능 | IDE가 가상 코드 표시 |
+| **설정 복잡도** | `build.yaml`, `part` 지시어 필요 | 어노테이션만 추가 |
+| **디버깅** | 생성된 코드 직접 확인 | 컴파일러 출력 분석 |
+| **안정성** | ✅ 프로덕션 검증됨 | ⚠️ 실험 단계 |
+
+### 11.3 `@JsonCodable` 미리보기
+
+현재 실험적으로 제공되는 `@JsonCodable` 매크로 예시:
+
+```dart
+// ⚠️ 실험적 기능 — 프로덕션 사용 비권장
+// pubspec.yaml에서 experiment flag 필요
+// dart --enable-experiment=macros run lib/main.dart
+
+// 향후 Macros 방식 (미리보기)
+@JsonCodable()
+class User {
+  final String name;
+  final int age;
+  final String email;
+}
+
+// ✅ 위 코드만으로 아래가 자동 생성됨:
+// - User.fromJson(Map<String, dynamic> json)
+// - Map<String, dynamic> toJson()
+// - 별도 .g.dart 파일 없음, part 지시어 불필요
+```
+
+**현재 build_runner 방식과 비교:**
+
+```dart
+// 현재 방식 — json_serializable 사용
+import 'package:json_annotation/json_annotation.dart';
+
+part 'user.g.dart';  // ← Macros에서는 불필요
+
+@JsonSerializable()
+class User {
+  final String name;
+  final int age;
+  final String email;
+
+  User({required this.name, required this.age, required this.email});
+
+  // ← 이 보일러플레이트가 Macros에서는 불필요
+  factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
+  Map<String, dynamic> toJson() => _$UserToJson(this);
+}
+
+// dart run build_runner build ← 이 단계가 Macros에서는 불필요
+```
+
+### 11.4 Macros가 대체할 주요 패키지
+
+현재 프로젝트에서 사용 중인 코드 생성 패키지와 향후 Macros 대체 전망:
+
+| 패키지 | 용도 | Macros 대체 가능성 | 마이그레이션 전략 |
+|--------|------|-------------------|-----------------|
+| **json_serializable** | JSON ↔ Object | ✅ 높음 (`@JsonCodable`) | 가장 먼저 대체 예상 |
+| **freezed** | Immutable class + Union | ⚠️ 중간 (부분 대체) | sealed class로 일부 대체, 나머지 Macros 대기 |
+| **injectable** | DI 코드 생성 | ⚠️ 중간 | `@Injectable` 매크로 가능성 |
+| **retrofit** | API 클라이언트 생성 | ⚠️ 중간 | HTTP 클라이언트 매크로 가능성 |
+| **auto_route** | 라우터 코드 생성 | ❌ 낮음 (go_router가 대체) | 이미 go_router 사용 권장 |
+| **hive_generator** | Hive 어댑터 생성 | ✅ 높음 | 직렬화 매크로로 대체 가능 |
+
+### 11.5 마이그레이션 준비 전략
+
+Macros가 안정화되기 전 현재 프로젝트에서 준비할 수 있는 사항:
+
+**1단계: 현재 (build_runner 유지)**
+
+```yaml
+# pubspec.yaml — 현재 권장 설정
+dependencies:
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  build_runner: ^2.4.15
+  freezed: ^3.1.0
+  json_serializable: ^6.9.5
+```
+
+**2단계: 준비 (코드 구조 정리)**
+
+```dart
+// ✅ 좋은 패턴: 모델과 직렬화 분리
+// 향후 Macros 전환 시 모델 클래스만 어노테이션 변경하면 됨
+
+// domain/entities/user.dart — 순수 도메인 모델
+class User {
+  final String name;
+  final int age;
+  const User({required this.name, required this.age});
+}
+
+// data/models/user_dto.dart — 직렬화 담당
+// 향후 @JsonSerializable → @JsonCodable로 변경만 하면 됨
+@JsonSerializable()
+class UserDto {
+  final String name;
+  final int age;
+  // ...
+}
+```
+
+**3단계: 전환 (Macros 안정화 후)**
+
+```dart
+// 향후 전환 예상 — 변경 최소화
+// 1. part 지시어 제거
+// 2. 어노테이션 변경
+// 3. 보일러플레이트 팩토리/메서드 제거
+// 4. build_runner 의존성 제거
+
+@JsonCodable()  // @JsonSerializable() → @JsonCodable()
+class UserDto {
+  final String name;
+  final int age;
+  // fromJson, toJson 자동 생성 — 보일러플레이트 제거
+}
+```
+
+### 11.6 주의사항
+
+1. **프로덕션에서 Macros를 사용하지 마세요** — 아직 실험 단계이며 API가 변경될 수 있습니다
+2. **build_runner 방식은 당분간 유효합니다** — Macros가 안정화되어도 점진적 전환 기간이 있습니다
+3. **Dart 팀의 공식 발표를 추적하세요** — [Dart 공식 블로그](https://medium.com/dartlang)와 [GitHub](https://github.com/dart-lang/language/tree/main/working/macros)에서 진행 상황을 확인하세요
+4. **sealed class를 적극 활용하세요** — Dart 3.0의 sealed class는 freezed의 union type 일부를 이미 대체합니다. 이는 Macros 전환 시 마이그레이션 범위를 줄여줍니다
+
+> **참고**: Freezed와 sealed class 활용은 [Freezed](../core/Freezed.md)를 참조하세요.
+> build_runner 설정은 [메타프로그래밍](#8-메타프로그래밍) 섹션을 참조하세요.
+
+---
+
 ## 실습 과제
 
 ### 과제 1: Generic Repository 구현
@@ -1009,6 +1181,9 @@ Bloc 패턴을 사용하여 Todo 앱의 상태 관리를 구현하세요:
 - [ ] build_runner와 code generation의 원리를 이해하고, freezed/injectable을 활용할 수 있다
 - [ ] WeakReference를 사용한 캐시 패턴을 이해하고, Stream 구독 해제로 메모리 누수를 방지할 수 있다
 - [ ] Isolate의 메모리 격리 개념을 이해하고, compute 함수로 무거운 연산을 백그라운드에서 처리할 수 있다
+- [ ] Dart Macros의 개념과 build_runner 대비 장점(생성 파일 불필요, 빌드 속도)을 설명할 수 있다
+- [ ] `@JsonCodable` 매크로와 기존 `@JsonSerializable` + `build_runner` 방식의 차이를 비교할 수 있다
+- [ ] Macros 안정화 대비 현재 코드 구조를 준비하는 전략(모델/DTO 분리, sealed class 활용)을 이해하고 있다
 
 ---
 
