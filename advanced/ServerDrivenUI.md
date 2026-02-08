@@ -1,5 +1,6 @@
 # Server-Driven UI - Flutter 서버 주도 UI 패턴
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 시니어 | **카테고리**: advanced
 > **선행 학습**: [Architecture](../core/Architecture.md), [Freezed](../core/Freezed.md)
 > **예상 학습 시간**: 3h
@@ -1033,10 +1034,10 @@ class CustomBuilders {
       width: parser.parseDouble('width'),
       height: parser.parseDouble('height'),
       fit: parser.parseBoxFit('fit'),
-      placeholder: (context, url) => Center(
-        child: CircularProgressIndicator(),
+      placeholder: (context, url) => const Center(
+        child: const CircularProgressIndicator(),
       ),
-      errorWidget: (context, url, error) => Icon(Icons.error),
+      errorWidget: (context, url, error) => const Icon(Icons.error),
     );
   }
 
@@ -1629,7 +1630,9 @@ class AttributeParser {
 
 ```dart
 // lib/core/sdui/renderer/sdui_renderer.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
 import '../models/sdui_node.dart';
 import '../registry/widget_registry.dart';
 import '../actions/action_handler.dart';
@@ -2812,10 +2815,10 @@ class _LazyListBuilderState extends State<LazyListBuilder> {
       itemCount: _items.length + (_isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
         if (index == _items.length) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: CircularProgressIndicator(),
+          return const Center(
+            child: const Padding(
+              padding: EdgeInsets.all(16),
+              child: const CircularProgressIndicator(),
             ),
           );
         }
@@ -3537,9 +3540,9 @@ class SDUIPageContent extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('화면을 불러오는 중...'),
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  const Text('화면을 불러오는 중...'),
                 ],
               ),
             ),
@@ -3576,19 +3579,20 @@ class SDUIPageContent extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  SizedBox(height: 16),
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
                   Text(
                     '화면을 불러올 수 없습니다',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
+                  // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
                   Text(
                     state.failure.message,
                     style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () {
                       context.read<SchemaBloc>().add(
@@ -3745,6 +3749,8 @@ Future<void> configureDependencies() async {
 
 ```dart
 // lib/core/sdui/monitoring/sdui_monitor.dart
+import 'package:flutter/foundation.dart';
+
 class SDUIMonitor {
   static void trackRenderTime(String screen, Duration duration) {
     // Firebase Performance Monitoring

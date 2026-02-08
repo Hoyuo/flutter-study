@@ -1,5 +1,6 @@
 # Flutter 레이아웃 시스템 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 중급 | **카테고리**: fundamentals
 > **선행 학습**: [WidgetFundamentals](./WidgetFundamentals.md)
 > **예상 학습 시간**: 5h
@@ -487,7 +488,7 @@ class ConstraintDebugger extends StatelessWidget {
           Text('maxWidth: ${_formatValue(constraints.maxWidth)}'),
           Text('minHeight: ${_formatValue(constraints.minHeight)}'),
           Text('maxHeight: ${_formatValue(constraints.maxHeight)}'),
-          Divider(),
+          const Divider(),
           Text('isTight: ${constraints.isTight}'),
           Text('hasBoundedWidth: ${constraints.hasBoundedWidth}'),
           Text('hasBoundedHeight: ${constraints.hasBoundedHeight}'),
@@ -906,13 +907,13 @@ class SpacerExample extends StatelessWidget {
             color: Colors.blue.shade100,
             child: Row(
               children: [
-                Icon(Icons.menu),
-                SizedBox(width: 16),
-                Text('Title', style: TextStyle(fontSize: 20)),
-                Spacer(), // 남은 공간 차지
-                Icon(Icons.search),
-                SizedBox(width: 16),
-                Icon(Icons.more_vert),
+                const Icon(Icons.menu),
+                const SizedBox(width: 16),
+                const Text('Title', style: TextStyle(fontSize: 20)),
+                const Spacer(), // 남은 공간 차지
+                const Icon(Icons.search),
+                const SizedBox(width: 16),
+                const Icon(Icons.more_vert),
               ],
             ),
           ),

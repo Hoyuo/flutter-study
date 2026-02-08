@@ -1,5 +1,6 @@
 # Flutter 오프라인 우선 아키텍처
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 고급 | **카테고리**: advanced
 > **선행 학습**: [LocalStorage](../infrastructure/LocalStorage.md)
 > **예상 학습 시간**: 2h

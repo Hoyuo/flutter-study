@@ -1,5 +1,6 @@
 # Flutter Clean Architecture Reference Guide
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 Flutter 개발을 위한 포괄적인 참조 가이드입니다. Clean Architecture + Bloc 패턴을 기반으로 한 56개의 문서와 실제 구현 예제를 제공합니다.
 
 ## Overview

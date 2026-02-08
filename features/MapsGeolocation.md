@@ -1,5 +1,6 @@
 # Flutter 지도 & 위치 서비스 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > Flutter에서 Google Maps, Geolocator, Geocoding을 활용한 위치 기반 서비스 구현 가이드. Clean Architecture, Bloc 패턴, injectable DI, fpdart Either를 적용한 실전 예제로 마커 관리, 경로 탐색, Geofencing, 클러스터링까지 다룹니다.
 
 > **난이도**: 중급 | **카테고리**: features
@@ -317,6 +318,7 @@ class Location with _$Location {
 
 ```dart
 // lib/features/maps/presentation/pages/map_page.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -1133,6 +1135,7 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
     final result = await _repository.getCurrentLocation();
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
       (failure) => emit(LocationState.error(failure.message)),
       (location) => emit(LocationState.loaded(location, isTracking: false)),
     );
@@ -1191,6 +1194,7 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
     final result = await _repository.checkLocationPermission();
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
       (failure) => emit(LocationState.error(failure.message)),
       (hasPermission) {
         if (!hasPermission) {
@@ -1207,6 +1211,7 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
     final result = await _repository.requestLocationPermission();
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
       (failure) => emit(LocationState.error(failure.message)),
       (granted) {
         if (granted) {
@@ -1667,6 +1672,8 @@ class GetRoute {
 
 ```dart
 // lib/features/maps/domain/entities/geofence.dart
+import 'dart:math';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -1736,8 +1743,11 @@ class GeofenceEvent with _$GeofenceEvent {
 ```dart
 // lib/features/maps/data/services/geofence_manager.dart
 import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:injectable/injectable.dart';
+
 import '../../domain/entities/geofence.dart';
 import '../../domain/entities/location.dart';
 
@@ -2351,6 +2361,8 @@ class MyApp extends StatelessWidget {
 // lib/features/maps/data/services/map_tile_cache.dart
 import 'dart:io';
 import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';

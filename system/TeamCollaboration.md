@@ -1,5 +1,6 @@
 # Flutter 팀 협업 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 고급 | **카테고리**: system
 > **선행 학습**: [Architecture](../core/Architecture.md) | **예상 학습 시간**: 2h
 
@@ -941,7 +942,7 @@ Flutter 팀 (10명)
 - Bloc 패턴
 - Drift (로컬 데이터베이스)
 
-자세한 내용: [docs/architecture.md](docs/architecture.md)
+자세한 내용: [Architecture](../core/Architecture.md)
 
 ## 🚀 시작하기
 
@@ -1000,7 +1001,7 @@ fvm flutter build ipa --release
 
 ## 🤝 기여하기
 
-[CONTRIBUTING.md](CONTRIBUTING.md)를 참조하세요.
+코드 기여 시 [Architecture](../core/Architecture.md) 및 [Testing](./Testing.md) 문서를 참조하세요.
 
 ## 📄 라이선스
 

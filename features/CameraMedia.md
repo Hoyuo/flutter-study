@@ -1,5 +1,6 @@
 # Flutter 카메라 & 미디어 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > Flutter에서 카메라, 갤러리, 비디오 재생, QR 스캔 등 미디어 관련 기능을 Clean Architecture와 Bloc 패턴으로 구현하는 종합 가이드입니다. camera, image_picker, video_player, mobile_scanner 패키지를 활용한 실전 예제를 다룹니다.
 
 > **난이도**: 중급 | **카테고리**: features
@@ -571,6 +572,7 @@ class CameraControls extends StatelessWidget {
 ```dart
 // lib/features/media/presentation/widgets/zoom_focus_widget.dart
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class ZoomFocusWidget extends StatefulWidget {
@@ -2078,6 +2080,7 @@ class MediaBloc extends Bloc<MediaEvent, MediaState> {
     );
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
       (failure) => emit(MediaState.error(failure.message)),
       (file) => emit(MediaState.loaded([file])),
     );
@@ -2095,6 +2098,7 @@ class MediaBloc extends Bloc<MediaEvent, MediaState> {
     );
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
       (failure) => emit(MediaState.error(failure.message)),
       (files) => emit(MediaState.loaded(files)),
     );
@@ -2109,6 +2113,7 @@ class MediaBloc extends Bloc<MediaEvent, MediaState> {
     final result = await _capturePhoto(enableFlash: event.enableFlash);
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
       (failure) => emit(MediaState.error(failure.message)),
       (file) => emit(MediaState.loaded([file])),
     );

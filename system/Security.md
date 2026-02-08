@@ -1,5 +1,6 @@
 # Flutter 보안 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 고급 | **카테고리**: system
 > **선행 학습**: [Architecture](../core/Architecture.md) | **예상 학습 시간**: 2h
 >
@@ -508,6 +509,7 @@ class EncryptionException implements Exception {
 ```dart
 // lib/core/security/rsa_encryption.dart
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:pointycastle/export.dart';
@@ -2761,6 +2763,8 @@ frida -U -f com.example.app
 
 ```dart
 // lib/core/security/security_audit.dart
+import 'package:flutter/foundation.dart';
+
 class SecurityAudit {
   /// 로깅 확인
   static Future<void> checkLoggingPractices() async {
@@ -2801,6 +2805,8 @@ class SecurityAudit {
 
 ```dart
 // lib/core/security/penetration_test_checklist.dart
+import 'package:flutter/foundation.dart';
+
 class PenetrationTestChecklist {
   static const Map<String, String> checklist = {
     // 인증 및 인가
@@ -3091,6 +3097,7 @@ android {
 ```dart
 // lib/services/integrity_service.dart
 // Play Integrity API는 MethodChannel을 통한 플랫폼 채널 구현이 필요합니다.
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:dio/dio.dart';
 
@@ -3156,8 +3163,10 @@ class IntegrityVerdict {
 ```dart
 // lib/services/device_check_service.dart
 // iOS DeviceCheck/App Attest는 MethodChannel을 통한 플랫폼 채널 구현이 필요합니다.
-import 'package:flutter/services.dart';
 import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 class DeviceCheckService {
   static const MethodChannel _channel = MethodChannel('com.example.app/device_check');

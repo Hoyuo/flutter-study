@@ -1,5 +1,6 @@
 # Flutter WebSocket & 실시간 통신 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 고급 | **카테고리**: networking | **작성 기준**: 2026년 2월
 > **선행 학습**: [Networking_Dio](./Networking_Dio.md) | **예상 학습 시간**: 2h
 

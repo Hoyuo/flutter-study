@@ -1,5 +1,6 @@
 # Flutter 플랫폼 통합 가이드 (시니어)
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 시니어 | **카테고리**: infrastructure
 > **선행 학습**: [FlutterInternals](../fundamentals/FlutterInternals.md)
 > **예상 학습 시간**: 3h

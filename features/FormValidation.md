@@ -1,5 +1,6 @@
 # Flutter 폼 검증 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 중급 | **카테고리**: features
 > **선행 학습**: [Bloc](../core/Bloc.md)
 > **예상 학습 시간**: 1.5h
@@ -435,6 +436,7 @@ class LoginFormBloc extends Bloc<LoginFormEvent, LoginFormState> {
     );
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
       (failure) => emit(state.copyWith(
         isSubmitting: false,
         submitError: failure.message,
@@ -762,6 +764,7 @@ class RegisterFormBloc extends Bloc<RegisterFormEvent, RegisterFormState> {
       final result = await _checkEmailUseCase(email);
 
       result.fold(
+        // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
         (failure) => emit(state.copyWith(
           isCheckingEmail: false,
           emailError: failure.message,
@@ -883,6 +886,7 @@ class RegisterFormBloc extends Bloc<RegisterFormEvent, RegisterFormState> {
     );
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
       (failure) => emit(state.copyWith(
         isSubmitting: false,
         submitError: failure.message,
@@ -1367,6 +1371,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
 
 ```dart
 // lib/features/auth/presentation/pages/login_with_autofill.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -1880,6 +1885,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
       (failure) {
         if (failure is ValidationFailure) {
           // 서버 필드별 에러 매핑
+          // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
           emit(state.copyWith(
             isSubmitting: false,
             emailError: failure.fieldErrors['email']?.first,

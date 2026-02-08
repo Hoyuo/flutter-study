@@ -1,5 +1,6 @@
 # Flutter Functional Programming with fpdart
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 중급 | **카테고리**: core
 > **선행 학습**: [Architecture](./Architecture.md)
 > **예상 학습 시간**: 1.5h
@@ -300,6 +301,7 @@ class CreateOrderUseCase {
     final cartResult = await _cartRepository.getCart(params.cartId);
 
     return cartResult.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
       (failure) => Left(OrderFailure.cartError(failure.message)),
       (cart) async {
         // 2. 재고 확인
@@ -319,6 +321,7 @@ class CreateOrderUseCase {
             );
 
             return paymentResult.fold(
+              // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
               (failure) => Left(OrderFailure.paymentError(failure.message)),
               (payment) async {
                 // 4. 주문 생성
@@ -895,6 +898,7 @@ Future<Either<UserFailure, Unit>> deleteUser(String id);
 
 // ✅ fold로 명시적 처리
 result.fold(
+  // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
   (failure) => emit(UserState.error(failure.message)),
   (user) => emit(UserState.loaded(user)),
 );

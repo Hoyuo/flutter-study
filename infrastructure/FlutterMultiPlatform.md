@@ -1,5 +1,6 @@
 # Flutter Web & Desktop 멀티플랫폼 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 고급 | **카테고리**: infrastructure
 > **선행 학습**: [Architecture](../core/Architecture.md)
 > **예상 학습 시간**: 2h
@@ -1836,7 +1837,7 @@ class MyPage extends StatelessWidget {
         return const HeavyWidget();
       },
       placeholder: const Center(
-        child: CircularProgressIndicator(),
+        child: const CircularProgressIndicator(),
       ),
     );
   }
@@ -2219,6 +2220,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     final result = await _getUserData();
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다:
+      // String get message => when(server: (msg) => msg, network: (msg) => msg, ...);
       (failure) => emit(HomeState.error(failure.message)),
       (data) => emit(HomeState.loaded(data)),
     );

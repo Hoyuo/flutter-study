@@ -1,5 +1,6 @@
 # Flutter 권한 처리 가이드 (permission_handler)
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 중급 | **카테고리**: features
 > **선행 학습**: [Architecture](../core/Architecture.md) | **예상 학습 시간**: 1h
 
@@ -578,6 +579,7 @@ class PermissionBloc extends Bloc<PermissionEvent, PermissionState> {
     final result = await _requestPermissionUseCase(permission);
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
       (failure) => emit(state.copyWith(
         isLoading: false,
         error: failure.message,

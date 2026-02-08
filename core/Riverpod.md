@@ -1,5 +1,6 @@
 # Riverpod 상태 관리 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 고급 | **카테고리**: core
 > **선행 학습**: [Bloc](./Bloc.md)
 > **예상 학습 시간**: 3h
@@ -285,6 +286,7 @@ Future<Weather> weather(Ref ref, String city) async {
 
   // 에러 처리
   return result.fold(
+    // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
     (failure) => throw Exception(failure.message),
     (weather) => weather,
   );
@@ -371,7 +373,8 @@ class UserProfileNotifier extends _$UserProfileNotifier {
     final result = await usecase(userId);
 
     return result.fold(
-      (failure) => throw Exception(failure.message),
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
+    (failure) => throw Exception(failure.message),
       (profile) => profile,
     );
   }
@@ -697,7 +700,7 @@ class UserProfileScreen extends ConsumerWidget {
       body: userProfileAsync.when(
         // 로딩 상태
         loading: () => const Center(
-          child: CircularProgressIndicator(),
+          child: const CircularProgressIndicator(),
         ),
 
         // 데이터 상태
@@ -884,7 +887,8 @@ class Posts extends _$Posts {
     final result = await usecase(NoParams());
 
     return result.fold(
-      (failure) => throw Exception(failure.message),
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
+    (failure) => throw Exception(failure.message),
       (posts) => posts,
     );
   }
@@ -936,7 +940,8 @@ class Weather extends _$Weather {
     final result = await usecase(city);
 
     return result.fold(
-      (failure) => throw Exception(failure.message),
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
+    (failure) => throw Exception(failure.message),
       (weather) => weather,
     );
   }
@@ -972,6 +977,7 @@ Future<Product> product(Ref ref, String productId) async {
   final result = await usecase(productId);
 
   return result.fold(
+    // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
     (failure) => throw Exception(failure.message),
     (product) => product,
   );
@@ -996,6 +1002,7 @@ Future<List<Product>> productsByCategory(
   ));
 
   return result.fold(
+    // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
     (failure) => throw Exception(failure.message),
     (products) => products,
   );
@@ -1052,6 +1059,7 @@ Future<UserData> userData(Ref ref, String userId) async {
   final result = await usecase(userId);
 
   return result.fold(
+    // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
     (failure) => throw Exception(failure.message),
     (user) => user,
   );
@@ -1073,6 +1081,7 @@ Future<List<Post>> paginatedPosts(Ref ref, int page) async {
   final result = await usecase(GetPostsParams(page: page));
 
   return result.fold(
+    // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
     (failure) => throw Exception(failure.message),
     (posts) => posts,
   );
@@ -1597,7 +1606,8 @@ class Products extends _$Products {
     final result = await usecase();
 
     return result.fold(
-      (failure) => throw Exception(failure.message),
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
+    (failure) => throw Exception(failure.message),
       (products) => products,
     );
   }
@@ -1805,7 +1815,8 @@ class Posts extends _$Posts {
     final result = await usecase(NoParams());
 
     return result.fold(
-      (failure) => throw Exception(failure.message),
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
+    (failure) => throw Exception(failure.message),
       (posts) => posts,
     );
   }
@@ -2116,6 +2127,7 @@ class UserProfile extends _$UserProfile {
 
     return result.fold(
       (failure) {
+        // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
         // 구체적인 에러 타입으로 변환
         if (failure is NetworkFailure) {
           throw NetworkException(failure.message);
@@ -2195,7 +2207,8 @@ class UserNotifier extends _$UserNotifier {
     final usecase = ref.watch(getUserUseCaseProvider);
     final result = await usecase(userId);
     return result.fold(
-      (failure) => throw Exception(failure.message),
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
+    (failure) => throw Exception(failure.message),
       (user) => user,
     );
   }

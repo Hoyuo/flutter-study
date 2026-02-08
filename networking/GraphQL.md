@@ -1,5 +1,6 @@
 # Flutter GraphQL 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 고급 | **카테고리**: networking | **작성 기준**: 2026년 2월
 > **선행 학습**: [Networking_Dio](./Networking_Dio.md) | **예상 학습 시간**: 2h
 
@@ -994,9 +995,9 @@ class InfinitePostsList extends StatelessWidget {
             itemBuilder: (context, index) {
               if (index == posts.length) {
                 return const Center(
-                  child: Padding(
+                  child: const Padding(
                     padding: EdgeInsets.all(16.0),
-                    child: CircularProgressIndicator(),
+                    child: const CircularProgressIndicator(),
                   ),
                 );
               }
@@ -1625,6 +1626,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     );
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
       (failure) => emit(PostState.error(failure.message)),
       (posts) => emit(PostState.loaded(posts)),
     );
@@ -1641,6 +1643,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     );
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
       (failure) => emit(PostState.error(failure.message)),
       (post) => emit(PostState.postCreated(post)),
     );

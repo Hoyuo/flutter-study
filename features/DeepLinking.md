@@ -1,5 +1,6 @@
 # Flutter Deep Linking 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > 앱 외부(웹 브라우저, 이메일, SMS 등)에서 특정 URL을 통해 Flutter 앱의 특정 화면으로 직접 이동하는 기술을 구현하는 방법을 다룹니다. URL Scheme, Universal Links(iOS), App Links(Android), Firebase Dynamic Links를 활용하여 사용자 경험을 개선하고, go_router와 Bloc을 연동하여 Clean Architecture 기반의 딥링크 처리 시스템을 구축합니다.
 
 > **난이도**: 고급 | **카테고리**: features
@@ -1118,6 +1119,7 @@ class DeepLinkBloc extends Bloc<DeepLinkEvent, DeepLinkState> {
     _deepLinkSubscription = repository.watchDeepLinks().listen(
       (either) {
         either.fold(
+          // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
           (failure) => emit(DeepLinkState.error(failure.message)),
           (data) => add(DeepLinkEvent.deepLinkReceived(data)),
         );
@@ -1289,6 +1291,7 @@ class FCMDataSource {
 
 ```dart
 // lib/features/notifications/presentation/bloc/notification_bloc.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -1832,6 +1835,8 @@ class DeepLinkConfig {
 
 ```dart
 // lib/features/deep_linking/presentation/bloc/deep_link_bloc.dart (확장)
+import 'package:flutter/foundation.dart';
+
 extension DeepLinkErrorRecovery on DeepLinkBloc {
   Future<void> handleError(
     String error,

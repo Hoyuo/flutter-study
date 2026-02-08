@@ -1,5 +1,6 @@
 # Flutter 디자인 시스템 구축 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 중급 | **카테고리**: fundamentals
 > **선행 학습**: [WidgetFundamentals](./WidgetFundamentals.md), [LayoutSystem](./LayoutSystem.md)
 > **예상 학습 시간**: 2h

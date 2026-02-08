@@ -1,5 +1,6 @@
 # Flutter Isolate & 동시성 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 고급 | **카테고리**: system
 > **선행 학습**: [DartAdvanced](../fundamentals/DartAdvanced.md) | **예상 학습 시간**: 2h
 
@@ -407,9 +408,10 @@ dynamic _processTask(Map<String, dynamic> task) {
 
 ```dart
 // lib/core/isolates/bidirectional_isolate.dart
-
 import 'dart:async';
 import 'dart:isolate';
+
+import 'package:flutter/foundation.dart';
 
 class BidirectionalIsolate {
   Isolate? _isolate;
@@ -1382,6 +1384,7 @@ class ImageBloc extends Bloc<ImageEvent, ImageState> {
     final result = await _compressImage(bytes, quality);
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
       (failure) => emit(ImageState.error(failure.message)),
       (compressed) => emit(ImageState.compressed(compressed)),
     );
@@ -1397,6 +1400,7 @@ class ImageBloc extends Bloc<ImageEvent, ImageState> {
     final result = await _applyFilter(bytes, filterType);
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
       (failure) => emit(ImageState.error(failure.message)),
       (filtered) => emit(ImageState.filtered(filtered)),
     );

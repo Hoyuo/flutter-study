@@ -1,5 +1,6 @@
 # Flutter 이미지 처리 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 중급 | **카테고리**: features
 > **선행 학습**: [Architecture](../core/Architecture.md)
 > **예상 학습 시간**: 2h
@@ -128,13 +129,13 @@ CachedNetworkImage(
   placeholder: (context, url) => Container(
     color: Colors.grey[200],
     child: const Center(
-      child: Icon(Icons.image, color: Colors.grey),
+      child: const Icon(Icons.image, color: Colors.grey),
     ),
   ),
   errorWidget: (context, url, error) => Container(
     color: Colors.grey[200],
     child: const Center(
-      child: Icon(Icons.broken_image, color: Colors.grey),
+      child: const Icon(Icons.broken_image, color: Colors.grey),
     ),
   ),
 )
@@ -561,6 +562,7 @@ class ImageCompressService {
 // lib/core/image/file_cleanup_utility.dart
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path/path.dart' as path;
 

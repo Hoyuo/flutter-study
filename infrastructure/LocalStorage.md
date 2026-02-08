@@ -1,5 +1,6 @@
 # Flutter Local Storage Guide
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 중급 | **카테고리**: infrastructure
 > **선행 학습**: [Architecture](../core/Architecture.md)
 > **예상 학습 시간**: 2h

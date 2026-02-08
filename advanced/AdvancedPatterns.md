@@ -1,5 +1,6 @@
 # Advanced Design Patterns - Flutter 고급 설계 패턴
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 시니어 | **카테고리**: advanced
 > **선행 학습**: [Architecture](../core/Architecture.md), [Bloc](../core/Bloc.md)
 > **예상 학습 시간**: 2h
@@ -175,6 +176,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
       emit(OrderCreating());
       final result = await _createOrder.execute(event.request);
       result.fold(
+        // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
         (failure) => emit(OrderError(failure.message)),
         (orderId) => emit(OrderCreated(orderId)),
       );

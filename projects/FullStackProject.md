@@ -1,5 +1,6 @@
 # Flutter 실전 프로젝트 가이드 - Todo 앱 처음부터 끝까지
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 중급 | **카테고리**: projects
 > **선행 학습**: [Architecture](../core/Architecture.md), [Bloc](../core/Bloc.md), [Freezed](../core/Freezed.md), [Fpdart](../core/Fpdart.md) | **예상 학습 시간**: 8h
 
@@ -355,6 +356,7 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     final result = await _getTodosUseCase();
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다
       (failure) => emit(TodoState.error(failure.message)),
       (todos) => emit(TodoState.loaded(todos)),
     );

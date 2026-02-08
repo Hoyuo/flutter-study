@@ -1,5 +1,6 @@
 # Flutter 페이지네이션 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 중급 | **카테고리**: features
 > **선행 학습**: [Bloc](../core/Bloc.md)
 > **예상 학습 시간**: 1.5h
@@ -235,6 +236,8 @@ class ProductListBloc extends Bloc<ProductListEvent, ProductListState> {
     );
 
     result.fold(
+      // 📝 참고: Failure에 message getter가 정의되어 있어야 합니다:
+      // String get message => when(...);
       (failure) => emit(state.copyWith(
         isLoading: false,
         error: failure.message,
@@ -525,7 +528,7 @@ class _EmptyView extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.inbox_outlined, size: 48, color: Colors.grey),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text('상품이 없습니다'),
         ],
       ),

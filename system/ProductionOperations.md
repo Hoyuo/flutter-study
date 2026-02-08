@@ -1,5 +1,6 @@
 # Flutter 프로덕션 운영 가이드 (시니어)
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 시니어 | **카테고리**: system
 > **선행 학습**: [Testing](./Testing.md), [CICD](../infrastructure/CICD.md) | **예상 학습 시간**: 3h
 

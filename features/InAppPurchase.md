@@ -1,5 +1,6 @@
 # Flutter 인앱 결제 가이드 (In-App Purchase)
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 고급 | **카테고리**: features
 > **선행 학습**: [Architecture](../core/Architecture.md)
 > **예상 학습 시간**: 3h

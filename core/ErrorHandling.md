@@ -1,5 +1,6 @@
 # Flutter 에러 처리 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 중급 | **카테고리**: core
 > **선행 학습**: [Fpdart](./Fpdart.md)
 > **예상 학습 시간**: 2h
@@ -338,6 +339,7 @@ class ProductRepositoryImpl implements ProductRepository {
 
 ```dart
 // lib/core/error/error_handler.dart
+import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 
 import 'exceptions.dart';
@@ -416,6 +418,7 @@ enum ErrorDisplayType {
 
 ```dart
 // lib/core/error/error_presenter.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'failure.dart';

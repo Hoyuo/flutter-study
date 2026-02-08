@@ -1,5 +1,6 @@
 # Flutter Custom Painting & 그래픽 가이드
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 고급 | **카테고리**: features
 > **선행 학습**: [FlutterInternals](../fundamentals/FlutterInternals.md)
 > **예상 학습 시간**: 3h
@@ -2781,6 +2782,9 @@ class StarBorder extends ShapeBorder {
 
 ```dart
 // lib/core/widgets/custom_render_box.dart
+import 'package:flutter/foundation.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 
 class CustomSizeWidget extends LeafRenderObjectWidget {
   final Color color;

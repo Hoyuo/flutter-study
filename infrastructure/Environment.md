@@ -1,5 +1,6 @@
 # Flutter Environment & Multi-Country Guide
 
+> **마지막 업데이트**: 2026-02-08 | **Flutter 3.38** | **Dart 3.10**
 > **난이도**: 중급 | **카테고리**: infrastructure
 > **선행 학습**: [DI](./DI.md)
 > **예상 학습 시간**: 1h
@@ -623,6 +624,8 @@ final price = formatter.format(10000);
 ## 8. 빌드 설정
 
 ### 8.1 Android Flavor 설정
+
+<!-- 📝 참고: 아래는 Groovy DSL 예제입니다. Kotlin DSL을 사용하는 경우 build.gradle.kts로 변환하세요. -->
 
 ```groovy
 // android/app/build.gradle
