@@ -1294,8 +1294,8 @@ void main() {
     });
 
     testWidgets('Text color contrast meets WCAG AA', (WidgetTester tester) async {
-      const foreground = Color(0xFF000000);  // 검정
-      const background = Color(0xFFFFFFFF);  // 흰색
+      const foreground = Color.fromARGB32(0xFF000000);  // 검정
+      const background = Color.fromARGB32(0xFFFFFFFF);  // 흰색
 
       final contrast = AccessibilityColorUtils.getContrastRatio(
         foreground,
