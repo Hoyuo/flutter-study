@@ -92,8 +92,8 @@ flutter_secure_storage는 플랫폼별 보안 저장소(iOS Keychain, Android Ke
 # pubspec.yaml
 dependencies:
   flutter_secure_storage: ^10.0.0
-  crypto: ^3.0.0
-  pointycastle: ^3.7.0
+  crypto: ^3.0.7
+  pointycastle: ^4.0.0
 ```
 
 **Flutter 3.27 요구사항**
@@ -360,7 +360,7 @@ import 'package:pointycastle/pointycastle.dart';
 
 // pubspec.yaml에 pointycastle 의존성 추가 필요:
 // dependencies:
-//   pointycastle: ^3.7.0
+//   pointycastle: ^4.0.0
 //   encrypt: ^5.0.0
 
 class PBKDF2 {
@@ -698,7 +698,7 @@ object KeystoreManager {
 # pubspec.yaml
 dependencies:
   dio: ^5.9.1
-  dio_http2_adapter: ^2.0.0
+  dio_http2_adapter: ^2.6.0
 ```
 
 #### Certificate Pinning 구현
@@ -1529,7 +1529,7 @@ class TimingSafeComparison {
 # pubspec.yaml
 dependencies:
   flutter_jailbreak_detection: ^1.10.0
-  safe_device: ^2.0.0  # 추가 보안 검사
+  safe_device: ^1.3.8  # 추가 보안 검사
 ```
 
 ```dart
@@ -2311,7 +2311,7 @@ class TokenException implements Exception {
 ```yaml
 # pubspec.yaml
 dependencies:
-  local_auth: ^2.1.0
+  local_auth: ^3.0.0
   local_auth_ios: ^1.0.0
   local_auth_android: ^1.0.0
 ```

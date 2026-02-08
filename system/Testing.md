@@ -1225,7 +1225,7 @@ Patrol은 Flutter의 Integration Test를 강화한 프레임워크로, 네이티
 ```yaml
 # pubspec.yaml
 dev_dependencies:
-  patrol: ^4.0.0
+  patrol: ^4.1.0
 ```
 
 ### 14.2 기본 Patrol Test
@@ -1454,8 +1454,8 @@ Property-based Testing은 랜덤 입력값으로 함수의 불변성(invariant)�
 ```yaml
 # pubspec.yaml
 dev_dependencies:
-  test: ^1.25.0
-  glados: ^2.0.0  # Property-based testing
+  test: ^1.29.0
+  glados: ^1.1.7  # Property-based testing
   # 💡 Fake 객체는 mocktail 또는 직접 구현으로 생성합니다. (별도 패키지 불필요)
 ```
 
@@ -1686,7 +1686,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   golden_toolkit: ^0.15.0
-  alchemist: ^0.7.0  # 고급 Golden Test
+  alchemist: ^0.13.0  # 고급 Golden Test
 ```
 
 ### 17.2 Alchemist로 고급 Golden Test
@@ -1933,7 +1933,7 @@ API의 요청/응답 스키마를 검증하여 프론트엔드-백엔드 계약�
 
 ```yaml
 dev_dependencies:
-  http_mock_adapter: ^0.6.0
+  http_mock_adapter: ^0.6.1
   json_schema: ^5.1.0
 ```
 
@@ -2141,7 +2141,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   golden_toolkit: ^0.15.0
-  alchemist: ^0.7.0
+  alchemist: ^0.13.0
 ```
 
 ```dart

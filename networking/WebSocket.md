@@ -79,7 +79,7 @@ dependencies:
     sdk: flutter
 
   # WebSocket & 실시간 통신
-  web_socket_channel: ^3.0.2      # 기본 WebSocket 클라이언트
+  web_socket_channel: ^3.0.3      # 기본 WebSocket 클라이언트
   socket_io_client: ^3.1.4         # Socket.IO 클라이언트
 
   # 상태 관리 & 아키텍처
@@ -102,7 +102,7 @@ dependencies:
   connectivity_plus: ^7.0.0        # 네트워크 상태 확인
   shared_preferences: ^2.5.4       # 로컬 저장소
   rxdart: ^0.28.0                  # Reactive Extensions (BehaviorSubject 등)
-  battery_plus: ^6.1.0             # 배터리 상태 확인
+  battery_plus: ^7.0.0             # 배터리 상태 확인
 
 dev_dependencies:
   flutter_test:

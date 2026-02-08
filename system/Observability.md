@@ -46,21 +46,21 @@ dependencies:
   firebase_core: ^4.4.0
   firebase_analytics: ^12.1.1
   firebase_crashlytics: ^5.0.7
-  firebase_performance: ^0.11.0
+  firebase_performance: ^0.11.1+4
 
   # 로깅
   logger: ^2.6.2
 
   # Sentry (선택사항)
-  sentry_flutter: ^8.14.2
+  sentry_flutter: ^9.12.0
   sentry_dio: ^9.12.0
 
   # 네트워크 & 유틸
   dio: ^5.9.1
-  sqflite: ^2.3.0
+  sqflite: ^2.4.2
   path_provider: ^2.1.5
-  intl: ^0.19.0
-  uuid: ^4.0.0
+  intl: ^0.20.2
+  uuid: ^4.5.2
   injectable: ^2.7.1
 
 dev_dependencies:

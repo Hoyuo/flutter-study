@@ -145,7 +145,7 @@ dependencies:
 
   # 네트워킹
   dio: ^5.9.1
-  retrofit: ^4.5.0
+  retrofit: ^4.9.2
   pretty_dio_logger: ^1.4.0
 
   # JSON 직렬화
@@ -172,8 +172,8 @@ dependencies:
 
   # 유틸리티
   equatable: ^2.0.8
-  intl: ^0.19.0
-  logger: ^2.5.0
+  intl: ^0.20.2
+  logger: ^2.6.2
 
 dev_dependencies:
   flutter_test:
@@ -184,7 +184,7 @@ dev_dependencies:
   build_runner: ^2.11.0
   json_serializable: ^6.12.0
   freezed: ^3.2.5
-  retrofit_generator: ^9.1.4
+  retrofit_generator: ^10.2.1
   injectable_generator: ^2.12.0
   hive_generator: ^2.0.1
 

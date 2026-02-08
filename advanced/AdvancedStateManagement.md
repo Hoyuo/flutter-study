@@ -6,7 +6,7 @@
 
 > 대규모 엔터프라이즈 애플리케이션을 위한 고급 상태 관리 패턴 및 아키텍처
 
-> **Flutter 3.27+ / Dart 3.6+** | bloc ^9.1.1 | flutter_bloc ^9.1.1 | bloc_concurrency ^0.3.0 | hydrated_bloc ^9.1.5 | freezed ^3.2.4 | fpdart ^1.2.0
+> **Flutter 3.27+ / Dart 3.6+** | bloc ^9.1.1 | flutter_bloc ^9.1.1 | bloc_concurrency ^0.3.0 | hydrated_bloc ^10.1.1 | freezed ^3.2.4 | fpdart ^1.2.0
 
 > **학습 목표**: 이 문서를 학습하면 다음을 할 수 있습니다:
 > - Event Sourcing, CQRS 등 고급 상태 관리 패턴을 이해하고 구현할 수 있다

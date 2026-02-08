@@ -2567,7 +2567,7 @@ Feature Flag를 활용하면 코드 배포와 기능 출시를 분리할 수 있
 ```yaml
 # pubspec.yaml
 dependencies:
-  launchdarkly_flutter_client_sdk: ^4.0.0
+  launchdarkly_flutter_client_sdk: ^4.14.0
 ```
 
 ```dart

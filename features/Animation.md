@@ -18,10 +18,10 @@ Flutter 애니메이션의 모든 것을 다룹니다. 암시적 애니메이션
 ```yaml
 # pubspec.yaml
 dependencies:
-  lottie: ^3.3.1  # Lottie 애니메이션 (2026년 2월 기준)
-  rive: ^0.13.19  # Rive 애니메이션 (선택사항)
+  lottie: ^3.3.2  # Lottie 애니메이션 (2026년 2월 기준)
+  rive: ^0.14.2  # Rive 애니메이션 (선택사항)
   flutter_animate: ^4.5.2  # 선언적 애니메이션 헬퍼
-  animations: ^2.0.11  # Material 모션 라이브러리
+  animations: ^2.1.1  # Material 모션 라이브러리
 ```
 
 ## 애니메이션 선택 가이드

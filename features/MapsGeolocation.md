@@ -72,17 +72,17 @@ dependencies:
   json_annotation: ^4.10.0
 
   # Maps & Location
-  google_maps_flutter: ^2.12.1
+  google_maps_flutter: ^2.14.0
   google_maps_flutter_web: ^0.5.10
   google_maps_flutter_android: ^2.14.6
   google_maps_flutter_ios: ^2.11.0
-  geolocator: ^14.0.0
-  geocoding: ^3.0.0
-  flutter_polyline_points: ^2.1.0
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  flutter_polyline_points: ^3.1.0
 
   # Utilities
   permission_handler: ^12.0.1
-  uuid: ^4.5.1
+  uuid: ^4.5.2
   http: ^1.2.2
   cached_network_image: ^3.4.1
 

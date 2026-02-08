@@ -69,13 +69,13 @@ environment:
 
 dependencies:
   # 필요 시 의존성 추가
-  meta: ^1.15.0
+  meta: ^1.18.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   lints: ^6.1.0
-  test: ^1.25.0
+  test: ^1.29.0
 
 # 플랫폼 제약이 없는 순수 Dart 패키지
 platforms:
@@ -1511,13 +1511,13 @@ environment:
   sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
-  meta: ^1.15.0
+  meta: ^1.18.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   lints: ^6.1.0
-  test: ^1.25.0
+  test: ^1.29.0
   mocktail: ^1.0.4
 
 topics:

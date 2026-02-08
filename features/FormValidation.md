@@ -1779,7 +1779,7 @@ class CardNumberFormatter extends TextInputFormatter {
 ```dart
 // pubspec.yaml에 추가 필요:
 // dependencies:
-//   intl: ^0.19.0
+//   intl: ^0.20.2
 
 import 'package:intl/intl.dart';
 

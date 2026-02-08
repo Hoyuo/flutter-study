@@ -104,11 +104,11 @@ dependencies:
   firebase_auth: ^6.1.4
   cloud_firestore: ^6.1.2
   firebase_storage: ^13.0.6
-  cloud_functions: ^5.0.1
+  cloud_functions: ^6.0.6
   firebase_messaging: ^16.1.1
   firebase_crashlytics: ^5.0.7
   firebase_analytics: ^12.1.1
-  firebase_remote_config: ^5.0.1
+  firebase_remote_config: ^6.1.4
 
   # State Management & DI
   flutter_bloc: ^9.1.1
@@ -526,7 +526,7 @@ class FirebaseAuthRepository implements AuthRepository {
 ```yaml
 # pubspec.yaml
 dependencies:
-  sign_in_with_apple: ^5.0.0
+  sign_in_with_apple: ^7.0.1
 ```
 
 ```dart

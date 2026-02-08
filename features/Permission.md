@@ -1174,7 +1174,7 @@ App Store 심사 시 ATT 없이 IDFA 접근 시 **리젝** 됩니다.
 ```dart
 // pubspec.yaml
 dependencies:
-  app_tracking_transparency: ^2.0.0
+  app_tracking_transparency: ^2.0.6+1
 
 // lib/services/tracking_service.dart
 import 'dart:io';

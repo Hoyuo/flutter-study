@@ -30,13 +30,13 @@ dependencies:
   freezed_annotation: ^3.1.0  # Dart 3.6 호환
 
   # UUID 생성
-  uuid: ^4.0.0
+  uuid: ^4.5.2
 
   # 함수형 프로그래밍
   fpdart: ^1.2.0
 
   # 백그라운드 작업
-  workmanager: ^0.9.0
+  workmanager: ^0.9.0+3
 
 dev_dependencies:
   freezed: ^3.2.5            # Dart 3.6 호환

@@ -118,8 +118,8 @@ dependencies:
   json_annotation: ^4.10.0
 
   # 백그라운드 작업
-  workmanager: ^0.9.0
-  flutter_background_service: ^5.0.10
+  workmanager: ^0.9.0+3
+  flutter_background_service: ^5.1.0
 
   # 유틸리티
   logger: ^2.6.2

@@ -1376,7 +1376,7 @@ class ProductListPage extends StatelessWidget {
 ```yaml
 # pubspec.yaml
 dependencies:
-  hydrated_bloc: ^10.0.0  # bloc ^9.0.0 호환
+  hydrated_bloc: ^10.1.1  # bloc ^9.0.0 호환
   path_provider: ^2.1.5
 ```
 

@@ -144,25 +144,25 @@ dependencies:
   json_annotation: ^4.10.0
 
   # Camera & Media
-  camera: ^0.11.1
+  camera: ^0.11.3
   image_picker: ^1.2.1
-  video_player: ^2.9.1
-  mobile_scanner: ^5.2.3
+  video_player: ^2.10.1
+  mobile_scanner: ^7.1.4
 
   # Image Processing
   flutter_image_compress: ^2.4.0
-  image: ^4.2.0
+  image: ^4.7.2
   image_cropper: ^11.0.0
 
   # Video Processing
-  video_compress: ^3.1.3
+  video_compress: ^3.1.4
 
   # Permissions
   permission_handler: ^12.0.1
 
   # Path
   path_provider: ^2.1.5
-  path: ^1.9.0
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:

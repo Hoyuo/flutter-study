@@ -947,7 +947,7 @@ void main() {
 ```yaml
 # pubspec.yaml
 dependencies:
-  workmanager: ^0.9.0
+  workmanager: ^0.9.0+3
 ```
 
 ```dart

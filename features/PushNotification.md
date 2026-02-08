@@ -26,7 +26,7 @@ Firebase Cloud Messaging(FCM)과 flutter_local_notifications를 조합하여 푸
 dependencies:
   firebase_core: ^4.4.0
   firebase_messaging: ^16.1.1
-  flutter_local_notifications: ^19.2.1
+  flutter_local_notifications: ^20.0.0
 ```
 
 ### Migration Notes (firebase_messaging v15 → v16)

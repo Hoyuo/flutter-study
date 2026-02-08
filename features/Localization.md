@@ -24,7 +24,7 @@ easy_localization은 Flutter에서 다국어 처리를 간편하게 구현할 �
 ```yaml
 # pubspec.yaml (2026년 2월 기준)
 dependencies:
-  easy_localization: ^3.0.7  # 3.x stable
+  easy_localization: ^3.0.8  # 3.x stable
 
 flutter:
   assets:

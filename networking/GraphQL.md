@@ -71,10 +71,10 @@ dependencies:
   flutter_bloc: ^9.1.1
 
   # GraphQL
-  graphql_flutter: ^5.2.0-beta.7
-  ferry: ^0.16.0
+  graphql_flutter: ^5.2.1
+  ferry: ^0.16.1+2
   ferry_flutter: ^0.9.0
-  gql: ^1.0.0
+  gql: ^1.0.1
   gql_http_link: ^1.0.2
   gql_websocket_link: ^1.0.0
 
@@ -88,7 +88,7 @@ dependencies:
   # Code Generation
   freezed_annotation: ^3.1.0
   json_annotation: ^4.10.0
-  built_value: ^8.9.2
+  built_value: ^8.12.3
 
   # Utils
   equatable: ^2.0.8

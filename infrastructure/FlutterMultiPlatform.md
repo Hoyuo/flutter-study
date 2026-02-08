@@ -141,16 +141,16 @@ dependencies:
   flutter_adaptive_scaffold: ^0.2.3  # ⚠️ DISCONTINUED - Flutter 공식 adaptive_layout 또는 자체 반응형 레이아웃 구현 권장
 
   # Platform Detection
-  universal_io: ^2.2.2
+  universal_io: ^2.3.1
 
   # Web Specific
   # url_strategy: deprecated - flutter_web_plugins 내장 기능 사용
   js: ^0.7.1  # ⚠️ deprecated - dart:js_interop 사용 권장
 
   # Desktop Specific
-  window_manager: ^0.4.2
-  tray_manager: ^0.2.3
-  file_picker: ^8.1.2
+  window_manager: ^0.5.1
+  tray_manager: ^0.5.2
+  file_picker: ^10.3.10
   path_provider: ^2.1.5
 
   # Storage
@@ -407,7 +407,7 @@ Dart에서 window_manager 패키지 사용:
 ```dart
 // pubspec.yaml
 dependencies:
-  window_manager: ^0.4.2
+  window_manager: ^0.5.1
 
 // lib/main.dart
 import 'package:flutter/material.dart';
@@ -808,8 +808,8 @@ class PlatformDialog {
 ```yaml
 # pubspec.yaml
 dependencies:
-  fluent_ui: ^4.9.1
-  window_manager: ^0.4.2
+  fluent_ui: ^4.13.0
+  window_manager: ^0.5.1
 ```
 
 ```dart

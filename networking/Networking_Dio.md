@@ -56,7 +56,7 @@ dependencies:
   injectable: ^2.7.1
   freezed_annotation: ^3.1.0
   fpdart: ^1.2.0
-  crypto: ^3.0.3  # for SSL pinning (sha256)
+  crypto: ^3.0.7  # for SSL pinning (sha256)
 
 dev_dependencies:
   injectable_generator: ^2.12.0
@@ -546,7 +546,7 @@ SSL Pinning은 중간자 공격(MITM)을 방지하기 위해 서버의 인증서
 dependencies:
   # SSL Pinning 옵션:
   # Option 1: http_certificate_pinning (권장)
-  http_certificate_pinning: ^2.0.0
+  http_certificate_pinning: ^3.0.1
   # Option 2: 직접 구현 (4.6.3 섹션 참조)
 ```
 
@@ -902,7 +902,7 @@ class AuthInterceptor extends Interceptor {
 ```dart
 // core/core_network/pubspec.yaml
 dependencies:
-  synchronized: ^3.3.0+3
+  synchronized: ^3.4.0
 ```
 
 ```dart

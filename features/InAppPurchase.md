@@ -33,7 +33,7 @@ dependencies:
   in_app_purchase: ^3.2.3
 
   # 또는 RevenueCat (권장 - 서버 인프라 포함)
-  purchases_flutter: ^8.10.0
+  purchases_flutter: ^9.11.0
 
   # 상태 관리
   flutter_bloc: ^9.1.1

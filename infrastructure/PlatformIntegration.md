@@ -956,7 +956,7 @@ class ComputationBloc extends Bloc<ComputationEvent, ComputationState> {
 ```yaml
 # pubspec.yaml
 dev_dependencies:
-  ffigen: ^13.0.0
+  ffigen: ^20.1.1
 
 # ffigen.yaml
 name: NativeLibrary
@@ -1005,7 +1005,7 @@ Pigeon은 타입 안전한 Platform Channel 코드를 자동 생성합니다.
 ```yaml
 # pubspec.yaml
 dev_dependencies:
-  pigeon: ^22.0.0
+  pigeon: ^26.1.7
 
 # pigeons/messages.dart
 import 'package:pigeon/pigeon.dart';

@@ -24,10 +24,10 @@ dependencies:
   image_picker: ^1.2.1
   image_cropper: ^11.0.0
   flutter_image_compress: ^2.4.0
-  http_parser: ^4.0.0  # multipart 업로드용
+  http_parser: ^4.1.2  # multipart 업로드용
   shimmer: ^3.0.0
   permission_handler: ^12.0.1
-  path: ^1.8.0  # 경로 처리용
+  path: ^1.9.1  # 경로 처리용
   device_info_plus: ^12.3.0
 ```
 
@@ -1411,7 +1411,7 @@ class LargeImageHandler {
 ```dart
 // pubspec.yaml
 dependencies:
-  flutter_blurhash: ^0.8.0
+  flutter_blurhash: ^0.9.1
 
 class BlurHashImage extends StatelessWidget {
   final String imageUrl;
