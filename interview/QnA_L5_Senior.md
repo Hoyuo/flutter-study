@@ -1341,7 +1341,7 @@ class FeatureFlagDebugScreen extends ConsumerWidget {
 
 **핵심 키워드**: Module Federation, Isolated Widget Tree, Cross-Module Communication
 
-**모범 답응**:
+**모범 답변**:
 Flutter Web에서 Micro Frontend는 독립 빌드와 런타임 격리가 핵심입니다.
 
 **Module Federation 구조**:
@@ -5651,7 +5651,7 @@ flutter pub outdated --mode=null-safety
 
 ### 관련 문서
 - [L3 Junior Q&A](./QnA_L3_Junior.md) - 주니어 레벨 기초 질문
-- [L4 Mid-level Q&A](./QnA_L4_Mid.md) - 미드 레벨 실무 질문
+- [L4 Mid-level Q&A](./QnA_L4_MidLevel.md) - 미드 레벨 실무 질문
 - [L6 Staff Q&A](./QnA_L6_Staff.md) - 스태프 레벨 전략적 질문
 - [Performance Optimization](../docs/performance_optimization.md)
 - [Testing Strategy](../docs/testing_strategy.md)

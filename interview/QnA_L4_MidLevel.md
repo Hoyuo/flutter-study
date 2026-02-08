@@ -5452,7 +5452,7 @@ class CacheManager {
 
 ---
 
-## 섹션 5: 테스트 전략 (Q29-Q32)
+## 6. 테스트
 
 ### Q29. 테스트 피라미드를 Flutter에 적용하면?
 **핵심 키워드**: Unit Test, Widget Test, Integration Test
@@ -5639,7 +5639,7 @@ testWidgets('ProductCard dark mode', (tester) async {
 
 ---
 
-## 섹션 6: 모바일 실무 (Q33-Q37)
+## 7. 모바일 실무
 
 ### Q33. AppLifecycleState를 어떻게 활용하나요?
 **핵심 키워드**: `WidgetsBindingObserver`, Background/Foreground, State Preservation

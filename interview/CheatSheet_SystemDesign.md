@@ -2,7 +2,7 @@
 
 > **대상**: 모바일 엔지니어 시스템 설계 면접 준비
 > **레벨**: L5 (Senior) ~ L6 (Staff)
-> **레벨 표시**: :yellow_circle: L5 필수 | :red_circle: L6 필수
+> **레벨 표시**: 🟡 L5 필수 | 🔴 L6 필수
 
 ---
 
@@ -17,7 +17,7 @@
 
 ## 1. 아키텍처 패턴 비교
 
-### 1.1 Clean Architecture 3계층 요약 :yellow_circle:
+### 1.1 Clean Architecture 3계층 요약 🟡
 
 ```mermaid
 flowchart TD
@@ -64,7 +64,7 @@ flowchart TD
 
 ---
 
-### 1.2 Clean Architecture vs Hexagonal vs Onion 비교표 :red_circle:
+### 1.2 Clean Architecture vs Hexagonal vs Onion 비교표 🔴
 
 | 항목 | Clean Architecture | Hexagonal (Ports & Adapters) | Onion Architecture |
 |------|-------------------|-----------------------------|--------------------|
@@ -97,7 +97,7 @@ flowchart LR
 
 ---
 
-### 1.3 DDD 핵심 개념 요약 :red_circle:
+### 1.3 DDD 핵심 개념 요약 🔴
 
 | 개념 | 설명 | 모바일 예시 |
 |------|------|-------------|
@@ -120,7 +120,7 @@ flowchart LR
 
 ---
 
-### 1.4 CQRS + Event Sourcing 패턴 :red_circle:
+### 1.4 CQRS + Event Sourcing 패턴 🔴
 
 ```mermaid
 flowchart LR
@@ -157,7 +157,7 @@ flowchart LR
 
 ---
 
-### 1.5 Feature-based vs Layer-based 폴더 구조 비교 :yellow_circle:
+### 1.5 Feature-based vs Layer-based 폴더 구조 비교 🟡
 
 | 항목 | Layer-based | Feature-based |
 |------|------------|---------------|
@@ -189,7 +189,7 @@ lib/                              lib/
 
 ## 2. 모바일 시스템 설계 프레임워크
 
-### 2.1 시스템 설계 면접 답변 프레임워크 (4단계) :yellow_circle:
+### 2.1 시스템 설계 면접 답변 프레임워크 (4단계) 🟡
 
 ```mermaid
 flowchart LR
@@ -263,7 +263,7 @@ flowchart TD
 | **동기화** | 오프라인 큐, 충돌 해결, 낙관적 업데이트 |
 | **성능** | 페이지네이션, 이미지 최적화, 프리로딩 |
 
-#### 4단계: 트레이드오프 분석 (10분) :red_circle:
+#### 4단계: 트레이드오프 분석 (10분) 🔴
 
 | 결정 항목 | 선택지 A | 선택지 B | 판단 기준 |
 |-----------|---------|---------|-----------|
@@ -276,7 +276,7 @@ flowchart TD
 
 ---
 
-### 2.2 비기능 요구사항 체크리스트 :yellow_circle:
+### 2.2 비기능 요구사항 체크리스트 🟡
 
 | NFR 카테고리 | 세부 항목 | 질문 예시 |
 |-------------|----------|-----------|
@@ -292,7 +292,7 @@ flowchart TD
 
 ---
 
-### 2.3 API 설계 원칙 요약 :yellow_circle:
+### 2.3 API 설계 원칙 요약 🟡
 
 | 원칙 | 설명 | 모바일 관점 |
 |------|------|-------------|
@@ -330,7 +330,7 @@ GET /api/v1/posts?cursor=abc123&limit=20
 
 ---
 
-### 문제 1: 실시간 채팅 앱 :yellow_circle:
+### 문제 1: 실시간 채팅 앱 🟡
 
 #### 핵심 요구사항
 - 1:1 및 그룹 채팅
@@ -405,7 +405,7 @@ flowchart TD
 
 ---
 
-### 문제 2: 대규모 이미지 피드 (Instagram 스타일) :yellow_circle:
+### 문제 2: 대규모 이미지 피드 (Instagram 스타일) 🟡
 
 #### 핵심 요구사항
 - 무한 스크롤 피드
@@ -478,7 +478,7 @@ flowchart TD
 
 ---
 
-### 문제 3: O2O 배달 앱 (실시간 위치 추적) :yellow_circle:
+### 문제 3: O2O 배달 앱 (실시간 위치 추적) 🟡
 
 #### 핵심 요구사항
 - 주문 상태 실시간 추적
@@ -564,7 +564,7 @@ LocationSettings getSettings(DeliveryStatus status) {
 
 ---
 
-### 문제 4: 오프라인 우선 메모 앱 :red_circle:
+### 문제 4: 오프라인 우선 메모 앱 🔴
 
 #### 핵심 요구사항
 - 네트워크 없이도 완전한 CRUD 동작
@@ -605,7 +605,7 @@ flowchart TD
     WS -->|변경 알림| NoteBloc
 ```
 
-#### 충돌 해결 전략 비교 :red_circle:
+#### 충돌 해결 전략 비교 🔴
 
 | 전략 | 설명 | 장점 | 단점 | 적합한 상황 |
 |------|------|------|------|-------------|
@@ -643,7 +643,7 @@ flowchart TD
 
 ---
 
-### 문제 5: White-Label SaaS 모바일 앱 :red_circle:
+### 문제 5: White-Label SaaS 모바일 앱 🔴
 
 #### 핵심 요구사항
 - 하나의 코드베이스로 N개 브랜드 앱 빌드
@@ -743,7 +743,7 @@ flowchart LR
 
 ## 4. 모바일 특화 설계 고려사항
 
-### 4.1 네트워크 불안정 처리 전략 :yellow_circle:
+### 4.1 네트워크 불안정 처리 전략 🟡
 
 | 전략 | 설명 | 구현 방법 | 사용 시나리오 |
 |------|------|----------|-------------|
@@ -764,7 +764,7 @@ Duration getRetryDelay(int retryCount) {
 
 ---
 
-### 4.2 오프라인 우선 아키텍처 패턴 비교 :red_circle:
+### 4.2 오프라인 우선 아키텍처 패턴 비교 🔴
 
 | 패턴 | 동작 방식 | 장점 | 단점 | 적합한 앱 |
 |------|----------|------|------|-----------|
@@ -790,7 +790,7 @@ flowchart TD
 
 ---
 
-### 4.3 인증 시스템 설계 요약 :yellow_circle:
+### 4.3 인증 시스템 설계 요약 🟡
 
 #### JWT 토큰 회전 (Rotation) 전략
 
@@ -841,7 +841,7 @@ sequenceDiagram
 
 ---
 
-### 4.4 모바일 보안 계층 요약 :yellow_circle:
+### 4.4 모바일 보안 계층 요약 🟡
 
 | 보안 계층 | 위협 | 방어 수단 |
 |----------|------|----------|
@@ -870,7 +870,7 @@ sequenceDiagram
 
 ---
 
-### 4.5 앱 배포 전략 비교표 :red_circle:
+### 4.5 앱 배포 전략 비교표 🔴
 
 | 전략 | 설명 | 장점 | 단점 | 롤백 |
 |------|------|------|------|------|
@@ -881,7 +881,7 @@ sequenceDiagram
 | **Feature Flag** | 기능 단위 ON/OFF | 배포 없이 기능 제어 | 코드 복잡도 증가, 기술 부채 | Flag OFF |
 | **Staged Rollout** | Play Store/App Store의 단계적 배포 | 스토어 내장 기능 | 제어 제한적 | 롤아웃 중단 |
 
-#### OTA (Shorebird) vs 스토어 배포 :red_circle:
+#### OTA (Shorebird) vs 스토어 배포 🔴
 
 | 항목 | 스토어 배포 | Shorebird OTA |
 |------|-----------|---------------|
@@ -896,7 +896,7 @@ sequenceDiagram
 
 ### 빠른 참조: 면접 키워드 정리
 
-#### 아키텍처 키워드 :yellow_circle:
+#### 아키텍처 키워드 🟡
 
 | 키워드 | 한 줄 설명 |
 |--------|-----------|
@@ -907,7 +907,7 @@ sequenceDiagram
 | **Bloc Pattern** | Event -> State 단방향 상태 관리 |
 | **Either<Failure, T>** | 함수형 에러 처리, try-catch 대체 |
 
-#### 시스템 설계 키워드 :red_circle:
+#### 시스템 설계 키워드 🔴
 
 | 키워드 | 한 줄 설명 |
 |--------|-----------|
@@ -926,7 +926,7 @@ sequenceDiagram
 
 ### 면접 답변 체크리스트
 
-#### 답변 시 반드시 포함할 것 :yellow_circle:
+#### 답변 시 반드시 포함할 것 🟡
 
 - [ ] 요구사항 확인 질문을 먼저 했는가?
 - [ ] High-Level 아키텍처 다이어그램을 그렸는가?
@@ -935,7 +935,7 @@ sequenceDiagram
 - [ ] 오프라인 시나리오를 고려했는가?
 - [ ] 에러 핸들링 전략을 설명했는가?
 
-#### L6 추가 평가 항목 :red_circle:
+#### L6 추가 평가 항목 🔴
 
 - [ ] 트레이드오프를 명확히 분석하고 근거를 제시했는가?
 - [ ] 확장성 (수평/수직) 전략을 설명했는가?

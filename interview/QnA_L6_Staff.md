@@ -1295,7 +1295,7 @@ if (isNewPaymentEnabled) {
 - 비즈니스 이해 (기술 vs 비즈니스 밸런스)
 
 **관련 문서**:
-- [L4 Mid-level Q&A](./QnA_L4_Mid.md)
+- [L4 Mid-level Q&A](./QnA_L4_MidLevel.md)
 - [L5 Senior Q&A](./QnA_L5_Senior.md)
 - [Best Practices](../Best_Practices.md)
 - [Production Checklist](../Production_Checklist.md)
